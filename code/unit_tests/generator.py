@@ -8,7 +8,7 @@ from unit_tests.json_to_unittest import json_to_test_lines
 
 def replace_func_name(code):
 
-    pattern = r'def\s+(\w+)\s*\('
+    pattern = r'def\s+(\w+)\('
     match = re.search(pattern, code)
     original_name = match.group(1)
     new_name = 'testfunc'
@@ -136,7 +136,7 @@ def unit_tests_generator(test_values_file, predictions):
         add_function(i+1, predictions[i], question['name'])
         add_tests(i+1, question, question['name'])
 
-    print("All test files generated!")
+    print("\nAll test files generated!\n")
 
     return
     

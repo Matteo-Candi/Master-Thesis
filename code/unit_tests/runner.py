@@ -53,7 +53,7 @@ def run_all_tests(test_values_file, input_file):
             fail_count += 1
             final_results[question['name']] = 'Fail'
     
-    print("\nAll tests runned!")
+    print("\nAll tests runned!\n")
 
     total = pass_count + fail_count
     final_results['passed'] = pass_count

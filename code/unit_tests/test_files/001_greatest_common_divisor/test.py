@@ -86,7 +86,6 @@ def start():
         print("All Passed!")
     else:
         print("Compilation Passed!")
-        
 
 
 if __name__ == "__main__":
