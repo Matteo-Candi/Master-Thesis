@@ -8,9 +8,9 @@ import sys
 
 # Write the target function here
 def testfunc(s, k):
-    tmp = sorted([char for char in s], reverse=True)
+    tmp = list(s)
+    tmp.sort(reverse=True)
     return tmp[k - 1]
-
 # End here
 
 

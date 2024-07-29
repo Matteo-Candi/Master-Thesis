@@ -21,7 +21,6 @@ def testfunc(matrix, res):
         if maxC in set:
             res.append(maxC)
     return res
-
 # End here
 
 

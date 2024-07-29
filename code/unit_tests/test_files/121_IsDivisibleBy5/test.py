@@ -9,7 +9,7 @@ import sys
 # Write the target function here
 def testfunc(s):
     n = len(s)
-    return ord(s[n - 1]) - ord('0') == 0 or ord(s[n - 1]) - ord('0') == 5
+    return ord(s[n-1]) - ord('0') == 0 or ord(s[n-1]) - ord('0') == 5
 # End here
 
 

@@ -20,7 +20,6 @@ def testfunc(s):
     if b > a:
         return True
     return False
-
 # End here
 
 

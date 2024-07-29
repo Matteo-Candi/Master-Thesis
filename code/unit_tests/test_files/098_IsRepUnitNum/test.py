@@ -17,6 +17,7 @@ def testfunc(n, b):
             countOne += 1
         n = n // b
     return countOne >= 3 and countOne == length
+
 # End here
 
 

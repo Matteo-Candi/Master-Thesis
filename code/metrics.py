@@ -86,9 +86,22 @@ def metrics_values(references, predictions, input_file):
     input_file_name = os.path.basename(input_file).split('.')[0]
     output_file= f"../results/{input_file_name}/metrics.json"
 
-    with open(output_file, 'w') as file:
-        json.dump(final_metrics, file)
+    if os.path.exists(output_file):
+        # Load existing data
+        with open(output_file, 'r') as file:
+            existing_data = json.load(file)
+        
+        # Append new metrics to existing data
+        existing_data.update(final_metrics)
+        
+        # Write the updated data back to the file
+        with open(output_file, 'w') as file:
+            json.dump(existing_data, file)
+    else:
+        # Write new metrics to the file
+        with open(output_file, 'w') as file:
+            json.dump(final_metrics, file)
 
-    print(f"Final metrics for {input_file_name}: {final_metrics}")
+    print(f"\nFinal metrics for {input_file_name}: {final_metrics}\n")
 
     return 

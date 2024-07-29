@@ -7,15 +7,12 @@ import math
 import sys
 
 # Write the target function here
-import math
-
 def testfunc(n, k):
-    digitsNum = math.floor(math.log(n, 10)) + 1
+    digitsNum = int(math.floor(math.log(n, 10)) + 1)
     tempSum = 0
     temp = digitsNum
     result = 0
-    x = 0
-    v = 0
+    x, v = 0, 0
     sum = 0
     num2 = n
     while num2 != 0:
@@ -28,13 +25,13 @@ def testfunc(n, k):
             v = n // 10**(temp - 1)
             tempSum += v % 10
             if tempSum >= k:
-                v = v // 10 + 1
+                v //= 10
+                v += 1
                 result = v * 10**temp
                 break
             temp -= 1
         x = result - n
     return x
-
 # End here
 
 

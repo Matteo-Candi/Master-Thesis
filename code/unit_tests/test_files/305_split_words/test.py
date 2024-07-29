@@ -13,7 +13,7 @@ def testfunc(txt):
     if ' ' in txt:
         for i in range(len(txt) + 1):
             if i == len(txt) or txt[i] == ' ':
-                if current != "":
+                if len(current) > 0:
                     result.append(current)
                 current = ""
             else:
@@ -22,7 +22,7 @@ def testfunc(txt):
     if ',' in txt:
         for i in range(len(txt) + 1):
             if i == len(txt) or txt[i] == ',':
-                if current != "":
+                if len(current) > 0:
                     result.append(current)
                 current = ""
             else:

@@ -12,13 +12,14 @@ def testfunc(arr):
         return True
     num = 0
     for i in range(1, len(arr)):
-        if arr[i] < arr[i-1]:
+        if arr[i] < arr[i - 1]:
             num += 1
     if arr[-1] > arr[0]:
         num += 1
     if num < 2:
         return True
     return False
+
 # End here
 
 

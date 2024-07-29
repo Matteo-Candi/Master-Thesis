@@ -15,7 +15,6 @@ def testfunc(s):
     if s1[0] == '0':
         s1[0] = '9'
     return ''.join(s1)
-
 # End here
 
 

@@ -10,7 +10,6 @@ import sys
 def testfunc(numbersA, numbersB):
     pairs = [ [a, b] for a in numbersA for b in numbersB if a < b ]
     return pairs
-
 # End here
 
 

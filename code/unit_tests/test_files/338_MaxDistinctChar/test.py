@@ -14,26 +14,21 @@ def testfunc(s, n, k):
             freq[s[i]] += 1
         else:
             freq[s[i]] = 1
-    
     v = list(freq.values())
     v.sort()
-    
     for i in range(len(v)):
         mn = min(v[i] - 1, k)
         v[i] -= mn
         k -= mn
-    
     if k > 0:
         for i in range(len(v)):
             mn = min(v[i], k)
             v[i] -= mn
             k -= mn
-    
     res = 0
     for i in range(len(v)):
         if v[i] == 1:
             res += 1
-    
     return res
 # End here
 

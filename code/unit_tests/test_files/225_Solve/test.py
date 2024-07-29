@@ -12,8 +12,8 @@ def testfunc(values, salary, mod):
     amt = 0
     values.sort()
     salary.sort()
-    while salary:
-        while values and values[-1] >= salary[-1]:
+    while len(salary) > 0:
+        while len(values) > 0 and values[-1] >= salary[-1]:
             amt += 1
             values.pop()
         if amt == 0:
@@ -22,7 +22,6 @@ def testfunc(values, salary, mod):
         ret %= mod
         salary.pop()
     return ret
-
 # End here
 
 

@@ -22,7 +22,6 @@ def testfunc(arr):
         else:
             r -= 1
     return res
-
 # End here
 
 

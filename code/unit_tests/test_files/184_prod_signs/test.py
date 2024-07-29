@@ -8,7 +8,7 @@ import sys
 
 # Write the target function here
 def testfunc(arr):
-    if len(arr) == 0:
+    if not arr:
         return -32768
     sum = 0
     prods = 1

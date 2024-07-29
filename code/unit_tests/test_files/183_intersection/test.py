@@ -17,7 +17,6 @@ def testfunc(interval1, interval2):
         if l % i == 0:
             return "NO"
     return "YES"
-
 # End here
 
 

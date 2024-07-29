@@ -10,8 +10,8 @@ import sys
 def testfunc(n):
     count = 0
     day = 1
-    while count + day * (day + 1) / 2 < n:
-        count += day * (day + 1) / 2
+    while count + day * (day + 1) // 2 < n:
+        count += day * (day + 1) // 2
         day += 1
     for type in range(day, 0, -1):
         count += type

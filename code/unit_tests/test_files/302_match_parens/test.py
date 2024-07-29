@@ -21,7 +21,6 @@ def testfunc(lst):
         if count == 0:
             return "Yes"
     return "No"
-
 # End here
 
 

@@ -27,7 +27,6 @@ def testfunc(n, prev):
     if diff == prev:
         return diff
     return testfunc(diff, prev)
-
 # End here
 
 

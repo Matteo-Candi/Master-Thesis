@@ -12,7 +12,10 @@ def testfunc(test):
     max = 0
     for i in range(len(test)):
         if test[i] != ' ':
-            count[test[i]] = count.get(test[i], 0) + 1
+            if test[i] in count:
+                count[test[i]] += 1
+            else:
+                count[test[i]] = 1
             if count[test[i]] > max:
                 max = count[test[i]]
     result = {}
@@ -20,6 +23,7 @@ def testfunc(test):
         if item[1] == max:
             result[item[0]] = item[1]
     return result
+
 # End here
 
 

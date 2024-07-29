@@ -9,22 +9,18 @@ import sys
 # Write the target function here
 def testfunc(arr):
     cnt = 0
-    maxInd = -1
-    minInd = 10000000
+    max_ind = -1
+    min_ind = 10000000
     n = len(arr)
-    indexOf = {}
-
+    index_of = {}
     for i in range(n):
-        indexOf[arr[i]] = i + 1
-
+        index_of[arr[i]] = i + 1
     for i in range(1, n + 1):
-        maxInd = max(maxInd, indexOf.get(i, 0))
-        minInd = min(minInd, indexOf.get(i, 0))
-        if maxInd - minInd + 1 == i:
+        max_ind = max(max_ind, index_of.get(i, 0))
+        min_ind = min(min_ind, index_of.get(i, 0))
+        if max_ind - min_ind + 1 == i:
             cnt += 1
-
     return cnt
-
 # End here
 
 

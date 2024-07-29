@@ -10,19 +10,18 @@ import sys
 def testfunc(a, k):
     n = len(a)
     a.sort()
-    vis = [False]*n
+    vis = [False] * n
     mp = {}
     for i in range(n):
         mp[a[i]] = i
     c = 0
     for i in range(n):
         if not vis[i]:
-            check = a[i]*k
+            check = a[i] * k
             if check in mp:
                 c += 1
                 vis[mp[check]] = True
     return n - c
-
 # End here
 
 

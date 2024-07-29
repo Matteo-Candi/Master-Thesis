@@ -8,11 +8,11 @@ import sys
 
 # Write the target function here
 def testfunc(numbers):
-    minNum = min(numbers)
-    maxNum = max(numbers)
+    min_num = min(numbers)
+    max_num = max(numbers)
     result = []
     for n in numbers:
-        result.append((n - minNum) / (maxNum - minNum))
+        result.append((n - min_num) / (max_num - min_num))
     return result
 
 # End here

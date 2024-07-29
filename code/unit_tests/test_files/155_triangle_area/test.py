@@ -12,6 +12,7 @@ def testfunc(a, b, c):
         return -1
     s = (a + b + c) / 2
     return math.sqrt(s * (s - a) * (s - b) * (s - c))
+
 # End here
 
 

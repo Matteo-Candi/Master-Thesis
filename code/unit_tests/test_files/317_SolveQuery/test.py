@@ -12,10 +12,11 @@ def testfunc(start, end, arr):
     for i in range(start, end+1):
         mp[arr[i]] = mp.get(arr[i], 0) + 1
     count = 0
-    for entry in mp.items():
-        if entry[0] == entry[1]:
+    for entry in mp:
+        if entry == mp[entry]:
             count += 1
     return count
+
 # End here
 
 

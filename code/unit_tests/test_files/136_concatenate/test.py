@@ -12,6 +12,7 @@ def testfunc(strings):
     for s in strings:
         result += s
     return result
+
 # End here
 
 

@@ -10,7 +10,6 @@ import sys
 def testfunc(numbers):
     subSequence = [num for i, num in enumerate(numbers) if num >= i]
     return subSequence
-
 # End here
 
 

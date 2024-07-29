@@ -24,7 +24,6 @@ def testfunc(s, a, n):
             cnt += 1
             ans.append(cnt)
     return ans
-
 # End here
 
 

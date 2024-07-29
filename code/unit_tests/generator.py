@@ -12,7 +12,7 @@ def replace_func_name(code):
     match = re.search(pattern, code)
     original_name = match.group(1)
     new_name = 'testfunc'
-    code = code.replace(original_name, new_name)
+    code = code.replace(original_name + '(', new_name + '(')
 
     return code
 
@@ -66,7 +66,7 @@ def add_function(idx, prediction, function_name):
     for line in test_file_lines_after:
         test_file_lines.append(line)
 
-    with open(test_folder + r'\test.py', "w", encoding="utf-8") as f:
+    with open(test_folder + '/test.py', "w", encoding="utf-8") as f:
         for line in test_file_lines:
             f.write(line)
 
@@ -83,7 +83,7 @@ def add_tests(idx, question, function_name):
     test_folder = f"unit_tests/test_files/{idx}_{function_name}"
     template_file = f'unit_tests/test_files/{idx}_{function_name}/test.py'
 
-    os.makedirs(test_folder, exist_ok=True)
+    # os.makedirs(template_file, exist_ok=True)
 
     file_lines = []
     with open(template_file, "r", encoding="utf-8") as f:
@@ -121,7 +121,7 @@ def add_tests(idx, question, function_name):
     for line in test_file_lines_after:
         test_file_lines.append(line)
 
-    with open(test_folder + r'\test.py', "w", encoding="utf-8") as f:
+    with open(template_file, "w", encoding="utf-8") as f:
         for line in test_file_lines:
             f.write(line)
         print("Test file generated: " + test_folder)

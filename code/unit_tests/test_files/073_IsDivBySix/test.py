@@ -17,7 +17,6 @@ def testfunc(s, n):
     if lastDigit % 2 != 0:
         return False
     return True
-
 # End here
 
 

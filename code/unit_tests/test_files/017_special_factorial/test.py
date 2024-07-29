@@ -14,7 +14,6 @@ def testfunc(n):
         fact *= i
         specialFact *= fact
     return specialFact
-
 # End here
 
 

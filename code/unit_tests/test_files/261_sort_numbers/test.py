@@ -8,24 +8,25 @@ import sys
 
 # Write the target function here
 def testfunc(numbers):
-    toNum = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9}
-    fromNum = {0: "zero", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
+    to_num = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9}
+    from_num = {0: "zero", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
     ints = []
     current = ""
     for i in range(len(numbers) + 1):
         if i == len(numbers) or numbers[i] == ' ':
-            if current in toNum:
-                ints.append(toNum[current])
+            if current in to_num:
+                ints.append(to_num[current])
                 current = ""
         else:
             current += numbers[i]
     ints.sort()
     result = ""
     for i in range(len(ints)):
-        result += fromNum[ints[i]]
+        result += from_num[ints[i]]
         if i != len(ints) - 1:
             result += " "
     return result
+
 # End here
 
 

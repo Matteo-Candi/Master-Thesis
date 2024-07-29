@@ -9,7 +9,7 @@ import sys
 # Write the target function here
 def testfunc(numbers):
     distinct_count = len(set(numbers))
-    distinct_odd_count = len(set(filter(lambda x: x % 2 == 1, numbers)))
+    distinct_odd_count = len([num for num in set(numbers) if num % 2 == 1])
     return distinct_odd_count / distinct_count
 # End here
 

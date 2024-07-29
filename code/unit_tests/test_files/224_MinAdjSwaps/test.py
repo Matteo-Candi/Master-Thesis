@@ -9,13 +9,11 @@ import sys
 # Write the target function here
 def testfunc(mat):
     n = len(mat)
-    cntZero = [0]*n
+    cntZero = [0] * n
     for i in range(n):
-        for j in range(n-1, -1, -1):
+        for j in range(n - 1, -1, -1):
             if mat[i][j] == 0:
                 cntZero[i] += 1
-            else:
-                break
     cntSwaps = 0
     for i in range(n):
         if cntZero[i] < (n - i - 1):
@@ -29,7 +27,6 @@ def testfunc(mat):
                 first -= 1
                 cntSwaps += 1
     return cntSwaps
-
 # End here
 
 

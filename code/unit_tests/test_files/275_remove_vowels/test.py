@@ -14,6 +14,7 @@ def testfunc(text):
         if ch.lower() not in vowels:
             result += ch
     return result
+
 # End here
 
 

@@ -8,9 +8,9 @@ import sys
 
 # Write the target function here
 def testfunc(x, y, z):
-    if y / x == 0:
-        return y / z == 0 and y != 0 and z != 0 and y % z == 0
-    return x / z == 0 and x != 0 and z != 0 and x % z == 0
+    if (y / x == 0):
+        return y / z == 0 and y != z
+    return x / z == 0 and x != z
 # End here
 
 

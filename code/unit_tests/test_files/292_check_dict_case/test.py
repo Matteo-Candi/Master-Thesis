@@ -21,6 +21,7 @@ def testfunc(dict):
             else:
                 return False
     return is_lower + is_upper == 1
+
 # End here
 
 

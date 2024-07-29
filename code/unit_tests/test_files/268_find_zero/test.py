@@ -12,7 +12,7 @@ def testfunc(xs):
     value = 0
     for i in range(len(xs)):
         value += xs[i] * (ans ** i)
-
+    
     while abs(value) > 1e-6:
         driv = 0
         for i in range(1, len(xs)):
@@ -21,7 +21,7 @@ def testfunc(xs):
         value = 0
         for i in range(len(xs)):
             value += xs[i] * (ans ** i)
-
+    
     return ans
 
 # End here

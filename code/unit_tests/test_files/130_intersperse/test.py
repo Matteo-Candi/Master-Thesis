@@ -16,6 +16,7 @@ def testfunc(numbers, delimiter):
         result.append(delimiter)
     result.append(numbers[-1])
     return result
+
 # End here
 
 

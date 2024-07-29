@@ -13,17 +13,19 @@ def testfunc(s, k):
     if len(s) == k:
         return True
     for i in range(len(s)):
-        m[s[i]] = m.get(s[i], 0) + 1
+        if s[i] in m:
+            m[s[i]] += 1
+        else:
+            m[s[i]] = 1
     if k > len(s):
         return False
     else:
         for h in m:
             if m[h] % 2 != 0:
                 p += 1
-    if k < p:
-        return False
+        if k < p:
+            return False
     return True
-
 # End here
 
 

@@ -14,6 +14,7 @@ def testfunc(lst):
         if i >= 2 and lst[i] == lst[i - 1] and lst[i] == lst[i - 2]:
             return False
     return True
+
 # End here
 
 

@@ -21,6 +21,7 @@ def testfunc(s):
                 cntZero -= 1
             cntOne += 1
     return cntOne + cntZero
+
 # End here
 
 

@@ -23,7 +23,6 @@ def testfunc(nums):
                 result[j - 1], result[j] = result[j], result[j - 1]
                 nums[j - 1], nums[j] = nums[j], nums[j - 1]
     return nums
-
 # End here
 
 

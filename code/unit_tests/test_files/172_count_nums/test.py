@@ -12,7 +12,7 @@ def testfunc(arr):
     for n in arr:
         neg = -1 if n < 0 else 1
         n = abs(n)
-        digits = [int(i) for i in str(n)]
+        digits = [int(c) for c in str(n)]
         digits[0] = digits[0] * neg
         sum = 0
         for d in digits:
@@ -20,7 +20,6 @@ def testfunc(arr):
         if sum > 0:
             num += 1
     return num
-
 # End here
 
 

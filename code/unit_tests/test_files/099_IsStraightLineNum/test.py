@@ -16,7 +16,6 @@ def testfunc(n):
         if ord(s[i]) - ord(s[i-1]) != d:
             return False
     return True
-
 # End here
 
 

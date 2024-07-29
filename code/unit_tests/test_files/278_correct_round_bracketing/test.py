@@ -17,6 +17,7 @@ def testfunc(brackets):
         if depth < 0:
             return False
     return depth == 0
+
 # End here
 
 

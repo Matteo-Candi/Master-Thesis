@@ -12,6 +12,7 @@ def testfunc(arr):
     while index > 0 and arr[index] >= arr[index - 1]:
         index -= 1
     return index
+
 # End here
 
 

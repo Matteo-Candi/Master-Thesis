@@ -10,12 +10,12 @@ import sys
 def testfunc(n):
     primes = []
     for i in range(2, n):
-        is_prime = True
+        isPrime = True
         for j in range(2, i):
             if i % j == 0:
-                is_prime = False
+                isPrime = False
                 break
-        if is_prime:
+        if isPrime:
             primes.append(i)
     return primes
 

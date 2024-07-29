@@ -16,6 +16,7 @@ def testfunc(numbers):
         if c[i] == 1:
             result.append(i)
     return result
+
 # End here
 
 

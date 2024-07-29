@@ -14,6 +14,7 @@ def testfunc(word):
         if word[i] != word[n - 1 - i]:
             return False
     return True
+
 # End here
 
 

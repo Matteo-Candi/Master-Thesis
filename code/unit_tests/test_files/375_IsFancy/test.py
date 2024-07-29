@@ -10,14 +10,14 @@ import sys
 def testfunc(num):
     fp = {'0': '0', '1': '1', '6': '9', '8': '8', '9': '6'}
     n = len(num)
-    l, r = 0, n - 1
+    l = 0
+    r = n - 1
     while l <= r:
         if num[l] not in fp or fp[num[l]] != num[r]:
             return False
         l += 1
         r -= 1
     return True
-
 # End here
 
 

@@ -15,7 +15,6 @@ def testfunc(m, length, s):
         if countOdd > 1:
             return False
     return True
-
 # End here
 
 

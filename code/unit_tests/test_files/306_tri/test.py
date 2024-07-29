@@ -10,13 +10,13 @@ import sys
 def testfunc(n):
     if n == 0:
         return [1]
-    testfuncs = [1, 3]
+    tris = [1, 3]
     for i in range(2, n + 1):
         if i % 2 == 0:
-            testfuncs.append(i // 2 + 1)
+            tris.append(i // 2 + 1)
         else:
-            testfuncs.append(testfuncs[i - 1] + testfuncs[i - 2] + (i + 3) // 2)
-    return testfuncs
+            tris.append(tris[i - 1] + tris[i - 2] + (i + 3) // 2)
+    return tris
 # End here
 
 

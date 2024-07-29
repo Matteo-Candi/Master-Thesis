@@ -12,6 +12,7 @@ def testfunc(arr):
         if arr[i] > arr[i + 1]:
             return False
     return True
+
 # End here
 
 

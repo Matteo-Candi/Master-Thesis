@@ -7,23 +7,22 @@ import math
 import sys
 
 # Write the target function here
-def testfunc(file_name):
-    digit_num = 0
-    dot_num = 0
-    if len(file_name) < 5 or not file_name[0].isalpha():
+def testfunc(fileName):
+    digitNum = 0
+    dotNum = 0
+    if len(fileName) < 5 or not fileName[0].isalpha():
         return "No"
-    suffix = file_name[-4:]
-    if suffix != ".txt" and suffix != ".exe" and suffix != ".dll":
+    suffix = fileName[-4:]
+    if not suffix == ".txt" and not suffix == ".exe" and not suffix == ".dll":
         return "No"
-    for c in file_name:
+    for c in fileName:
         if c.isdigit():
-            digit_num += 1
+            digitNum += 1
         if c == '.':
-            dot_num += 1
-    if digit_num > 3 or dot_num != 1:
+            dotNum += 1
+    if digitNum > 3 or dotNum != 1:
         return "No"
     return "Yes"
-
 # End here
 
 

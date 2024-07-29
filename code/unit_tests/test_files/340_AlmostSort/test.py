@@ -16,7 +16,6 @@ def testfunc(a, n):
         if a[i] > a[i + 1]:
             return False
     return True
-
 # End here
 
 

@@ -16,7 +16,6 @@ def testfunc(num):
         else:
             odd_count += 1
     return [even_count, odd_count]
-
 # End here
 
 

@@ -10,7 +10,6 @@ import sys
 def testfunc(numbers, start, length):
     sub_list = [n for n in numbers[start:] if n < 0][:length]
     return sub_list
-
 # End here
 
 

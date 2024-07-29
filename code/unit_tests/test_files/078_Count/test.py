@@ -10,18 +10,18 @@ import sys
 def testfunc(s, k):
     n = len(s)
     d = 0
-    testfunc = 0
+    count = 0
     for i in range(n):
         d += ord(s[i])
     if d % k == 0:
-        testfunc += 1
+        count += 1
     for i in range(k, n):
         prev = ord(s[i - k])
         d -= prev
         d += ord(s[i])
         if d % k == 0:
-            testfunc += 1
-    return testfunc
+            count += 1
+    return count
 # End here
 
 

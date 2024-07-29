@@ -10,6 +10,7 @@ import sys
 def testfunc(value):
     w = float(value)
     return round(w)
+
 # End here
 
 

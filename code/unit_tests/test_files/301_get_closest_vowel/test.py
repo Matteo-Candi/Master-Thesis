@@ -10,7 +10,7 @@ import sys
 def testfunc(word):
     vowels = "AEIOUaeiou"
     for i in range(len(word) - 2, 0, -1):
-        if (vowels.index(word[i]) != -1) and (vowels.index(word[i + 1]) == -1) and (vowels.index(word[i - 1]) == -1):
+        if (vowels.index(word[i]) != -1 and vowels.index(word[i + 1]) == -1 and vowels.index(word[i - 1]) == -1):
             return word[i]
     return ""
 # End here

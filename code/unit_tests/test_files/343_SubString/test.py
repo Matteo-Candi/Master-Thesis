@@ -14,7 +14,6 @@ def testfunc(s, n):
             find = s[i:i + len]
             v.append(find)
     return v
-
 # End here
 
 

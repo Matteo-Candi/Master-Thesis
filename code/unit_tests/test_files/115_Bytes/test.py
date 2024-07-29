@@ -7,9 +7,10 @@ import math
 import sys
 
 # Write the target function here
-def testfunc(kilotestfunc):
-    b = kilotestfunc * 1024
+def testfunc(kilobytes):
+    b = kilobytes * 1024
     return b
+
 # End here
 
 

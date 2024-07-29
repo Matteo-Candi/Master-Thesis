@@ -25,7 +25,6 @@ def testfunc(n, k):
     if len(v) >= k:
         return True
     return False
-
 # End here
 
 

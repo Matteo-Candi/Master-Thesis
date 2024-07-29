@@ -7,18 +7,19 @@ import math
 import sys
 
 # Write the target function here
-detestfunc testfunc(n):
+def testfunc(n):
     sum = 0
     prod = 1
     result = []
-    testfuncor i in range(1, n+1):
+    for i in range(1, n+1):
         sum += i
         prod *= i
-        itestfunc i % 2 == 0:
+        if i % 2 == 0:
             result.append(prod)
         else:
             result.append(sum)
     return result
+
 # End here
 
 

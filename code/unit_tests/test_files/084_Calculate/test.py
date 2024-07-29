@@ -17,17 +17,17 @@ def testfunc(s):
                         for n in range(10):
                             if i + j + k == l + m + n:
                                 c = 0
-                                if i != int(s[0]):
+                                if i != int(s[0]) - 0:
                                     c += 1
-                                if j != int(s[1]):
+                                if j != int(s[1]) - 0:
                                     c += 1
-                                if k != int(s[2]):
+                                if k != int(s[2]) - 0:
                                     c += 1
-                                if l != int(s[3]):
+                                if l != int(s[3]) - 0:
                                     c += 1
-                                if m != int(s[4]):
+                                if m != int(s[4]) - 0:
                                     c += 1
-                                if n != int(s[5]):
+                                if n != int(s[5]) - 0:
                                     c += 1
                                 if c < ans:
                                     ans = c

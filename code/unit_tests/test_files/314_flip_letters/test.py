@@ -22,6 +22,7 @@ def testfunc(s):
         return result[::-1]
     else:
         return result
+
 # End here
 
 

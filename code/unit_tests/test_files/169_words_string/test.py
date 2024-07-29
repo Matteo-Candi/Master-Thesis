@@ -18,6 +18,7 @@ def testfunc(s):
         else:
             current += s[i]
     return words
+
 # End here
 
 

@@ -11,6 +11,7 @@ def testfunc(lst1, lst2):
     sum1 = sum(len(st) for st in lst1)
     sum2 = sum(len(st) for st in lst2)
     return lst2 if sum1 > sum2 else lst1
+
 # End here
 
 

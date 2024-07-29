@@ -16,6 +16,7 @@ def testfunc(n):
         n >>= 1
         p2 *= 2
     return ans
+
 # End here
 
 

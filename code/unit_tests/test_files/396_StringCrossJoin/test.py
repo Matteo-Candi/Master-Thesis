@@ -8,7 +8,7 @@ import sys
 
 # Write the target function here
 def testfunc(end_words, begin_words):
-    cross_strings = [e + " " + b for b in begin_words for e in end_words if b[0] == e[-1]]
+    cross_strings = [e + " " + b for e in end_words for b in begin_words if e[0] == e[-1]]
     return cross_strings
 
 # End here

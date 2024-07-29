@@ -27,7 +27,6 @@ def testfunc(a, k, n):
             ans.append(x+1)
             k -= 1
     return ans
-
 # End here
 
 

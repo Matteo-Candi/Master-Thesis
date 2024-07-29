@@ -9,11 +9,12 @@ import sys
 # Write the target function here
 def testfunc(numbers, threshold):
     for i in range(len(numbers)):
-        for j in range(i+1, len(numbers)):
+        for j in range(i + 1, len(numbers)):
             distance = abs(numbers[i] - numbers[j])
             if distance < threshold:
                 return True
     return False
+
 # End here
 
 

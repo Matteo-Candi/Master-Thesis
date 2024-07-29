@@ -8,10 +8,9 @@ import sys
 
 # Write the target function here
 def testfunc(arr, n, k):
-    mp = {}
-    mp[arr[0]] = 0
+    mp = {arr[0]: 0}
     for i in range(1, n):
-        arr[i] += arr[i-1]
+        arr[i] += arr[i - 1]
         mp[arr[i]] = i
     len = float('inf')
     for i in range(n):

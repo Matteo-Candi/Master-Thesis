@@ -8,13 +8,15 @@ import sys
 
 # Write the target function here
 def testfunc(l):
-    evens = [l[i] for i in range(0, len(l), 2)]
+    evens = []
+    for i in range(0, len(l), 2):
+        evens.append(l[i])
     evens.sort()
     result = []
     for i in range(len(l)):
         if i % 2 == 0:
             result.append(evens[i // 2])
-        else:
+        if i % 2 == 1:
             result.append(l[i])
     return result
 

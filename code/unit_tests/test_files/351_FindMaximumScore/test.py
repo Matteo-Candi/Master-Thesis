@@ -21,7 +21,7 @@ def testfunc(a, n):
     dp[1] = freq.get(1, 0)
     
     for i in range(2, len(dp)):
-        dp[i] = max(dp[i-1], dp[i-2] + freq.get(i, 0) * i)
+        dp[i] = max(dp[i - 1], dp[i - 2] + freq.get(i, 0) * i)
     
     return dp[-1]
 # End here

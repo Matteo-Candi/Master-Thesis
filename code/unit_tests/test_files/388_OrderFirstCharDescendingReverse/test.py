@@ -11,7 +11,6 @@ def testfunc(words):
     sorted_words = sorted(words, key=lambda w: w[0], reverse=True)
     sorted_words.sort(key=str.lower)
     return sorted_words[::-1]
-
 # End here
 
 

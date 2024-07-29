@@ -28,7 +28,6 @@ def testfunc(sentence):
     if len(result) > 0:
         result = result[:-1]
     return result
-
 # End here
 
 

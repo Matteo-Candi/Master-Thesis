@@ -7,9 +7,9 @@ import math
 import sys
 
 # Write the target function here
-def testfunc(vector_a, vector_b):
-    testfunc = sum(vector_a[i] * vector_b[i] for i in range(len(vector_a)))
-    return testfunc
+def testfunc(vectorA, vectorB):
+    dotProduct = sum(vectorA[i] * vectorB[i] for i in range(len(vectorA)))
+    return dotProduct
 # End here
 
 

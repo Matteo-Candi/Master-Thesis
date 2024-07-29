@@ -10,6 +10,7 @@ import sys
 def testfunc(text):
     pr = text[::-1]
     return pr == text
+
 # End here
 
 

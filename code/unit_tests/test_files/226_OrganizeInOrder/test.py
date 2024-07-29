@@ -10,7 +10,9 @@ import sys
 def testfunc(vec, op, n):
     result = [0] * n
     vec.sort()
-    i, j, k = 0, n - 1, 0
+    i = 0
+    j = n - 1
+    k = 0
     while i <= j and k <= n - 2:
         if op[k] == '<':
             result[k] = vec[i]

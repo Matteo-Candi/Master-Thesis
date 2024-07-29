@@ -11,17 +11,17 @@ def testfunc(s, n):
     vowels = "aeiouAEIOU"
     current = ""
     result = []
-    consonant_num = 0
+    consonantNum = 0
     for i in range(len(s) + 1):
         if i == len(s) or s[i] == ' ':
-            if consonant_num == n:
+            if consonantNum == n:
                 result.append(current)
             current = ""
-            consonant_num = 0
+            consonantNum = 0
         else:
             current += s[i]
             if vowels.find(s[i]) == -1:
-                consonant_num += 1
+                consonantNum += 1
     return result
 
 # End here

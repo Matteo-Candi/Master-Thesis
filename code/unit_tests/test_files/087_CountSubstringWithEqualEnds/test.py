@@ -15,6 +15,7 @@ def testfunc(s):
             if s[i] == s[j]:
                 result += 1
     return result
+
 # End here
 
 

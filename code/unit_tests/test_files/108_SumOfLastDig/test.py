@@ -10,9 +10,9 @@ import sys
 def testfunc(n, m):
     sum = 0
     k = n // m
-    arr = [0]*10
+    arr = [0] * 10
     for i in range(10):
-        arr[i] = m * (i+1) % 10
+        arr[i] = m * (i + 1) % 10
         sum += arr[i]
     rem = k % 10
     ans = k // 10 * sum

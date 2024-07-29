@@ -20,7 +20,6 @@ def testfunc(s, n):
         elif not flag and num1 != "":
             flag = True
     return n - int(num1) - int(num2)
-
 # End here
 
 

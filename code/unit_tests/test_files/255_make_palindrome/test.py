@@ -8,7 +8,7 @@ import sys
 
 # Write the target function here
 def testfunc(s):
-    if not s:
+    if s == "":
         return ""
     for i in range(len(s)):
         rStr = s[i:]
@@ -16,8 +16,7 @@ def testfunc(s):
             nStr = s[:i]
             n2Str = nStr[::-1]
             return s + n2Str
-    return s[:-1][::-1] + s[::-1]
-
+    return s[:len(s)-1][::-1] + s[::-1]
 # End here
 
 

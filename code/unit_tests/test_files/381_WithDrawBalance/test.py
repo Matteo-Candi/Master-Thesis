@@ -8,7 +8,10 @@ import sys
 
 # Write the target function here
 def testfunc(start, withdrawals):
-    end = reduce(lambda balance, nextWithdrawal: nextWithdrawal <= balance and balance - nextWithdrawal or balance, withdrawals, start)
+    end = start
+    for withdrawal in withdrawals:
+        if withdrawal <= end:
+            end -= withdrawal
     return end
 # End here
 

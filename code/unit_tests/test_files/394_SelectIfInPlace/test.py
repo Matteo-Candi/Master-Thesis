@@ -10,7 +10,6 @@ import sys
 def testfunc(numbers):
     nums_in_place = [numbers[index] == index for index in range(len(numbers))]
     return nums_in_place
-
 # End here
 
 

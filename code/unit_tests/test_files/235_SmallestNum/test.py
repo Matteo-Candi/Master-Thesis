@@ -8,7 +8,7 @@ import sys
 
 # Write the target function here
 def testfunc(n):
-    x = 10 ** ((n - 1) / 2.0)
+    x = pow(10, (n - 1) / 2.0)
     return int(x)
 # End here
 

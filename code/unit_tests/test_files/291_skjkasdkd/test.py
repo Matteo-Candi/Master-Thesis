@@ -23,7 +23,6 @@ def testfunc(lst):
     for i in range(len(s)):
         sum += int(s[i])
     return sum
-
 # End here
 
 

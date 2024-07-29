@@ -9,7 +9,7 @@ import sys
 # Write the target function here
 def testfunc(s):
     count = 0
-    max_count = 0
+    maxCount = 0
     for ch in s:
         if ch == '[':
             count += 1
@@ -17,12 +17,11 @@ def testfunc(s):
             count -= 1
         if count < 0:
             count = 0
-        if count > max_count:
-            max_count = count
-        if count <= max_count - 2:
+        if count > maxCount:
+            maxCount = count
+        if count <= maxCount - 2:
             return True
     return False
-
 # End here
 
 

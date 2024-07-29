@@ -57,7 +57,9 @@ def extract_references(file):
 
 def extract_predictions(file):
 
-    with open(file, 'r') as file:
+    file_path = '../predictions/' + file + '.txt'
+
+    with open(file_path, 'r') as file:
         data = file.read()
 
     data = data.split(('\n\n# END OF TRANSLATION\n\n'))
@@ -82,6 +84,8 @@ def extract_predictions(file):
 
     input_file_name = os.path.basename(file.name).split('.')[0]
     output_file= f"../results/{input_file_name}/{input_file_name}_formatted.py"
+
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
     with open(output_file, 'w') as file:
         for i, item in enumerate(all_list):

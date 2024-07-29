@@ -8,7 +8,7 @@ import sys
 
 # Write the target function here
 def testfunc(n):
-    p = int(math.log(n) / math.log(2))
+    p = int(math.log(n, 2))
     return int(math.pow(2, p))
 # End here
 

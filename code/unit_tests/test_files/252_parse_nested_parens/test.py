@@ -17,7 +17,7 @@ def testfunc(parenString):
             level += 1
             if level > maxLevel:
                 maxLevel = level
-        if chr == ')':
+        elif chr == ')':
             level -= 1
             if level == 0:
                 allLevels.append(maxLevel)

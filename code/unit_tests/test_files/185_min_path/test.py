@@ -30,6 +30,7 @@ def testfunc(grid, k):
         else:
             ans.append(minNum)
     return ans
+
 # End here
 
 

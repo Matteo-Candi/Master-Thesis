@@ -13,7 +13,8 @@ def testfunc(l1, l2):
         for e2 in l2:
             if e1 == e2:
                 us.add(e1)
-    ret = sorted(list(us))
+    ret = list(us)
+    ret.sort()
     return ret
 # End here
 

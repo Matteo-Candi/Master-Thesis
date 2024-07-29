@@ -8,10 +8,7 @@ import sys
 
 # Write the target function here
 def testfunc(a, b):
-    if a > b - 1:
-        return 1 + testfunc(a // b, b)
-    else:
-        return 0
+    return 1 + testfunc(a // b, b) if a > b - 1 else 0
 # End here
 
 

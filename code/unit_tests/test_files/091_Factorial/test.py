@@ -10,11 +10,11 @@ import sys
 def testfunc(a, b):
     res = 1
     for i in range(1, a + b + 1):
-        res *= i
+        res = res * i
     for i in range(1, a + 1):
-        res /= i
+        res = res / i
     for i in range(1, b + 1):
-        res /= i
+        res = res / i
     return res
 # End here
 

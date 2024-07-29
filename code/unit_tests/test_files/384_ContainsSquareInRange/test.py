@@ -7,10 +7,9 @@ import math
 import sys
 
 # Write the target function here
-def testfunc(range_start, range_length):
-    contains_square = any(n**0.5 == int(n**0.5) for n in range(range_start, range_start+range_length))
-    return contains_square
-
+def testfunc(rangeStart, rangeLength):
+    containsSquare = any(n**0.5 == int(n**0.5) for n in range(rangeStart, rangeStart+rangeLength))
+    return containsSquare
 # End here
 
 

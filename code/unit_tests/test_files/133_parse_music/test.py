@@ -22,7 +22,6 @@ def testfunc(musicString):
         else:
             current += musicString[i]
     return result
-
 # End here
 
 

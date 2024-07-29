@@ -23,7 +23,6 @@ def testfunc(lst):
                 result += c
         results.append(result)
     return results
-
 # End here
 
 

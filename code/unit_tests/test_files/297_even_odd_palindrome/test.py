@@ -8,18 +8,17 @@ import sys
 
 # Write the target function here
 def testfunc(n):
-    even_count = 0
-    odd_count = 0
+    evenCount = 0
+    oddCount = 0
     for i in range(1, n+1):
         s = str(i)
-        r_str = s[::-1]
-        if s == r_str:
+        rStr = s[::-1]
+        if s == rStr:
             if i % 2 == 1:
-                odd_count += 1
+                oddCount += 1
             else:
-                even_count += 1
-    return [even_count, odd_count]
-
+                evenCount += 1
+    return [evenCount, oddCount]
 # End here
 
 

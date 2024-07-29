@@ -10,7 +10,7 @@ import sys
 def testfunc(s):
     ret = ""
     current = ""
-    for i in range(len(s)+1):
+    for i in range(len(s) + 1):
         if i == len(s) or s[i] == ' ':
             tmp = current
             tmp = ''.join(sorted(tmp))
@@ -21,7 +21,6 @@ def testfunc(s):
         else:
             current += s[i]
     return ret
-
 # End here
 
 

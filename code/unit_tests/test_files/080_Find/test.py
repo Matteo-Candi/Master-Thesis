@@ -10,25 +10,19 @@ import sys
 def testfunc(s1, s2):
     len1 = len(s1)
     len2 = len(s2)
-    
     if len1 != len2:
         return False
-    
     d = [0] * len1
     d[0] = ord(s2[0]) - ord(s1[0])
-    
     for i in range(1, len1):
         if ord(s1[i]) > ord(s2[i]):
             return False
         else:
             d[i] = ord(s2[i]) - ord(s1[i])
-    
     for i in range(len1 - 1):
         if d[i] < d[i + 1]:
             return False
-    
     return True
-
 # End here
 
 

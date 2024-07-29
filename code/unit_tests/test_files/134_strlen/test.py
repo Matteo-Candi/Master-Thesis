@@ -9,7 +9,6 @@ import sys
 # Write the target function here
 def testfunc(s):
     return len(s)
-
 # End here
 
 

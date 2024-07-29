@@ -7,14 +7,11 @@ import math
 import sys
 
 # Write the target function here
-import math
-
 def testfunc(l, r):
-    count_of_ps = math.floor(math.sqrt(r)) - math.ceil(math.sqrt(l)) + 1
+    count_of_ps = int(math.floor(math.sqrt(r))) - int(math.ceil(math.sqrt(l))) + 1
     total = r - l + 1
     prob = count_of_ps / total
     return prob
-
 # End here
 
 

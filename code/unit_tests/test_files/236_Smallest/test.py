@@ -8,13 +8,17 @@ import sys
 
 # Write the target function here
 def testfunc(s):
-    a = [int(c) for c in s]
-    b = [x for x in a if x % 2 != 0]
+    a = [0] * len(s)
+    for i in range(len(s)):
+        a[i] = int(s[i])
+    b = []
+    for i in range(len(a)):
+        if a[i] % 2 != 0:
+            b.append(a[i])
     b.sort()
     if len(b) > 1:
         return b[0] * 10 + b[1]
     return -1
-
 # End here
 
 

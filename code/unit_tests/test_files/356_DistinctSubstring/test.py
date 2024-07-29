@@ -14,14 +14,13 @@ def testfunc(p, q, k, n):
         s = ""
         for j in range(i, n):
             pos = ord(p[j]) - ord('a')
-            sum += int(q[pos])
+            sum += ord(q[pos]) - ord('0')
             s += p[j]
             if sum <= k:
                 ss.add(s)
             else:
                 break
     return len(ss)
-
 # End here
 
 

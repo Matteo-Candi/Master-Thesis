@@ -14,7 +14,6 @@ def testfunc(arr, size):
             arr[i], arr[j] = arr[j], arr[i]
             j += 1
     return j
-
 # End here
 
 

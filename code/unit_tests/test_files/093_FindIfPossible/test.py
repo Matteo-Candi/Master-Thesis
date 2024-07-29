@@ -26,7 +26,6 @@ def testfunc(n, s, x):
             else:
                 return "No"
     return "No"
-
 # End here
 
 

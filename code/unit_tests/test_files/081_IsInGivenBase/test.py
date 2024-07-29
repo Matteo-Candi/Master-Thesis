@@ -19,7 +19,6 @@ def testfunc(s, bas):
             if not (('0' <= s[i] < chr(ord('0') + bas)) or ('A' <= s[i] < chr(ord('A') + bas - 10))):
                 return False
     return True
-
 # End here
 
 

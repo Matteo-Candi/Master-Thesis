@@ -8,7 +8,8 @@ import sys
 
 # Write the target function here
 def testfunc(s, n):
-    smaller, cost = 0, 0
+    smaller = 0
+    cost = 0
     f = [0] * 26
     for i in range(n):
         currEle = ord(s[i]) - ord('a')
@@ -22,7 +23,6 @@ def testfunc(s, n):
             cost += i - smaller + 1
         f[ord(s[i]) - ord('a')] += 1
     return cost
-
 # End here
 
 
