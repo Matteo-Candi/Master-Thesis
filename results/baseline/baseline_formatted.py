@@ -102,7 +102,7 @@ def fibfib(n):
     return fibfib(n - 1) + fibfib(n - 2) + fibfib(n - 3)
 
 # 13 
-def isMultiplyPrime(a):
+def is_multiply_prime(a):
     num = 0
     for i in range(2, a + 1):
         while a % i == 0 and a >= i:
@@ -158,10 +158,10 @@ def rightAngleTriangle(a, b, c):
     return a * a == b * b + c * c or b * b == a * a + c * c or c * c == a * a + b * b
 
 # 20 
-def fastPow(n, k):
+def fast_pow(n, k):
     if k == 0:
         return 1
-    temp = fastPow(n, k // 2)
+    temp = fast_pow(n, k // 2)
     if k % 2 == 0:
         return temp * temp
     else:
@@ -240,9 +240,9 @@ def multiply(x, y):
 
 # 28 
 def smallest(x, y, z):
-    if y / x == 0:
-        return y / z == 0 and y != 0 and z != 0 and y % z == 0
-    return x / z == 0 and x != 0 and z != 0 and x % z == 0
+    if (y / x == 0):
+        return y / z == 0 and y != z
+    return x / z == 0 and x != z
 
 # 29 
 def isPowerOfFour(n):
@@ -309,7 +309,7 @@ def binomialCoeff(n, k):
     return res
 
 # 33 
-def isPrefix(temp, s):
+def is_prefix(temp, s):
     if len(temp) < len(s):
         return False
     else:
@@ -322,7 +322,7 @@ def isPrefix(temp, s):
 def lexicographicallySmallestString(s, n):
     lastZe = -1
     ans = ""
-    for i in range(n-1, -1, -1):
+    for i in range(n - 1, -1, -1):
         if s[i] == '0':
             lastZe = i
             break
@@ -395,7 +395,7 @@ def isComposite(n):
     while i * i <= n:
         if n % i == 0 or n % (i + 2) == 0:
             return True
-        i += 6
+        i = i + 6
     return False
 
 # 39 
@@ -425,7 +425,8 @@ def minDeletion(s):
 
 # 40 
 def minSteps(s, n):
-    smaller, cost = 0, 0
+    smaller = 0
+    cost = 0
     f = [0] * 26
     for i in range(n):
         currEle = ord(s[i]) - ord('a')
@@ -521,7 +522,7 @@ def minimum_possible_product(k):
     return res
 
 # 48 
-def findInGrid(i, j):
+def find_in_grid(i, j):
     if i == j:
         return i * i - (i - 1)
     elif i > j:
@@ -574,7 +575,7 @@ def findMaxSoln(n, x, y):
     return ans if 0 <= ans <= n else -1
 
 # 52 
-def numberOfPairs(n):
+def number_of_pairs(n):
     count = 0
     i = 1
     j = n - 1
@@ -714,7 +715,7 @@ def pad(n):
     return pNext
 
 # 63 
-def oddLengthPalindrome(k):
+def odd_length_palindrome(k):
     palin = k
     k = k // 10
     while k > 0:
@@ -759,19 +760,17 @@ def totalHammingDistance(n):
 def checkBitonic(s):
     i = 1
     while i < len(s):
-        if s[i] > s[i-1]:
-            i += 1
+        if s[i] > s[i - 1]:
             continue
-        if s[i] <= s[i-1]:
+        elif s[i] <= s[i - 1]:
             break
     if i == len(s) - 1:
         return 1
     j = i + 1
     while j < len(s):
-        if s[j] < s[j-1]:
-            j += 1
+        if s[j] < s[j - 1]:
             continue
-        if s[j] >= s[j-1]:
+        elif s[j] >= s[j - 1]:
             break
     i = j
     if i != len(s):
@@ -856,7 +855,7 @@ def isDivBySix(s, n):
     return True
 
 # 74 
-def isRedundantBraces(s):
+def IsRedundantBraces(s):
     a = 0
     b = 0
     for i in range(len(s)):
@@ -935,23 +934,18 @@ def findSubstringCount(s):
 def find(s1, s2):
     len1 = len(s1)
     len2 = len(s2)
-    
     if len1 != len2:
         return False
-    
     d = [0] * len1
     d[0] = ord(s2[0]) - ord(s1[0])
-    
     for i in range(1, len1):
         if ord(s1[i]) > ord(s2[i]):
             return False
         else:
             d[i] = ord(s2[i]) - ord(s1[i])
-    
     for i in range(len1 - 1):
         if d[i] < d[i + 1]:
             return False
-    
     return True
 
 # 81 
@@ -998,17 +992,17 @@ def calculate(s):
                         for n in range(10):
                             if i + j + k == l + m + n:
                                 c = 0
-                                if i != int(s[0]):
+                                if i != int(s[0]) - 0:
                                     c += 1
-                                if j != int(s[1]):
+                                if j != int(s[1]) - 0:
                                     c += 1
-                                if k != int(s[2]):
+                                if k != int(s[2]) - 0:
                                     c += 1
-                                if l != int(s[3]):
+                                if l != int(s[3]) - 0:
                                     c += 1
-                                if m != int(s[4]):
+                                if m != int(s[4]) - 0:
                                     c += 1
-                                if n != int(s[5]):
+                                if n != int(s[5]) - 0:
                                     c += 1
                                 if c < ans:
                                     ans = c
@@ -1075,15 +1069,15 @@ def findAreaShaded(a):
 def factorial(a, b):
     res = 1
     for i in range(1, a + b + 1):
-        res *= i
+        res = res * i
     for i in range(1, a + 1):
-        res /= i
+        res = res / i
     for i in range(1, b + 1):
-        res /= i
+        res = res / i
     return res
 
 # 92 
-def factorTree(n):
+def factor_tree(n):
     height = 0
     while n > 1:
         flag = False
@@ -1138,8 +1132,8 @@ def maximumTripletXor(a, b, c):
 def itemType(n):
     count = 0
     day = 1
-    while count + day * (day + 1) / 2 < n:
-        count += day * (day + 1) / 2
+    while count + day * (day + 1) // 2 < n:
+        count += day * (day + 1) // 2
         day += 1
     for type in range(day, 0, -1):
         count += type
@@ -1227,10 +1221,7 @@ def isPerfect(n):
 
 # 103 
 def logAToBaseB(a, b):
-    if a > b - 1:
-        return 1 + logAToBaseB(a // b, b)
-    else:
-        return 0
+    return 1 + logAToBaseB(a // b, b) if a > b - 1 else 0
 
 # 104 
 def usingBinarySearch(start, end, n, s):
@@ -1274,9 +1265,9 @@ def topsyTurvy(s):
 def sumOfLastDig(n, m):
     sum = 0
     k = n // m
-    arr = [0]*10
+    arr = [0] * 10
     for i in range(10):
-        arr[i] = m * (i+1) % 10
+        arr[i] = m * (i + 1) % 10
         sum += arr[i]
     rem = k % 10
     ans = k // 10 * sum
@@ -1320,7 +1311,7 @@ def isMersenne(n):
     return True
 
 # 112 
-def findThirdDigit(n):
+def find_third_digit(n):
     if n < 3:
         return 0
     return 1 if (n & 1) != 0 else 6
@@ -1336,7 +1327,7 @@ def isOddLength(num):
     return False
 
 # 114 
-def checkIsPossible(l, r, k):
+def check_is_possible(l, r, k):
     count = 0
     for i in range(l, r+1):
         if i % k == 0:
@@ -1390,7 +1381,7 @@ def countDigit(n):
 # 121 
 def isDivisibleBy5(s):
     n = len(s)
-    return ord(s[n - 1]) - ord('0') == 0 or ord(s[n - 1]) - ord('0') == 5
+    return ord(s[n-1]) - ord('0') == 0 or ord(s[n-1]) - ord('0') == 5
 
 # 122 
 def inv(a, m):
@@ -1412,7 +1403,7 @@ def inv(a, m):
     return x1
 
 # 123 
-def onlyFirstAndLastAreSet(n):
+def only_first_and_last_are_set(n):
     if n == 1:
         return True
     if n == 2:
@@ -1445,7 +1436,7 @@ def findProfession(level, pos):
 # 126 
 def hasCloseElements(numbers, threshold):
     for i in range(len(numbers)):
-        for j in range(i+1, len(numbers)):
+        for j in range(i + 1, len(numbers)):
             distance = abs(numbers[i] - numbers[j])
             if distance < threshold:
                 return True
@@ -1487,13 +1478,13 @@ def intersperse(numbers, delimiter):
     return result
 
 # 131 
-def sum_product(numbers):
-    sum_value = 0
-    prod_value = 1
+def sumProduct(numbers):
+    sumValue = 0
+    prodValue = 1
     for n in numbers:
-        sum_value += n
-        prod_value *= n
-    return [sum_value, prod_value]
+        sumValue += n
+        prodValue *= n
+    return [sumValue, prodValue]
 
 # 132 
 def allPrefixes(s):
@@ -1551,14 +1542,16 @@ def get_positive(l):
     return result
 
 # 138 
-def sort_even(l):
-    evens = [l[i] for i in range(0, len(l), 2)]
+def sortEven(l):
+    evens = []
+    for i in range(0, len(l), 2):
+        evens.append(l[i])
     evens.sort()
     result = []
     for i in range(len(l)):
         if i % 2 == 0:
             result.append(evens[i // 2])
-        else:
+        if i % 2 == 1:
             result.append(l[i])
     return result
 
@@ -1577,7 +1570,7 @@ def carRaceCollision(n):
     return n ** 2
 
 # 141 
-def incrList(l):
+def incr_list(l):
     result = []
     for i in l:
         result.append(i + 1)
@@ -1592,7 +1585,7 @@ def pairs_sum_to_zero(l):
     return False
 
 # 143 
-def changeBase(x, b):
+def change_base(x, b):
     ret = ""
     while x > 0:
         ret = str(x % b) + ret
@@ -1652,7 +1645,7 @@ def derivative(xs):
     return result
 
 # 150 
-def vowelsCount(s):
+def vowels_count(s):
     vowels = "aeiouAEIOU"
     count = 0
     for ch in s:
@@ -1671,7 +1664,7 @@ def digitSum(s):
     return sum
 
 # 152 
-def fruit_distribution(s, n):
+def fruitDistribution(s, n):
     num1 = ""
     num2 = ""
     flag = False
@@ -1699,7 +1692,7 @@ def pluck(arr):
     return result
 
 # 154 
-def strange_sort_list(lst):
+def strangeSortList(lst):
     res = []
     lst.sort()
     l = 0
@@ -1714,14 +1707,14 @@ def strange_sort_list(lst):
     return res
 
 # 155 
-def triangleArea(a, b, c):
+def triangle_area(a, b, c):
     if (a + b <= c or a + c <= b or b + c <= a):
         return -1
     s = (a + b + c) / 2
     return math.sqrt(s * (s - a) * (s - b) * (s - c))
 
 # 156 
-def willItFly(q, w):
+def will_it_fly(q, w):
     sum = 0
     for i in range(len(q)):
         if not q[i] == q[len(q)-i-1]:
@@ -1730,7 +1723,7 @@ def willItFly(q, w):
     return sum <= w
 
 # 157 
-def isCube(a):
+def is_cube(a):
     a = abs(a)
     i = round(pow(a, 1.0 / 3))
     return pow(i, 3) == a
@@ -1745,7 +1738,7 @@ def hexKey(num):
     return total
 
 # 159 
-def decimalToBinary(dec):
+def decimal_to_binary(dec):
     ans = ""
     if dec != 0:
         while dec > 0:
@@ -1805,15 +1798,15 @@ def anyInt(a, b, c):
     return a + b == c or a + c == b or b + c == a
 
 # 166 
-def count_up_to(n):
+def countUpTo(n):
     primes = []
     for i in range(2, n):
-        is_prime = True
+        isPrime = True
         for j in range(2, i):
             if i % j == 0:
-                is_prime = False
+                isPrime = False
                 break
-        if is_prime:
+        if isPrime:
             primes.append(i)
     return primes
 
@@ -1843,7 +1836,7 @@ def wordStrings(s):
     return words
 
 # 170 
-def rounded_avg(n, m):
+def roundedAvg(n, m):
     if n > m:
         return "-1"
     num = (m + n) // 2
@@ -1873,7 +1866,7 @@ def countNums(arr):
     for n in arr:
         neg = -1 if n < 0 else 1
         n = abs(n)
-        digits = [int(i) for i in str(n)]
+        digits = [int(c) for c in str(n)]
         digits[0] = digits[0] * neg
         sum = 0
         for d in digits:
@@ -1888,7 +1881,7 @@ def moveOneBall(arr):
         return True
     num = 0
     for i in range(1, len(arr)):
-        if arr[i] < arr[i-1]:
+        if arr[i] < arr[i - 1]:
             num += 1
     if arr[-1] > arr[0]:
         num += 1
@@ -1952,21 +1945,21 @@ def maxFill(grid, capacity):
     return res
 
 # 178 
-def select_words(s, n):
+def selectWords(s, n):
     vowels = "aeiouAEIOU"
     current = ""
     result = []
-    consonant_num = 0
+    consonantNum = 0
     for i in range(len(s) + 1):
         if i == len(s) or s[i] == ' ':
-            if consonant_num == n:
+            if consonantNum == n:
                 result.append(current)
             current = ""
-            consonant_num = 0
+            consonantNum = 0
         else:
             current += s[i]
             if vowels.find(s[i]) == -1:
-                consonant_num += 1
+                consonantNum += 1
     return result
 
 # 179 
@@ -2020,8 +2013,8 @@ def intersection(interval1, interval2):
     return "YES"
 
 # 184 
-def prodSigns(arr):
-    if len(arr) == 0:
+def prod_signs(arr):
+    if not arr:
         return -32768
     sum = 0
     prods = 1
@@ -2069,9 +2062,9 @@ def digits(n):
     return prod
 
 # 187 
-def is_nested(s):
+def isNested(s):
     count = 0
-    max_count = 0
+    maxCount = 0
     for ch in s:
         if ch == '[':
             count += 1
@@ -2079,9 +2072,9 @@ def is_nested(s):
             count -= 1
         if count < 0:
             count = 0
-        if count > max_count:
-            max_count = count
-        if count <= max_count - 2:
+        if count > maxCount:
+            maxCount = count
+        if count <= maxCount - 2:
             return True
     return False
 
@@ -2131,20 +2124,20 @@ def fix_spaces(text):
     return res
 
 # 192 
-def filename_check(file_name):
-    digit_num = 0
-    dot_num = 0
-    if len(file_name) < 5 or not file_name[0].isalpha():
+def filenameCheck(fileName):
+    digitNum = 0
+    dotNum = 0
+    if len(fileName) < 5 or not fileName[0].isalpha():
         return "No"
-    suffix = file_name[-4:]
-    if suffix != ".txt" and suffix != ".exe" and suffix != ".dll":
+    suffix = fileName[-4:]
+    if not suffix == ".txt" and not suffix == ".exe" and not suffix == ".dll":
         return "No"
-    for c in file_name:
+    for c in fileName:
         if c.isdigit():
-            digit_num += 1
+            digitNum += 1
         if c == '.':
-            dot_num += 1
-    if digit_num > 3 or dot_num != 1:
+            dotNum += 1
+    if digitNum > 3 or dotNum != 1:
         return "No"
     return "Yes"
 
@@ -2349,7 +2342,7 @@ def findDivisors(n):
     v = []
     for i in range(1, int(n**0.5) + 1):
         if n % i == 0:
-            if n // i == i:
+            if n / i == i:
                 v.append(i)
             else:
                 v.append(i)
@@ -2371,7 +2364,7 @@ def eggDrop(n, k):
     return min + 1
 
 # 209 
-def isPowerOfTwo(n):
+def is_power_of_two(n):
     if n == 0:
         return False
     return math.ceil(math.log(n) / math.log(2)) == math.floor(math.log(n) / math.log(2))
@@ -2476,15 +2469,12 @@ def findMinLength(arr):
     return index
 
 # 217 
-import math
-
 def minDigits(n, k):
-    digitsNum = math.floor(math.log(n, 10)) + 1
+    digitsNum = int(math.floor(math.log(n, 10)) + 1)
     tempSum = 0
     temp = digitsNum
     result = 0
-    x = 0
-    v = 0
+    x, v = 0, 0
     sum = 0
     num2 = n
     while num2 != 0:
@@ -2497,7 +2487,8 @@ def minDigits(n, k):
             v = n // 10**(temp - 1)
             tempSum += v % 10
             if tempSum >= k:
-                v = v // 10 + 1
+                v //= 10
+                v += 1
                 result = v * 10**temp
                 break
             temp -= 1
@@ -2570,13 +2561,11 @@ def isIncreasing(arr):
 # 224 
 def minAdjSwaps(mat):
     n = len(mat)
-    cntZero = [0]*n
+    cntZero = [0] * n
     for i in range(n):
-        for j in range(n-1, -1, -1):
+        for j in range(n - 1, -1, -1):
             if mat[i][j] == 0:
                 cntZero[i] += 1
-            else:
-                break
     cntSwaps = 0
     for i in range(n):
         if cntZero[i] < (n - i - 1):
@@ -2597,8 +2586,8 @@ def solve(values, salary, mod):
     amt = 0
     values.sort()
     salary.sort()
-    while salary:
-        while values and values[-1] >= salary[-1]:
+    while len(salary) > 0:
+        while len(values) > 0 and values[-1] >= salary[-1]:
             amt += 1
             values.pop()
         if amt == 0:
@@ -2612,7 +2601,9 @@ def solve(values, salary, mod):
 def organize_in_order(vec, op, n):
     result = [0] * n
     vec.sort()
-    i, j, k = 0, n - 1, 0
+    i = 0
+    j = n - 1
+    k = 0
     while i <= j and k <= n - 2:
         if op[k] == '<':
             result[k] = vec[i]
@@ -2643,7 +2634,7 @@ def count_points(n, m, a, b, x, y):
     return count
 
 # 228 
-def areSame(a, b):
+def are_same(a, b):
     a.sort()
     b.sort()
     return a == b
@@ -2707,14 +2698,19 @@ def factors(n):
     return v
 
 # 235 
-def smallestNum(n):
-    x = 10 ** ((n - 1) / 2.0)
+def smallest_num(n):
+    x = pow(10, (n - 1) / 2.0)
     return int(x)
 
 # 236 
 def smallest(s):
-    a = [int(c) for c in s]
-    b = [x for x in a if x % 2 != 0]
+    a = [0] * len(s)
+    for i in range(len(s)):
+        a[i] = int(s[i])
+    b = []
+    for i in range(len(a)):
+        if a[i] % 2 != 0:
+            b.append(a[i])
     b.sort()
     if len(b) > 1:
         return b[0] * 10 + b[1]
@@ -2759,11 +2755,11 @@ def nGon(n):
 
 # 240 
 def findMaxK(n):
-    p = int(math.log(n) / math.log(2))
+    p = int(math.log(n, 2))
     return int(math.pow(2, p))
 
 # 241 
-def nthFibo(n):
+def nth_fibo(n):
     a = (math.pow(5, 0.5) + 1) / 2
     b = (-1 * math.pow(5, 0.5) + 1) / 2
     r = math.pow(5, 0.5)
@@ -2771,10 +2767,8 @@ def nthFibo(n):
     return int(ans)
 
 # 242 
-import math
-
 def find_prob(l, r):
-    count_of_ps = math.floor(math.sqrt(r)) - math.ceil(math.sqrt(l)) + 1
+    count_of_ps = int(math.floor(math.sqrt(r))) - int(math.ceil(math.sqrt(l))) + 1
     total = r - l + 1
     prob = count_of_ps / total
     return prob
@@ -2901,7 +2895,7 @@ def parseNestedParens(parenString):
             level += 1
             if level > maxLevel:
                 maxLevel = level
-        if chr == ')':
+        elif chr == ')':
             level -= 1
             if level == 0:
                 allLevels.append(maxLevel)
@@ -2909,7 +2903,7 @@ def parseNestedParens(parenString):
     return allLevels
 
 # 253 
-def filterBySubstring(strings, substring):
+def filter_by_substring(strings, substring):
     result = []
     for s in strings:
         if substring in s:
@@ -2928,7 +2922,7 @@ def rolling_max(numbers):
 
 # 255 
 def makePalindrome(s):
-    if not s:
+    if s == "":
         return ""
     for i in range(len(s)):
         rStr = s[i:]
@@ -2936,7 +2930,7 @@ def makePalindrome(s):
             nStr = s[:i]
             n2Str = nStr[::-1]
             return s + n2Str
-    return s[:-1][::-1] + s[::-1]
+    return s[:len(s)-1][::-1] + s[::-1]
 
 # 256 
 def stringXor(a, b):
@@ -2982,22 +2976,22 @@ def how_many_times(s, sub):
     return times
 
 # 261 
-def sortNumbers(numbers):
-    toNum = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9}
-    fromNum = {0: "zero", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
+def sort_numbers(numbers):
+    to_num = {"zero": 0, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9}
+    from_num = {0: "zero", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight", 9: "nine"}
     ints = []
     current = ""
     for i in range(len(numbers) + 1):
         if i == len(numbers) or numbers[i] == ' ':
-            if current in toNum:
-                ints.append(toNum[current])
+            if current in to_num:
+                ints.append(to_num[current])
                 current = ""
         else:
             current += numbers[i]
     ints.sort()
     result = ""
     for i in range(len(ints)):
-        result += fromNum[ints[i]]
+        result += from_num[ints[i]]
         if i != len(ints) - 1:
             result += " "
     return result
@@ -3016,12 +3010,12 @@ def findClosestElements(numbers):
     return closestPair
 
 # 263 
-def rescaleToUnit(numbers):
-    minNum = min(numbers)
-    maxNum = max(numbers)
+def rescale_to_unit(numbers):
+    min_num = min(numbers)
+    max_num = max(numbers)
     result = []
     for n in numbers:
-        result.append((n - minNum) / (maxNum - minNum))
+        result.append((n - min_num) / (max_num - min_num))
     return result
 
 # 264 
@@ -3067,7 +3061,7 @@ def find_zero(xs):
     value = 0
     for i in range(len(xs)):
         value += xs[i] * (ans ** i)
-
+    
     while abs(value) > 1e-6:
         driv = 0
         for i in range(1, len(xs)):
@@ -3076,11 +3070,11 @@ def find_zero(xs):
         value = 0
         for i in range(len(xs)):
             value += xs[i] * (ans ** i)
-
+    
     return ans
 
 # 269 
-def sortThird(l):
+def sort_third(l):
     thirds = []
     for i in range(0, len(l), 3):
         thirds.append(l[i])
@@ -3104,7 +3098,7 @@ def max_element(l):
     return max(l)
 
 # 272 
-def triples_sum_to_zero(l):
+def triplesSumToZero(l):
     for i in range(len(l)):
         for j in range(i + 1, len(l)):
             for k in range(j + 1, len(l)):
@@ -3120,7 +3114,7 @@ def fib4(n):
     return results[n]
 
 # 274 
-def isPalindrome(text):
+def is_palindrome(text):
     pr = text[::-1]
     return pr == text
 
@@ -3146,7 +3140,8 @@ def common(l1, l2):
         for e2 in l2:
             if e1 == e2:
                 us.add(e1)
-    ret = sorted(list(us))
+    ret = list(us)
+    ret.sort()
     return ret
 
 # 278 
@@ -3384,18 +3379,18 @@ def f(n):
     return result
 
 # 297 
-def even_odd_palindrome(n):
-    even_count = 0
-    odd_count = 0
+def evenOddPalindrome(n):
+    evenCount = 0
+    oddCount = 0
     for i in range(1, n+1):
         s = str(i)
-        r_str = s[::-1]
-        if s == r_str:
+        rStr = s[::-1]
+        if s == rStr:
             if i % 2 == 1:
-                odd_count += 1
+                oddCount += 1
             else:
-                even_count += 1
-    return [even_count, odd_count]
+                evenCount += 1
+    return [evenCount, oddCount]
 
 # 298 
 def histogram(test):
@@ -3403,7 +3398,10 @@ def histogram(test):
     max = 0
     for i in range(len(test)):
         if test[i] != ' ':
-            count[test[i]] = count.get(test[i], 0) + 1
+            if test[i] in count:
+                count[test[i]] += 1
+            else:
+                count[test[i]] = 1
             if count[test[i]] > max:
                 max = count[test[i]]
     result = {}
@@ -3444,7 +3442,7 @@ def sortArray(arr):
 def getClosestVowel(word):
     vowels = "AEIOUaeiou"
     for i in range(len(word) - 2, 0, -1):
-        if (vowels.index(word[i]) != -1) and (vowels.index(word[i + 1]) == -1) and (vowels.index(word[i - 1]) == -1):
+        if (vowels.index(word[i]) != -1 and vowels.index(word[i + 1]) == -1 and vowels.index(word[i - 1]) == -1):
             return word[i]
     return ""
 
@@ -3501,7 +3499,7 @@ def split_words(txt):
     if ' ' in txt:
         for i in range(len(txt) + 1):
             if i == len(txt) or txt[i] == ' ':
-                if current != "":
+                if len(current) > 0:
                     result.append(current)
                 current = ""
             else:
@@ -3510,7 +3508,7 @@ def split_words(txt):
     if ',' in txt:
         for i in range(len(txt) + 1):
             if i == len(txt) or txt[i] == ',':
-                if current != "":
+                if len(current) > 0:
                     result.append(current)
                 current = ""
             else:
@@ -3658,8 +3656,8 @@ def solve_query(start, end, arr):
     for i in range(start, end+1):
         mp[arr[i]] = mp.get(arr[i], 0) + 1
     count = 0
-    for entry in mp.items():
-        if entry[0] == entry[1]:
+    for entry in mp:
+        if entry == mp[entry]:
             count += 1
     return count
 
@@ -3702,22 +3700,19 @@ def least_frequent(arr, n):
     return res
 
 # 321 
-def findPermutations(arr):
+def find_permutations(arr):
     cnt = 0
-    maxInd = -1
-    minInd = 10000000
+    max_ind = -1
+    min_ind = 10000000
     n = len(arr)
-    indexOf = {}
-
+    index_of = {}
     for i in range(n):
-        indexOf[arr[i]] = i + 1
-
+        index_of[arr[i]] = i + 1
     for i in range(1, n + 1):
-        maxInd = max(maxInd, indexOf.get(i, 0))
-        minInd = min(minInd, indexOf.get(i, 0))
-        if maxInd - minInd + 1 == i:
+        max_ind = max(max_ind, index_of.get(i, 0))
+        min_ind = min(min_ind, index_of.get(i, 0))
+        if max_ind - min_ind + 1 == i:
             cnt += 1
-
     return cnt
 
 # 322 
@@ -3868,15 +3863,15 @@ def findKthChar(n, k):
 
 # 330 
 def findKthLargest(s, k):
-    tmp = sorted([char for char in s], reverse=True)
+    tmp = list(s)
+    tmp.sort(reverse=True)
     return tmp[k - 1]
 
 # 331 
 def subArraylen(arr, n, k):
-    mp = {}
-    mp[arr[0]] = 0
+    mp = {arr[0]: 0}
     for i in range(1, n):
-        arr[i] += arr[i-1]
+        arr[i] += arr[i - 1]
         mp[arr[i]] = i
     len = float('inf')
     for i in range(n):
@@ -3896,14 +3891,14 @@ def subArraylen(arr, n, k):
 def findMaxLen(a, k):
     n = len(a)
     a.sort()
-    vis = [False]*n
+    vis = [False] * n
     mp = {}
     for i in range(n):
         mp[a[i]] = i
     c = 0
     for i in range(n):
         if not vis[i]:
-            check = a[i]*k
+            check = a[i] * k
             if check in mp:
                 c += 1
                 vis[mp[check]] = True
@@ -4009,26 +4004,21 @@ def maxDistinctChar(s, n, k):
             freq[s[i]] += 1
         else:
             freq[s[i]] = 1
-    
     v = list(freq.values())
     v.sort()
-    
     for i in range(len(v)):
         mn = min(v[i] - 1, k)
         v[i] -= mn
         k -= mn
-    
     if k > 0:
         for i in range(len(v)):
             mn = min(v[i], k)
             v[i] -= mn
             k -= mn
-    
     res = 0
     for i in range(len(v)):
         if v[i] == 1:
             res += 1
-    
     return res
 
 # 339 
@@ -4092,11 +4082,11 @@ def findMinOperations(arr, N, K):
     return operations
 
 # 343 
-def sub_string(s, n):
+def subString(s, n):
     v = []
     for i in range(n):
         for len in range(1, n - i + 1):
-            find = s[i:i + len]
+            find = s[i:i+len]
             v.append(find)
     return v
 
@@ -4216,7 +4206,7 @@ def findMaximumScore(a, n):
     dp[1] = freq.get(1, 0)
     
     for i in range(2, len(dp)):
-        dp[i] = max(dp[i-1], dp[i-2] + freq.get(i, 0) * i)
+        dp[i] = max(dp[i - 1], dp[i - 2] + freq.get(i, 0) * i)
     
     return dp[-1]
 
@@ -4295,14 +4285,14 @@ def countCharacters(strings, chars):
     return res
 
 # 356 
-def distinct_substring(p, q, k, n):
+def distinctSubstring(p, q, k, n):
     ss = set()
     for i in range(n):
         sum = 0
         s = ""
         for j in range(i, n):
             pos = ord(p[j]) - ord('a')
-            sum += int(q[pos])
+            sum += ord(q[pos]) - ord('0')
             s += p[j]
             if sum <= k:
                 ss.add(s)
@@ -4354,15 +4344,18 @@ def canConstruct(s, k):
     if len(s) == k:
         return True
     for i in range(len(s)):
-        m[s[i]] = m.get(s[i], 0) + 1
+        if s[i] in m:
+            m[s[i]] += 1
+        else:
+            m[s[i]] = 1
     if k > len(s):
         return False
     else:
         for h in m:
             if m[h] % 2 != 0:
                 p += 1
-    if k < p:
-        return False
+        if k < p:
+            return False
     return True
 
 # 360 
@@ -4612,7 +4605,8 @@ def fractionToDecimal(numr, denr):
 def isFancy(num):
     fp = {'0': '0', '1': '1', '6': '9', '8': '8', '9': '6'}
     n = len(num)
-    l, r = 0, n - 1
+    l = 0
+    r = n - 1
     while l <= r:
         if num[l] not in fp or fp[num[l]] != num[r]:
             return False
@@ -4623,7 +4617,7 @@ def isFancy(num):
 # 376 
 def distinct_odd_ratio(numbers):
     distinct_count = len(set(numbers))
-    distinct_odd_count = len(set(filter(lambda x: x % 2 == 1, numbers)))
+    distinct_odd_count = len([num for num in set(numbers) if num % 2 == 1])
     return distinct_odd_count / distinct_count
 
 # 377 
@@ -4661,7 +4655,10 @@ def averageDistinctLength(words):
 
 # 381 
 def withdraw_balance(start, withdrawals):
-    end = reduce(lambda balance, nextWithdrawal: nextWithdrawal <= balance and balance - nextWithdrawal or balance, withdrawals, start)
+    end = start
+    for withdrawal in withdrawals:
+        if withdrawal <= end:
+            end -= withdrawal
     return end
 
 # 382 
@@ -4678,9 +4675,9 @@ def bigNumberAtIndex(numbers, index):
         return None
 
 # 384 
-def contains_square_in_range(range_start, range_length):
-    contains_square = any(n**0.5 == int(n**0.5) for n in range(range_start, range_start+range_length))
-    return contains_square
+def containsSquareInRange(rangeStart, rangeLength):
+    containsSquare = any(n**0.5 == int(n**0.5) for n in range(rangeStart, rangeStart+rangeLength))
+    return containsSquare
 
 # 385 
 from collections import defaultdict
@@ -4749,7 +4746,7 @@ def select_pairs(numbersA, numbersB):
 
 # 396 
 def string_cross_join(end_words, begin_words):
-    cross_strings = [e + " " + b for b in begin_words for e in end_words if b[0] == e[-1]]
+    cross_strings = [e + " " + b for e in end_words for b in begin_words if e[0] == e[-1]]
     return cross_strings
 
 # 397 
@@ -4767,9 +4764,9 @@ def ConcatLargeNumbers(numbersA, numbersB, flag):
     return allNumbers
 
 # 399 
-def dot_product(vector_a, vector_b):
-    dot_product = sum(vector_a[i] * vector_b[i] for i in range(len(vector_a)))
-    return dot_product
+def DotProduct(vectorA, vectorB):
+    dotProduct = sum(vectorA[i] * vectorB[i] for i in range(len(vectorA)))
+    return dotProduct
 
 # 400 
 def SetDifference(setA, setB):
