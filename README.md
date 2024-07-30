@@ -1,4 +1,4 @@
-# Matteo Master Thesis
+# Master Thesis
 
 ## Content
 
