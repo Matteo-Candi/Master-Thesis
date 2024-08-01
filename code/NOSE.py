@@ -10,20 +10,17 @@ class IdentitySelfAttention(nn.Module):
         super().__init__()
         self.config = config
 
-    def forward(self, hidden_states, attention_mask=None, head_mask=None, output_attentions=False, position_ids=None, past_key_value=None, use_cache=False, query_length=None, cache_position=None):
+    # def forward(self, hidden_states, attention_mask=None, head_mask=None, output_attentions=False, position_ids=None, past_key_value=None, use_cache=False, query_length=None, cache_position=None):
+    def forward(self, hidden_states, **kwargs):
         return hidden_states, None, None
 
-# Function to replace a specific layer's self-attention with IdentitySelfAttention
-def set_attention_to_identity(model, layer_index):
-    layer = model.model.layers[layer_index]
-    layer.self_attn = IdentitySelfAttention(layer.self_attn.config)
-    return model
-
 # Function to reduce the model by setting specified layers' attention to identity
-def model_reduction(pretrained_model, S):
-    model = pretrained_model
-    for idx in S:
-        model = set_attention_to_identity(model, idx)
+def model_reduction(model, S):
+    if len(S) != 0:
+        layers = model.model.layers
+        for idx in S:
+            layers[idx].self_attn = IdentitySelfAttention(layers[idx].self_attn.config)
+
     return model
 
 # Function to get logits from the model
