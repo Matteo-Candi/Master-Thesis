@@ -65,11 +65,13 @@ def single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename):
 
     # Calculate avarege base entropy
     avg_base_entropy = 0
+    max_length_list = []
     for j, input_ids in enumerate(input_ids_list):
         print(f'            Running sample {j+1}/{n_samples}...')
         base_logits, max_length = get_logits(input_ids, model, tokenizer, base=True)
         base_entropy = get_entropy(base_logits)
         avg_base_entropy += base_entropy / n_samples
+        max_length_list.append(max_length)
 
     entropy_dict = {}
     num_attention_layers = pretrained_model.config.num_attention_heads
@@ -83,7 +85,7 @@ def single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename):
             avg_entropy = 0
             for j, input_ids in enumerate(input_ids_list):
                 print(f'            Running sample {j+1}/{n_samples}...')
-                logits = get_logits(input_ids, model, tokenizer, max_length=max_length)
+                logits = get_logits(input_ids, model, tokenizer, max_length=max_length_list[j])
                 entropy = get_entropy(logits)
                 avg_entropy += entropy / n_samples
 
