@@ -61,7 +61,7 @@ def get_entropy(logits):
 def single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename):
     model = model_reduction(pretrained_model, S)
     n_samples = len(input_ids_list)
-    print('      Running baseline...')
+    print('\n      Running baseline...')
 
     # Calculate avarege base entropy
     avg_base_entropy = 0
@@ -77,7 +77,7 @@ def single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename):
     num_attention_layers = pretrained_model.config.num_attention_heads
 
     for i in range(num_attention_layers):
-        print(f'      Running layer {i+1}/32...')
+        print(f'\n      Running layer {i+1}/32...')
         if i not in S:
             model = model_reduction(model, [i])
 
@@ -118,7 +118,7 @@ def NOSE(input_ids_list, pretrained_model, tokenizer, max_steps=32):
 
     S = []
     for _ in range(max_steps):
-        print(f'\nRunning step {len(S)}...')
+        print(f'\n\nRunning step {len(S)}...')
         step_layer = single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename)
         S.append(step_layer)
 
@@ -135,12 +135,15 @@ if __name__ == '__main__':
 
     number_input_sample = 10
 
-    # Input codes
+    # Get the 10 shortest samples
     with open('../benchmark/Java.test', 'r') as file:
-        samples = [file.readline().strip() for _ in range(number_input_sample)]
+        all_samples = [line.strip() for line in file]
+
+    samples = sorted(all_samples, key=len)[:number_input_sample]
 
     input_ids_list = []
-    for sample in samples:
+    for i, sample in enumerate(samples):
+        print(f'Sample {i+1}: {sample}')
         code = f'Convert the following code from Java to Python: \n\n{sample}'
         input = [{'role': 'user', 'content': code}]
         input_ids = tokenizer.apply_chat_template(input, return_tensors="pt").to('cuda')
