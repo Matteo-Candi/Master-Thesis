@@ -11,11 +11,11 @@ class IdentitySelfAttention(nn.Module):
         self.config = config
 
     # def forward(self, hidden_states, attention_mask=None, head_mask=None, output_attentions=False, position_ids=None, past_key_value=None, use_cache=False, query_length=None, cache_position=None):
-    def forward(self, x, **kwargs):
+    def forward(self, hidden_states, **kwargs):
 
-        x = 2 * x
+        hidden_states = 2 * hidden_states
 
-        return x, None, None
+        return hidden_states, None, None
 
 # Function to reduce the model by setting specified layers' attention to identity
 def model_reduction(model, S):
@@ -27,7 +27,7 @@ def model_reduction(model, S):
     return model
 
 # Function to get logits from the model
-def get_logits(input_ids, model, tokenizer, base=False, max_length=1000):
+def get_logits(input_ids, model, tokenizer, base=False, max_length=500):
     temperature = 0.1
     eos_token_id = tokenizer.eos_token_id
     all_logits = []
