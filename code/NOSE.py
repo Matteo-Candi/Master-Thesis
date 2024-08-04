@@ -27,7 +27,7 @@ def model_reduction(model, S):
     return model
 
 # Function to get logits from the model
-def get_logits(input_ids, model, tokenizer, base=False, max_length=500):
+def get_logits(input_ids, model, tokenizer, base=False, max_length=300):
     temperature = 0.1
     eos_token_id = tokenizer.eos_token_id
     all_logits = []
@@ -72,6 +72,7 @@ def single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename):
         base_entropy = get_entropy(base_logits)
         avg_base_entropy += base_entropy / n_samples
         max_length_list.append(max_length)
+    print(f'            {max_length_list}')
 
     entropy_dict = {}
     num_attention_layers = pretrained_model.config.num_attention_heads
@@ -116,7 +117,7 @@ def NOSE(input_ids_list, pretrained_model, tokenizer, max_steps=32):
     if not os.path.exists(filename):
         json.dump({}, open(filename, 'w'))
 
-    S = []
+    S = [0, 2]
     for _ in range(max_steps):
         print(f'\n\nRunning step {len(S)}...')
         step_layer = single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename)
