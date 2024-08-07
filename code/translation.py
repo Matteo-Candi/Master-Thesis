@@ -47,7 +47,7 @@ def generate_translations(input_data_path, file_name):
     device = 'cuda'
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
-    model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device)
+    model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device, torch_dtype=torch.float16)
     model.eval()
 
     save_computation_metrics(file_name, model, device)

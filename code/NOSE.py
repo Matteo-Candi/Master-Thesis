@@ -132,8 +132,9 @@ if __name__ == '__main__':
 
     # Load pre-trained model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained("m-a-p/OpenCodeInterpreter-DS-6.7B")
-    pretrained_model = AutoModelForCausalLM.from_pretrained("m-a-p/OpenCodeInterpreter-DS-6.7B").to('cuda')
-
+    pretrained_model = AutoModelForCausalLM.from_pretrained("m-a-p/OpenCodeInterpreter-DS-6.7B", torch_dtype=torch.float16).to('cuda')
+    pretrained_model.eval()
+    
     number_input_sample = 10
 
     # Get the 10 shortest samples

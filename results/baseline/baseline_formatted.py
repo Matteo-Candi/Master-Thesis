@@ -715,7 +715,7 @@ def pad(n):
     return pNext
 
 # 63 
-def odd_length_palindrome(k):
+def oddLengthPalindrome(k):
     palin = k
     k = k // 10
     while k > 0:
@@ -1784,7 +1784,7 @@ def getRow(lst, x):
     return coords
 
 # 164 
-def nextSmallest(lst):
+def next_smallest(lst):
     lst.sort()
     for i in range(1, len(lst)):
         if lst[i] != lst[i - 1]:
@@ -2182,17 +2182,14 @@ def simplify(x, n):
     b = 0
     c = 0
     d = 0
-
     for i in range(len(x)):
         if x[i] == '/':
             a = int(x[:i])
             b = int(x[i+1:])
-
     for i in range(len(n)):
         if n[i] == '/':
             c = int(n[:i])
             d = int(n[i+1:])
-
     return (a * c) % (b * d) == 0
 
 # 196 
@@ -2474,7 +2471,8 @@ def minDigits(n, k):
     tempSum = 0
     temp = digitsNum
     result = 0
-    x, v = 0, 0
+    x = 0
+    v = 0
     sum = 0
     num2 = n
     while num2 != 0:
@@ -3027,7 +3025,7 @@ def filterIntegers(values):
     return result
 
 # 265 
-def remove_duplicates(numbers):
+def removeDuplicates(numbers):
     c = {}
     for i in numbers:
         c[i] = c.get(i, 0) + 1
@@ -3863,8 +3861,7 @@ def findKthChar(n, k):
 
 # 330 
 def findKthLargest(s, k):
-    tmp = list(s)
-    tmp.sort(reverse=True)
+    tmp = sorted([c for c in s], reverse=True)
     return tmp[k - 1]
 
 # 331 
@@ -4155,7 +4152,7 @@ def getMinCost(arr, n):
 def possibility(m, length, s):
     countOdd = 0
     for i in range(length):
-        if (m.get(int(s[i])) & 1) != 0:
+        if (m.get(int(s[i]) - 48) & 1) != 0:
             countOdd += 1
         if countOdd > 1:
             return False
@@ -4764,9 +4761,9 @@ def ConcatLargeNumbers(numbersA, numbersB, flag):
     return allNumbers
 
 # 399 
-def DotProduct(vectorA, vectorB):
-    dotProduct = sum(vectorA[i] * vectorB[i] for i in range(len(vectorA)))
-    return dotProduct
+def dot_product(vector_a, vector_b):
+    dot_product = sum(vector_a[i] * vector_b[i] for i in range(len(vector_a)))
+    return dot_product
 
 # 400 
 def SetDifference(setA, setB):
