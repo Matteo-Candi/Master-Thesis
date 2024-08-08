@@ -20,19 +20,19 @@ if __name__ == "__main__":
         exit()
 
     # Define the path to the Java test data
-    java_data_path = '../benchmark/Java.test'
+    java_data_path: str = '../benchmark/Java.test'
 
     # Generate translations from Java to Python
     generate_translations(java_data_path, args.filename)
 
     # Extract predictions from the generated translations
-    predictions = extract_predictions(args.filename)
+    predictions: list[str] = extract_predictions(args.filename)
 
     # Extract references from the Python test data
-    references = extract_references("../benchmark/Python.test")
+    references: list[str] = extract_references("../benchmark/Python.test")
 
     # Define the path to the test values JSON file
-    test_values_file = 'unit_tests/test_values.json'
+    test_values_file: str = 'unit_tests/test_values.json'
 
     # Generate unit tests based on the predictions
     unit_tests_generator(test_values_file, predictions)
