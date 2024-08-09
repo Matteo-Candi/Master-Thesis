@@ -1,59 +1,65 @@
+import argparse
+
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import DatasetDict
 import torch
 
-from utils import tokenize_and_save_dataset, create_dataloader, train_custom_model
-
-
-device: str = 'cuda'
-model_name: str = "m-a-p/OpenCodeInterpreter-DS-6.7B"
-dataset_name: str = "m-a-p/Code-Feedback"
-tokenized_dataset_path: str = "tokenized_dataset"
-
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16)
-
-
-# Uncomment the following line to download, tokenize and save the dataset
-tokenize_and_save_dataset(dataset_name, tokenized_dataset_path, tokenizer)
-
-batch_size = 1
-
-# Load the tokenized dataset and convert the data to tensors
-tokenized_dataset = DatasetDict.load_from_disk(tokenized_dataset_path)
-
-# train_dataloader = create_dataloader(tokenized_dataset['train'].select(range(100)), tokenizer, batch_size)
-train_dataloader = create_dataloader(tokenized_dataset['train'], tokenizer, batch_size)
-eval_dataloader = create_dataloader(tokenized_dataset['validation'], tokenizer, batch_size)
+from utils import tokenize_and_save_dataset, create_dataloader, train_custom_model, validation_step, get_idxs_list_NOSE
 
 
 
+if __name__ == "__main__":
 
-def freeze_model_parameters(model):
-    for param in model.parameters():
-        param.requires_grad = False
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--nose_step", required=True)
+    args = parser.parse_args()
 
-freeze_model_parameters(model) 
+    device: str = 'cuda'
+    model_name: str = "m-a-p/OpenCodeInterpreter-DS-6.7B"
+    dataset_name: str = "m-a-p/Code-Feedback"
+    tokenized_dataset_path: str = "tokenized_dataset"
 
-your_layer_index = 0  
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16)
 
-layer_to_train = model.model.layers[your_layer_index]  
-for param in layer_to_train.parameters():
-    param.requires_grad = True
+    batch_size = 1
+
+    seed = 23
+    torch.cuda.manual_seed_all(seed)
+
+    # Uncomment the following line to download, tokenize and save the dataset
+    # tokenize_and_save_dataset(dataset_name, tokenized_dataset_path, tokenizer, seed=23)
+
+    # Load the tokenized dataset and convert the data to tensors
+    tokenized_dataset = DatasetDict.load_from_disk(tokenized_dataset_path)
+
+    # train_dataloader = create_dataloader(tokenized_dataset['train'].select(range(100)), tokenizer, batch_size)
+    # val_dataloader = create_dataloader(tokenized_dataset['validation'].select(range(10)), tokenizer, batch_size)
+    train_dataloader = create_dataloader(tokenized_dataset['train'], tokenizer, batch_size)
+    val_dataloader = create_dataloader(tokenized_dataset['validation'], tokenizer, batch_size)
 
 
 
 
-train_custom_model(model,
-                    num_epochs=3,
-                    learning_rate=5e-5,
-                    gradient_accumulation_steps=4,
-                    train_dataloader=train_dataloader,
-                    eval_dataloader=eval_dataloader,
-                    device=device)
+    S = get_idxs_list_NOSE(args.nose_step)
+
+    # validation_step(model, val_dataloader, device)
+   
+
+    train_custom_model(model,
+                        S,
+                        num_epochs=10,
+                        learning_rate=5e-5,
+                        gradient_accumulation_steps=4,
+                        train_dataloader=train_dataloader,
+                        val_dataloader=val_dataloader,
+                        device=device,
+                        nose_step=args.nose_step
+                        )
+
 
 
 
 
 # BASELINE Loss
-# {'eval_loss': 0.7510344982147217, 'eval_runtime': 2602.2609, 'eval_samples_per_second': 2.551, 'eval_steps_per_second': 0.319}
+# {'val_loss': 0.8106189448610845}

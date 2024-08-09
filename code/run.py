@@ -11,7 +11,7 @@ if __name__ == "__main__":
     
     # Set up argument parsing
     parser = argparse.ArgumentParser()
-    parser.add_argument("--filename", required=False)
+    parser.add_argument("--filename", required=True)
     args = parser.parse_args()
 
     # Check if a filename is provided

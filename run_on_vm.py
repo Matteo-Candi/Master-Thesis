@@ -13,7 +13,8 @@ def run_code():
         'cd thesis',
         'source thesis_env/bin/activate',
         'cd code',
-        'python test.py' 
+        'cd training',
+        'nohup python run.py --nose_step 0 > output.log 2>&1 &' 
     ]
 
     # Combine commands into a single command string
@@ -59,3 +60,14 @@ if __name__ == '__main__':
     results = run_code()
     print("\nFinal Results:")
     print(results)
+
+
+
+# CHECK THE STATUS OF THE TRAINING
+# cd thesis/code/training 
+# tail -f output.log
+
+# KILL THE TRAINING
+# ps aux | grep run.py 
+# kill (PID)
+
