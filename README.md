@@ -8,3 +8,6 @@
   - `NOSE.py`: file to run NOSE algorithm
 - `predictions`: folder contatining the translations
 - `results`: folder with the results of each evaluation step
+
+
+## 

@@ -63,6 +63,9 @@ if __name__ == '__main__':
 
 
 
+# RUN THE CODE
+# nohup python run.py --nose_step 0 > output.log 2>&1 &
+
 # CHECK THE STATUS OF THE TRAINING
 # cd thesis/code/training 
 # tail -f output.log

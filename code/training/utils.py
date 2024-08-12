@@ -1,4 +1,6 @@
 from tqdm import tqdm
+import numpy as np
+import logging
 import json
 import time
 import os
@@ -28,7 +30,7 @@ class TokenizedDataset(torch.utils.data.Dataset):
 
 def tokenize_function(examples, tokenizer) -> None:
     chat_template = tokenizer.apply_chat_template(examples["messages"], tokenize=False, add_generation_prompt=False)
-    return tokenizer(chat_template, padding=True)
+    return tokenizer(chat_template, max_length=8000, truncation=True)
 
 
 def tokenize_and_save_dataset(data_id, tokenized_dataset_path, tokenizer, seed):
@@ -70,7 +72,6 @@ def get_idxs_list_NOSE(idx):
 def validation_step(model, val_dataloader, device):
 
     model.eval()
-    model.to(device)
 
     val_loss = 0
 
@@ -88,23 +89,33 @@ def validation_step(model, val_dataloader, device):
 
 def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulation_steps, train_dataloader, val_dataloader, device, nose_step):
 
-    # Prepare optimizer, only update unfrozen parameters
-    optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate, no_deprecation_warning=True)
-
     # Scheduler
     num_training_steps = num_epochs * len(train_dataloader)
-    lr_scheduler = get_scheduler(
-        name="linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps
-    )
 
     checkpoint_path = f'results_and_checkpoints/nose_step_{nose_step}'
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
 
-    for epoch in range(num_epochs):
+    state_dicts = torch.load(f'results_and_checkpoints/nose_step_{nose_step}/checkpoint_epoch_3.pth')['S_layers_state']
+
+    for s in S:
+        model.model.layers[s].mlp.load_state_dict(state_dicts[s][0]) 
+        model.model.layers[s].post_attention_layernorm.state_dict(state_dicts[s][0])
+
+    model.to(device)
+
+    logging.basicConfig(filename='gpu_usage.log', level=logging.INFO, format='%(message)s')
+    
+
+    for epoch in range(3, num_epochs):
+
+        optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate, no_deprecation_warning=True) 
+
+        lr_scheduler = get_scheduler(
+            name="linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps
+        )
 
         model.train()
-        model.to(device)
 
         scale_factor = 1 - ((epoch+1) / num_epochs)
         customize_model(model, S, scale_factor)
@@ -115,22 +126,41 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
 
         for step, batch in enumerate(tqdm(train_dataloader)):
 
-            batch.to(device)
+            batch = {k: v.to(device) for k, v in batch.items()}
             outputs = model(**batch)
             loss = outputs.loss
+            # print(f"Loss: {loss.item()}")
+
+            if np.isnan(loss.item()):
+                print(f"Loss is NaN at step {step} of the epoch {epoch+1}")
+                return
+            
             train_loss += loss.item()
             loss = loss / gradient_accumulation_steps
             loss.backward()
 
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            
             if (step + 1) % gradient_accumulation_steps == 0:
                 optimizer.step()
                 lr_scheduler.step()
                 optimizer.zero_grad()
+                torch.cuda.empty_cache()
+
+            if (step + 1) % 100 == 0:
+                allocated_memory = torch.cuda.memory_allocated(device) / 1024 ** 3
+                reserved_memory = torch.cuda.memory_reserved(device) / 1024 ** 3
+                lr = optimizer.param_groups[0]["lr"]
+
+                logging.info(f"Step {step + 1}, Loss: {round(loss.item(), 4)}, LR: {lr}, GPU usage: {allocated_memory+reserved_memory:.2f} / 81.92 GB")
+
 
         if (step + 1) % gradient_accumulation_steps != 0:
             optimizer.step()
             lr_scheduler.step()
             optimizer.zero_grad()
+            torch.cuda.empty_cache()
+
 
         end_time = time.time()
 
@@ -139,20 +169,18 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
         avg_val_loss = round(validation_step(model, val_dataloader, device), 4)
         avg_train_loss = round(train_loss / len(train_dataloader), 4)
 
-        print(f"Epoch {epoch+1}: [time: {epoch_time} min  - loss: {avg_train_loss} - val_loss: {avg_val_loss}]\n")
+        print(f"Epoch {epoch+1}: [time: {epoch_time} min - loss: {avg_train_loss} - val_loss: {avg_val_loss}]\n")
 
 
         # Saving checkpoints and results 
         checkpoint = {
-                    'epoch': epoch + 1,
                     'S_layers_state': [(model.model.layers[s].mlp.state_dict(), model.model.layers[s].post_attention_layernorm.state_dict()) for s in S],
                     'optimizer_state_dict': optimizer.state_dict(),
-                    'loss': loss.item(),
                     }
         
-        if epoch != 0:
-            old_epoch_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch}.pth'
-            os.remove(old_epoch_checkpoint_path)
+        # if epoch != 0:
+        #     old_epoch_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch}.pth'
+        #     os.remove(old_epoch_checkpoint_path)
 
         epoch_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}.pth'
         if epoch + 1 == num_epochs:
@@ -163,8 +191,10 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
         epochs_metrics = {
             'time': epoch_time,
             'train_loss': avg_train_loss,
-            'val_loss': avg_val_loss
+            'val_loss': avg_val_loss,
+            'learning_rate': lr
         }
+
 
         epochs_metrics_file = checkpoint_path + '/epochs_metrics.json'
 
