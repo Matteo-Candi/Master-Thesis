@@ -8,9 +8,7 @@ from utils import tokenize_and_save_dataset, create_dataloader, train_custom_mod
 from model_shrink import customize_model
 
 
-
-
-if __name__ == "__main__":
+def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--nose_step", required=True)
@@ -41,46 +39,33 @@ if __name__ == "__main__":
     val_dataloader = create_dataloader(tokenized_dataset['validation'], tokenizer, batch_size)
 
 
-
-
     S = get_idxs_list_NOSE(args.nose_step)
 
-    # validation_step(model, val_dataloader, device)
+    # vv = validation_step(model, val_dataloader, device)
+    # print(f'Baseline Loss: {vv}')
+
 
 
     train_custom_model(model,
                         S,
-                        num_epochs=5,
+                        num_epochs=10,
                         learning_rate=5e-6,
-                        gradient_accumulation_steps=16,
+                        gradient_accumulation_steps=1,
                         train_dataloader=train_dataloader,
                         val_dataloader=val_dataloader,
                         device=device,
-                        nose_step=args.nose_step
+                        nose_step=args.nose_step,
+                        reload_checkpoint_path=None,
                         )
 
 
 
+if __name__ == "__main__":
 
+    main()
 
-
-
-# Traceback (most recent call last):
-#   File "run.py", line 49, in <module>
-#     train_custom_model(model,
-#   File "/home/federicaverna/thesis/code/training/utils.py", line 128, in train_custom_model
-#     loss.backward()
-#   File "/home/federicaverna/thesis/thesis_env/lib/python3.8/site-packages/torch/_tensor.py", line 525, in backward
-#     torch.autograd.backward(
-#   File "/home/federicaverna/thesis/thesis_env/lib/python3.8/site-packages/torch/autograd/__init__.py", line 267, in backward
-#     _engine_run_backward(
-#   File "/home/federicaverna/thesis/thesis_env/lib/python3.8/site-packages/torch/autograd/graph.py", line 744, in _engine_run_backward
-#     return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
-# torch.cuda.OutOfMemoryError: CUDA out of memory. Tried to allocate 1.57 GiB. GPU 
 
 
 
 # BASELINE Loss
-# {'val_loss': 0.8106189448610845}
-
-# RERUN VALIDATION BASELINE
+# Baseline Loss: 0.8105868452329592

@@ -72,7 +72,6 @@ def single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename):
         base_entropy = get_entropy(base_logits)
         avg_base_entropy += base_entropy / n_samples
         max_length_list.append(max_length)
-    print(f'            {max_length_list}')
 
     entropy_dict = {}
     num_attention_layers = pretrained_model.config.num_attention_heads
@@ -117,7 +116,7 @@ def NOSE(input_ids_list, pretrained_model, tokenizer, max_steps=32):
     if not os.path.exists(filename):
         json.dump({}, open(filename, 'w'))
 
-    S = [0, 2]
+    S = [0, 2, 1, 7, 9, 5, 17, 30]
     for _ in range(max_steps):
         print(f'\n\nRunning step {len(S)}...')
         step_layer = single_step_NOSE(input_ids_list, pretrained_model, tokenizer, S, filename)
@@ -127,14 +126,12 @@ def NOSE(input_ids_list, pretrained_model, tokenizer, max_steps=32):
 
 
 
-
-if __name__ == '__main__':
+def main():
 
     # Load pre-trained model and tokenizer
     tokenizer = AutoTokenizer.from_pretrained("m-a-p/OpenCodeInterpreter-DS-6.7B")
-    pretrained_model = AutoModelForCausalLM.from_pretrained("m-a-p/OpenCodeInterpreter-DS-6.7B", torch_dtype=torch.float16).to('cuda')
-    pretrained_model.eval()
-    
+    pretrained_model = AutoModelForCausalLM.from_pretrained("m-a-p/OpenCodeInterpreter-DS-6.7B").to('cuda')
+
     number_input_sample = 10
 
     # Get the 10 shortest samples
@@ -153,3 +150,11 @@ if __name__ == '__main__':
 
     NOSE(input_ids_list, pretrained_model, tokenizer)
     print('\nNOSE completed!')
+
+
+
+
+
+if __name__ == '__main__':
+
+    main()

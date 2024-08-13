@@ -71,13 +71,14 @@ def get_idxs_list_NOSE(idx):
 
 def validation_step(model, val_dataloader, device):
 
+    model.to(device)
     model.eval()
 
     val_loss = 0
 
     print('Validation step...')
     for batch in tqdm(val_dataloader):
-        batch.to(device)
+        batch = {k: v.to(device) for k, v in batch.items()}
         with torch.no_grad():
             outputs = model(**batch)
             val_loss += outputs.loss.item()
@@ -87,33 +88,54 @@ def validation_step(model, val_dataloader, device):
     return avg_val_loss
 
 
-def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulation_steps, train_dataloader, val_dataloader, device, nose_step):
+def reload_checkpoint(path, model, S, optimizer, lr_scheduler):
+    checkpoint = torch.load(path)
+    
+    # Reload model layers
+    S_layers_state = checkpoint['S_layers_state']
+    for s, (mlp_state, layernorm_state) in zip(S, S_layers_state):
+        model.model.layers[s].mlp.load_state_dict(mlp_state)
+        model.model.layers[s].post_attention_layernorm.load_state_dict(layernorm_state)
+    
+    # Reload optimizer state
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    
+    # Reload learning rate scheduler state
+    lr_scheduler.load_state_dict(checkpoint['lr_scheduler_state_dict'])
+    
+    # Reload epoch and step
+    epoch = checkpoint['epoch']
+    step = checkpoint['step']
+    
+    return epoch, step
+
+
+def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulation_steps, train_dataloader, val_dataloader, device, nose_step, reload_checkpoint_path=None):
+
+    num_training_steps = num_epochs * len(train_dataloader)
+    optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate, no_deprecation_warning=True) 
 
     # Scheduler
-    num_training_steps = num_epochs * len(train_dataloader)
+    lr_scheduler = get_scheduler(
+        name="linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps
+    )
+
+    current_epoch, current_step = 0, 0
+
+    if reload_checkpoint_path:
+        current_epoch, current_step = reload_checkpoint(reload_checkpoint_path, model, S, optimizer, lr_scheduler)
+        print(f"Model reloaded from checkpoint at epoch {current_epoch} and step {current_step}")
 
     checkpoint_path = f'results_and_checkpoints/nose_step_{nose_step}'
     if not os.path.exists(checkpoint_path):
         os.makedirs(checkpoint_path)
-
-    state_dicts = torch.load(f'results_and_checkpoints/nose_step_{nose_step}/checkpoint_epoch_3.pth')['S_layers_state']
-
-    for s in S:
-        model.model.layers[s].mlp.load_state_dict(state_dicts[s][0]) 
-        model.model.layers[s].post_attention_layernorm.state_dict(state_dicts[s][0])
 
     model.to(device)
 
     logging.basicConfig(filename='gpu_usage.log', level=logging.INFO, format='%(message)s')
     
 
-    for epoch in range(3, num_epochs):
-
-        optimizer = AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=learning_rate, no_deprecation_warning=True) 
-
-        lr_scheduler = get_scheduler(
-            name="linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps
-        )
+    for epoch in range(current_epoch, num_epochs):
 
         model.train()
 
@@ -126,10 +148,12 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
 
         for step, batch in enumerate(tqdm(train_dataloader)):
 
+            if step < current_step:
+                continue
+
             batch = {k: v.to(device) for k, v in batch.items()}
             outputs = model(**batch)
             loss = outputs.loss
-            # print(f"Loss: {loss.item()}")
 
             if np.isnan(loss.item()):
                 print(f"Loss is NaN at step {step} of the epoch {epoch+1}")
@@ -151,8 +175,23 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
                 allocated_memory = torch.cuda.memory_allocated(device) / 1024 ** 3
                 reserved_memory = torch.cuda.memory_reserved(device) / 1024 ** 3
                 lr = optimizer.param_groups[0]["lr"]
-
                 logging.info(f"Step {step + 1}, Loss: {round(loss.item(), 4)}, LR: {lr}, GPU usage: {allocated_memory+reserved_memory:.2f} / 81.92 GB")
+
+            if (step + 1) % 10_000 == 0:
+                checkpoint = {
+                    'S_layers_state': [(model.model.layers[s].mlp.state_dict(), model.model.layers[s].post_attention_layernorm.state_dict()) for s in S],
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    'lr_scheduler_state_dict': lr_scheduler.state_dict(),
+                    'epoch': epoch,
+                    'step': step
+                    }
+                
+                epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{step + 1}.pth'
+                torch.save(checkpoint, epoch_step_checkpoint_path)
+
+                old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{step + 1 - 10_000}.pth'
+                if os.path.exists(old_epoch_step_checkpoint_path):
+                    os.remove(old_epoch_step_checkpoint_path)
 
 
         if (step + 1) % gradient_accumulation_steps != 0:
@@ -161,8 +200,8 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
             optimizer.zero_grad()
             torch.cuda.empty_cache()
 
-
         end_time = time.time()
+        current_step = 0
 
         # Epoch values
         epoch_time = round((end_time - start_time) / 60, 2)
@@ -176,6 +215,8 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
         checkpoint = {
                     'S_layers_state': [(model.model.layers[s].mlp.state_dict(), model.model.layers[s].post_attention_layernorm.state_dict()) for s in S],
                     'optimizer_state_dict': optimizer.state_dict(),
+                    'lr_scheduler_state_dict': lr_scheduler.state_dict(),
+
                     }
         
         # if epoch != 0:
@@ -187,6 +228,10 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
             epoch_checkpoint_path = checkpoint_path + '/final_checkpoint.pth'
 
         torch.save(checkpoint, epoch_checkpoint_path)
+
+        old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{60_000}.pth'
+        if os.path.exists(old_epoch_step_checkpoint_path):
+            os.remove(old_epoch_step_checkpoint_path)
 
         epochs_metrics = {
             'time': epoch_time,
