@@ -5,6 +5,9 @@ import torch
 import json
 import os
 
+from NOSE import model_reduction
+from training.utils import get_idxs_list_NOSE, reload_checkpoint
+
 # Function to extract data from a file
 def extract_data(file_path: str) -> list[str]:
     data: list[str] = []
@@ -47,6 +50,7 @@ def save_computation_metrics(file_name: str, model, device: str) -> None:
     return
 
 
+
 # Main function to generate translations from Java to Python
 def generate_translations(input_data_path: str, file_name: str) -> None:
     model_id: str = "m-a-p/OpenCodeInterpreter-DS-6.7B"
@@ -55,6 +59,15 @@ def generate_translations(input_data_path: str, file_name: str) -> None:
 
     tokenizer = AutoTokenizer.from_pretrained(model_id)
     model = AutoModelForCausalLM.from_pretrained(model_id, device_map=device, torch_dtype=torch.float16)
+
+    if file_name != "baseline":
+        step = int(file_name.split('_')[-1])
+        S = get_idxs_list_NOSE(step)
+        checkpoint_path = f"training/results_and_checkpoints/nose_step_{step}/final_cehckpoint.pth"
+        model_reduction(model, S)
+        _, _ = reload_checkpoint(checkpoint_path, model, S, None, None, device, test_phase=True)
+
+    model.to(device)
     model.eval()
 
     save_computation_metrics(file_name, model, device)

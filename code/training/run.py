@@ -44,6 +44,8 @@ def main():
     # vv = validation_step(model, val_dataloader, device)
     # print(f'Baseline Loss: {vv}')
 
+    # reload_checkpoint_path = 'results_and_checkpoints/nose_step_0/checkpoint_epoch_1.pth'
+    reload_checkpoint_path = None
 
 
     train_custom_model(model,
@@ -55,7 +57,7 @@ def main():
                         val_dataloader=val_dataloader,
                         device=device,
                         nose_step=args.nose_step,
-                        reload_checkpoint_path=None,
+                        reload_checkpoint_path=reload_checkpoint_path,
                         )
 
 

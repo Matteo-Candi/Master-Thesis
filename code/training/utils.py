@@ -1,4 +1,8 @@
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from dotenv import load_dotenv
 from tqdm import tqdm
+import smtplib, ssl
 import numpy as np
 import logging
 import json
@@ -88,26 +92,73 @@ def validation_step(model, val_dataloader, device):
     return avg_val_loss
 
 
-def reload_checkpoint(path, model, S, optimizer, lr_scheduler):
+def send_email_notification(content):
+
+    load_dotenv(override=True)
+
+    port = 587
+    smattp_server = "smtp.office365.com"
+    sender_email = os.getenv('EMAIL')
+    password = os.getenv('PASSWORD')
+    receiver_email = "mcandi79@gmail.com"
+
+    message = f"""\
+    Subject: Training Notification Update
+
+    {content}."""
+
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = receiver_email
+    message["Subject"] = 'VM Training Update'
+
+    # Add body to email
+    message.attach(MIMEText(content, "plain"))
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP(smattp_server, port) as server:
+        server.ehlo()
+        server.starttls(context=context)
+        server.ehlo()
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, message.as_string())
+
+
+def reload_checkpoint(path, model, S, optimizer, lr_scheduler, device, test_phase: bool = False):
+        
     checkpoint = torch.load(path)
-    
+        
     # Reload model layers
     S_layers_state = checkpoint['S_layers_state']
     for s, (mlp_state, layernorm_state) in zip(S, S_layers_state):
         model.model.layers[s].mlp.load_state_dict(mlp_state)
         model.model.layers[s].post_attention_layernorm.load_state_dict(layernorm_state)
+
+    model.to(device)
+        
+    if test_phase:
+        return None, None
     
-    # Reload optimizer state
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+    else:
+        # Reload optimizer state
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        
+        # Reload learning rate scheduler state
+        lr_scheduler.load_state_dict(checkpoint['lr_scheduler_state_dict'])
+        
+        # Reload epoch and step
+        epoch = checkpoint['epoch']
+
+        if 'step' not in checkpoint:
+            step = 0
+        else:
+            step = checkpoint['step']
+        
+        return epoch, step
     
-    # Reload learning rate scheduler state
-    lr_scheduler.load_state_dict(checkpoint['lr_scheduler_state_dict'])
-    
-    # Reload epoch and step
-    epoch = checkpoint['epoch']
-    step = checkpoint['step']
-    
-    return epoch, step
+
+
 
 
 def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulation_steps, train_dataloader, val_dataloader, device, nose_step, reload_checkpoint_path=None):
@@ -119,12 +170,13 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
     lr_scheduler = get_scheduler(
         name="linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps
     )
+    send_email_notification('Starting training...')
 
-    current_epoch, current_step = 0, 0
+    current_epoch, current_step = 0, 0 
 
     if reload_checkpoint_path:
-        current_epoch, current_step = reload_checkpoint(reload_checkpoint_path, model, S, optimizer, lr_scheduler)
-        print(f"Model reloaded from checkpoint at epoch {current_epoch} and step {current_step}")
+        current_epoch, current_step = reload_checkpoint(reload_checkpoint_path, model, S, optimizer, lr_scheduler, device)
+        print(f"\nModel reloaded. Restarting from epoch {current_epoch+1} at step {current_step}")
 
     checkpoint_path = f'results_and_checkpoints/nose_step_{nose_step}'
     if not os.path.exists(checkpoint_path):
@@ -157,6 +209,7 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
 
             if np.isnan(loss.item()):
                 print(f"Loss is NaN at step {step} of the epoch {epoch+1}")
+                send_email_notification('Code stopped for NaN!')
                 return
             
             train_loss += loss.item()
@@ -179,11 +232,11 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
 
             if (step + 1) % 10_000 == 0:
                 checkpoint = {
+                    'epoch': epoch,
+                    'step': step,
                     'S_layers_state': [(model.model.layers[s].mlp.state_dict(), model.model.layers[s].post_attention_layernorm.state_dict()) for s in S],
                     'optimizer_state_dict': optimizer.state_dict(),
                     'lr_scheduler_state_dict': lr_scheduler.state_dict(),
-                    'epoch': epoch,
-                    'step': step
                     }
                 
                 epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{step + 1}.pth'
@@ -192,6 +245,13 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
                 old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{step + 1 - 10_000}.pth'
                 if os.path.exists(old_epoch_step_checkpoint_path):
                     os.remove(old_epoch_step_checkpoint_path)
+
+            if (step + 1) % 23_000 == 0:
+                try:
+                    send_email_notification(f'Epoch {epoch+1} - step {step+1} - lr {lr}\n\
+                                            Everything is working fine!')
+                except:
+                    print('Email not sent!')
 
 
         if (step + 1) % gradient_accumulation_steps != 0:
@@ -210,13 +270,22 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
 
         print(f"Epoch {epoch+1}: [time: {epoch_time} min - loss: {avg_train_loss} - val_loss: {avg_val_loss}]\n")
 
+        try:
+            send_email_notification(f'Epoch {epoch+1} completed! \n\
+                                    LR of {lr}.\n\
+                                    Validation loss: {avg_val_loss}.\n\
+                                    Baseline validation loss: 0.8105.\n\n\
+                                    ;)')
+        except:
+            print('Email not sent!')
+
 
         # Saving checkpoints and results 
         checkpoint = {
+                    'epoch': epoch,
                     'S_layers_state': [(model.model.layers[s].mlp.state_dict(), model.model.layers[s].post_attention_layernorm.state_dict()) for s in S],
                     'optimizer_state_dict': optimizer.state_dict(),
                     'lr_scheduler_state_dict': lr_scheduler.state_dict(),
-
                     }
         
         # if epoch != 0:
@@ -229,7 +298,7 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
 
         torch.save(checkpoint, epoch_checkpoint_path)
 
-        old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{60_000}.pth'
+        old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_60000.pth'
         if os.path.exists(old_epoch_step_checkpoint_path):
             os.remove(old_epoch_step_checkpoint_path)
 
