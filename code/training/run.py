@@ -4,7 +4,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from datasets import DatasetDict
 import torch
 
-from utils import tokenize_and_save_dataset, create_dataloader, train_custom_model, validation_step, get_idxs_list_NOSE
+from utils import tokenize_and_save_dataset, create_dataloader, train_custom_model, validation_step, get_idxs_list_NOSE, send_email_notification
 from model_shrink import customize_model
 
 
@@ -44,21 +44,24 @@ def main():
     # vv = validation_step(model, val_dataloader, device)
     # print(f'Baseline Loss: {vv}')
 
-    # reload_checkpoint_path = 'results_and_checkpoints/nose_step_0/checkpoint_epoch_1.pth'
     reload_checkpoint_path = None
+    reload_checkpoint_path = 'results_and_checkpoints/nose_step_0/checkpoint_epoch_9_step_30000.pth'
 
 
-    train_custom_model(model,
-                        S,
-                        num_epochs=10,
-                        learning_rate=5e-6,
-                        gradient_accumulation_steps=1,
-                        train_dataloader=train_dataloader,
-                        val_dataloader=val_dataloader,
-                        device=device,
-                        nose_step=args.nose_step,
-                        reload_checkpoint_path=reload_checkpoint_path,
-                        )
+    try:
+        train_custom_model(model,
+                            S,
+                            num_epochs=10,
+                            learning_rate=5e-6,
+                            gradient_accumulation_steps=1,
+                            train_dataloader=train_dataloader,
+                            val_dataloader=val_dataloader,
+                            device=device,
+                            nose_step=args.nose_step,
+                            reload_checkpoint_path=reload_checkpoint_path,
+                            )
+    except Exception as e:
+        send_email_notification(f"Error encountered: {e}")
 
 
 

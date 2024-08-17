@@ -34,5 +34,23 @@
         "train_loss": 0.4157,
         "val_loss": 0.4156,
         "learning_rate": 2.0006251600560386e-06
+    },
+    "epoch_7": {
+        "time": 409.71,
+        "train_loss": 0.4114,
+        "val_loss": 0.4134,
+        "learning_rate": 1.5006251600560387e-06
+    },
+    "epoch_8": {
+        "time": 409.44,
+        "train_loss": 0.4079,
+        "val_loss": 0.4112,
+        "learning_rate": 1.0006251600560384e-06
+    },
+    "epoch_9": {
+        "time": 224.63,
+        "train_loss": 0.2231,
+        "val_loss": 0.408,
+        "learning_rate": 5.006176280071706e-07
     }
 }

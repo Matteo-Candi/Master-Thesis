@@ -4,25 +4,34 @@ import torch
 import json
 import os
 
+
 # Custom Identity Self-Attention Layer
 class IdentitySelfAttention(nn.Module):
-    def __init__(self, config):
+    def __init__(self, layer_idx):
         super().__init__()
-        self.config = config
 
-    # def forward(self, hidden_states, attention_mask=None, head_mask=None, output_attentions=False, position_ids=None, past_key_value=None, use_cache=False, query_length=None, cache_position=None):
-    def forward(self, hidden_states, **kwargs):
+        self.layer_idx = layer_idx
+
+    def forward(self, hidden_states, past_key_value, cache_position, **kwargs):
+
+        key_states = torch.zeros(hidden_states.shape)
+        value_states = torch.zeros(hidden_states.shape)
+
+        if past_key_value is not None:
+            cache_kwargs = {"sin": 0, "cos": 0, "cache_position": cache_position}
+            key_states, value_states = past_key_value.update(key_states, value_states, self.layer_idx, cache_kwargs)
 
         hidden_states = 2 * hidden_states
 
-        return hidden_states, None, None
+        return hidden_states, None, past_key_value
+    
 
 # Function to reduce the model by setting specified layers' attention to identity
 def model_reduction(model, S):
     if len(S) != 0:
         layers = model.model.layers
         for idx in S:
-            layers[idx].self_attn = IdentitySelfAttention(layers[idx].self_attn.config)
+            layers[idx].self_attn = IdentitySelfAttention(idx)
 
     return model
 

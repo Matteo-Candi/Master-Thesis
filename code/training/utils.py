@@ -7,6 +7,7 @@ import numpy as np
 import logging
 import json
 import time
+import sys
 import os
 
 from transformers import DataCollatorForLanguageModeling, get_scheduler, AdamW
@@ -14,10 +15,10 @@ from datasets import load_dataset, DatasetDict
 from torch.utils.data import DataLoader
 import torch
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.abspath(script_dir))
+
 from model_shrink import customize_model
-
-
-
 
 class TokenizedDataset(torch.utils.data.Dataset):
     def __init__(self, dataset):
@@ -63,8 +64,13 @@ def get_idxs_list_NOSE(idx):
     '''
     Returning list of indexes S from the selected NOSE step
     '''
+    working_dir = os.getcwd()
+    file_dir = os.path.dirname(os.path.abspath(__file__))
 
-    results_file_path = '../NOSE_results.json'
+    if working_dir == file_dir:
+        results_file_path = '../NOSE_results.json'
+    else:
+        results_file_path = 'NOSE_results.json'
     with open(results_file_path, 'r') as f:
         nose_results = json.load(f)
 
@@ -126,9 +132,9 @@ def send_email_notification(content):
 
 
 def reload_checkpoint(path, model, S, optimizer, lr_scheduler, device, test_phase: bool = False):
-        
+
     checkpoint = torch.load(path)
-        
+
     # Reload model layers
     S_layers_state = checkpoint['S_layers_state']
     for s, (mlp_state, layernorm_state) in zip(S, S_layers_state):
@@ -138,7 +144,7 @@ def reload_checkpoint(path, model, S, optimizer, lr_scheduler, device, test_phas
     model.to(device)
         
     if test_phase:
-        return None, None
+        return None, None, None
     
     else:
         # Reload optimizer state
@@ -149,13 +155,14 @@ def reload_checkpoint(path, model, S, optimizer, lr_scheduler, device, test_phas
         
         # Reload epoch and step
         epoch = checkpoint['epoch']
+        training_loss = checkpoint['training_loss']
 
         if 'step' not in checkpoint:
             step = 0
         else:
             step = checkpoint['step']
         
-        return epoch, step
+        return epoch, step, training_loss
     
 
 
@@ -172,11 +179,12 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
     )
     send_email_notification('Starting training...')
 
-    current_epoch, current_step = 0, 0 
+    current_epoch, current_step = 0, 0
 
     if reload_checkpoint_path:
-        current_epoch, current_step = reload_checkpoint(reload_checkpoint_path, model, S, optimizer, lr_scheduler, device)
-        print(f"\nModel reloaded. Restarting from epoch {current_epoch+1} at step {current_step}")
+        current_epoch, current_step, checkpoint_training_loss = reload_checkpoint(reload_checkpoint_path, model, S, optimizer, lr_scheduler, device)
+        print(f"\nModel reloaded. Restarting from epoch {current_epoch+1} at step {current_step + 1}")
+        reload_checkpoint_state = True
 
     checkpoint_path = f'results_and_checkpoints/nose_step_{nose_step}'
     if not os.path.exists(checkpoint_path):
@@ -193,8 +201,14 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
 
         scale_factor = 1 - ((epoch+1) / num_epochs)
         customize_model(model, S, scale_factor)
+
         train_loss = 0
+        if reload_checkpoint_state:
+            train_loss = checkpoint_training_loss
+            reload_checkpoint_state = False
+
         start_time = time.time()
+        
 
         print(f"\nEpoch {epoch+1}/{num_epochs}...\n")
 
@@ -234,6 +248,7 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
                 checkpoint = {
                     'epoch': epoch,
                     'step': step,
+                    'training_loss': train_loss,
                     'S_layers_state': [(model.model.layers[s].mlp.state_dict(), model.model.layers[s].post_attention_layernorm.state_dict()) for s in S],
                     'optimizer_state_dict': optimizer.state_dict(),
                     'lr_scheduler_state_dict': lr_scheduler.state_dict(),

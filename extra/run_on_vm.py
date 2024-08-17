@@ -14,8 +14,15 @@ def run_code():
         'source thesis_env/bin/activate',
         'cd code',
         'cd training',
-        'nohup python run.py --nose_step 0 > output.log 2>&1 &' 
+        'nohup python run.py --nose_step 4 > output.log 2>&1 &' 
     ]
+
+    # commands = [
+    #     'cd thesis',
+    #     'source thesis_env/bin/activate',
+    #     'cd code',
+    #     'nohup python run.py --filename nose_step_0 > output.log 2>&1 &' 
+    # ]
 
     # Combine commands into a single command string
     combined_command = ' && '.join(commands)
@@ -64,7 +71,7 @@ if __name__ == '__main__':
 
 
 # RUN THE CODE
-# nohup python run.py --nose_step 0 > output.log 2>&1 &
+# nohup python run.py --nose_step n > output.log 2>&1 &
 
 # CHECK THE STATUS OF THE TRAINING
 # cd thesis/code/training 
