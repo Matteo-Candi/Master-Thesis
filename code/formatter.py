@@ -57,7 +57,7 @@ def extract_references(file):
 
 def extract_predictions(file):
 
-    file_path = '../predictions/' + file + '.txt'
+    file_path = '../results/' + file + '/predictions.txt'
 
     with open(file_path, 'r') as file:
         data = file.read()
