@@ -155,11 +155,13 @@ def reload_checkpoint(path, model, S, optimizer, lr_scheduler, device, test_phas
         
         # Reload epoch and step
         epoch = checkpoint['epoch']
-        training_loss = checkpoint['training_loss']
+
+        training_loss = 0
 
         if 'step' not in checkpoint:
             step = 0
         else:
+            training_loss = checkpoint['training_loss']
             step = checkpoint['step']
         
         return epoch, step, training_loss
@@ -177,9 +179,14 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
     lr_scheduler = get_scheduler(
         name="linear", optimizer=optimizer, num_warmup_steps=0, num_training_steps=num_training_steps
     )
-    send_email_notification('Starting training...')
+
+    try:
+        send_email_notification('Starting training...')
+    except:
+        print('Email not sent!')
 
     current_epoch, current_step = 0, 0
+    reload_checkpoint_state = False
 
     if reload_checkpoint_path:
         current_epoch, current_step, checkpoint_training_loss = reload_checkpoint(reload_checkpoint_path, model, S, optimizer, lr_scheduler, device)
@@ -313,7 +320,7 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
 
         torch.save(checkpoint, epoch_checkpoint_path)
 
-        old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_60000.pth'
+        old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch}.pth'
         if os.path.exists(old_epoch_step_checkpoint_path):
             os.remove(old_epoch_step_checkpoint_path)
 

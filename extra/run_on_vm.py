@@ -14,7 +14,7 @@ def run_code():
         'source thesis_env/bin/activate',
         'cd code',
         'cd training',
-        'nohup python run.py --nose_step 4 > output.log 2>&1 &' 
+        'nohup python run.py --nose_step 1 > output.log 2>&1 &' 
     ]
 
     # commands = [

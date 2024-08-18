@@ -49,8 +49,14 @@
     },
     "epoch_9": {
         "time": 224.63,
-        "train_loss": 0.2231,
+        "train_loss": 0.41,
         "val_loss": 0.408,
         "learning_rate": 5.006176280071706e-07
+    },
+    "epoch_10": {
+        "time": 408.99,
+        "train_loss": 0.4214,
+        "val_loss": 0.4144,
+        "learning_rate": 6.176280071705105e-10
     }
 }
