@@ -1,0 +1,61 @@
+
+This SQL code is using the `MERGE INTO` statement to update or insert data into a table based on whether there are matching rows in another table. The target table is `ddwh01_dw.TM_VENL_MASTER_LINK`, and the source of the data is defined within the subquery.
+
+The equivalent PySpark code would be:
+
+```python
+from pyspark.sql import SparkSession
+
+# Create a Spark session
+spark = SparkSession.builder \
+    .appName("SQL to PySpark") \
+    .getOrCreate()
+
+# Read the source data from SA table
+sa_df = spark.read.format("parquet").load("ddwh00_sa.TS_VENL0001_WW_GPP")
+
+# Read the target data from DW table
+target_df = spark.read.format("parquet").load("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Perform a left anti join to get rows in SA that are not in TARGET based on the join condition
+not_matched_df = sa_df.join(target_df, (sa_df["CLIENT"] == target_df["VENL_CD_CLIENT"]) & 
+                                               (sa_df["PARTNER_GUID"] == target_df["VENL_CD_PARTNER_GUID"]), "leftanti")
+
+# Perform a left semi join to get rows in SA that are also in TARGET based on the join condition
+matched_df = sa_df.join(target_df, (sa_df["CLIENT"] == target_df["VENL_CD_CLIENT"]) & 
+                               (sa_df["PARTNER_GUID"] == target_df["VENL_CD_PARTNER_GUID"]), "leftsemi")
+
+# Update the matched rows in TARGET with the values from SA
+updated_target = target_df.join(matched_df, (target_df["VENL_CD_CLIENT"] == sa_df["CLIENT"]) & 
+                                       (target_df["VENL_CD_PARTNER_GUID"] == sa_df["PARTNER_GUID"])) \
+                              .select(sa_df["VENL_CD_CLIENT"], sa_df["PARTNER_GUID"], sa_df["VENL_CD_VENDOR"], 
+                                      sa_df["CRUSER"], sa_df["CRDAT"], sa_df["CRTIM"], 
+                                      F.current_timestamp().alias("VENL_DT_LAST_MODIFY"), 
+                                      F.lit(p_ELT_ID_BATCH).alias("VENL_ID_BATCH_LAST_MODIFY")) \
+                              .withColumnRenamed("CLIENT", "VENL_CD_CLIENT") \
+                              .withColumnRenamed("PARTNER_GUID", "VENL_CD_PARTNER_GUID") \
+                              .withColumnRenamed("VENL_CD_VENDOR", "VENL_CD_VENDOR") \
+                              .withColumnRenamed("CRUSER", "VENL_CD_USER") \
+                              .withColumnRenamed("CRDAT", "VENL_DT_DATE") \
+                              .withColumnRenamed("CRTIM", "VENL_DT_TIME")
+
+# Insert the not matched rows from SA into TARGET with default values for some columns
+inserted_rows = not_matched_df.select(F.lit(DDWH01_DW.SEQ_TM_VENL.NEXTVAL).alias("VENL_ID_LINK"), 
+                                             sa_df["CLIENT"].alias("VENL_CD_CLIENT"), 
+                                             sa_df["PARTNER_GUID"].alias("VENL_CD_PARTNER_GUID"), 
+                                             sa_df["VENL_CD_VENDOR"].alias("VENL_CD_VENDOR"), 
+                                             sa_df["CRUSER"].alias("VENL_CD_USER"), 
+                                             sa_df["CRDAT"].alias("VENL_DT_DATE"), 
+                                             sa_df["CRTIM"].alias("VENL_DT_TIME"), 
+                                             F.lit(NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG)).alias("VENL_ID_BATCH_LAST_MODIFY"), 
+                                             F.to_date(F.lit('01/01/1900'), 'dd/MM/yyyy').alias("VENL_DT_START_VALIDITY"), 
+                                             F.to_date(F.lit('31/12/9999'), 'dd/MM/yyyy').alias("VENL_DT_END_VALIDITY"), 
+                                             F.current_timestamp().alias("VENL_DT_INSERT"), 
+                                             F.lit(NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG)).alias("VENL_ID_BATCH_LAST_MODIFY"), 
+                                             F.current_timestamp().alias("VENL_DT_LAST_MODIFY"))
+
+# Union the updated rows and inserted rows to get the final result
+result = updated_target.union(inserted_rows)
+```
+
+Please note that this code assumes you have defined `DDWH01_DW`, `p_ELT_ID_BATCH`, `n_ELT_ID_JOB_LOG`, and the necessary imports at the beginning of your script.

@@ -1,0 +1,106 @@
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise. 
+
+@@Instruction 
+Translate the following code from SAS to Python:
+%macro quadraturagruppo(daquadrare,		
+						daquad,			
+						totpergru,		
+						perquad,		
+						giaquad,		
+						vargruppo,		
+						quadrato);		
+
+
+
+
+
+%put;
+%put %str(WARNING- ============================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- somma quadrare);
+%put %str(WARNING- identificano data set ausiliari della macro quadraturagruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni        );
+%put %str(WARNING- ============================================================);
+%put;
+
+
+proc sort data = &daquadrare;
+	by &vargruppo;
+run;
+proc means data = &daquadrare noprint;
+	by &vargruppo;
+	output out = somma (keep = &vargruppo datot)
+		   sum(&daquad) = datot;
+run;
+proc sort data = &totpergru;
+	by &vargruppo;
+run;
+data somma;
+	merge somma (in = inso) &totpergru (in = into);
+	by &vargruppo;
+	if inso and into;
+	keep &vargruppo datot &perquad;
+run; 
+
+
+data quadrare;
+	merge &daquadrare somma (in = presente);
+	by &vargruppo;
+	if presente;
+	&giaquad = &daquad*&perquad/datot;
+run;
+
+
+data &quadrato;
+	set quadrare;
+	drop &daquad datot &perquad;
+run;
+
+
+proc datasets library = work;
+	delete somma quadrare;
+run;
+quit;
+
+%mend quadraturagruppo;
+ 
+@@Response
+Here is the Python equivalent of the SAS code you provided:
+
+```python
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+
+    print("WARNING- ============================================================")
+    print("WARNING: I nomi")
+    print("WARNING- somma quadrare")
+    print("WARNING- identificano data set ausiliari della macro quadraturagruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni        ")
+    print("WARNING- ============================================================")
+
+    # Sort the data by the group variable
+    daquadrare.sort_values(by=[vargruppo])
+
+    # Calculate the sum of daquad for each group
+    somma = daquadrare.groupby(vargruppo)[daquad].sum().reset_index()
+    somma.columns = [vargruppo, 'datot']
+
+    # Merge the sum data with the total per group data
+    somma = pd.merge(somma, totpergru, on=vargruppo)
+
+    # Merge the original data with the sum data
+    quadrare = pd.merge(daquadrare, somma, on=vargruppo)
+
+    # Calculate the quadrature
+    quadrare[giaquad] = quadrare[daquad] * quadrare[perquad] / quadrare['datot']
+
+    # Drop the unnecessary columns
+    quadrare = quadrare.drop([daquad, 'datot', perquad], axis=1)
+
+    # Save the resulting data to the output dataframe
+    quadrare.to_csv(quadrato, index=False)
+
+    # Delete the temporary datasets
+    del somma, quadrare
+```
+
+Please note that this Python code assumes that the input dataframes are named `daquadrare`, `totpergru`, and `daquad`. The output dataframe will be written to the file specified by `quadrato`. The grouping variable is `vargruppo`, and the new variable `giaquad` will contain the quadrature calculation. The variables `daquad` and `perquad` are used to calculate the quadrature.

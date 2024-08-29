@@ -1,0 +1,53 @@
+Here's the translation of your SAS macro to Python. Due to the nature of both languages, there are some differences that cannot be translated directly. This includes concepts like macros and data steps which do not exist in Python. Also, it's important to note that Python doesn't have a direct equivalent for PROC MEANS in SAS. We use pandas library instead.
+
+```python
+import pandas as pd
+import numpy as np
+from typing import List, Any
+
+def arrotondainterogruppo(ingresso: str, 
+                           variab: str, 
+                           datototeff: str, 
+                           effettiva: str, 
+                           vargru: str, 
+                           uscita: str) -> None:
+    
+    # Load data into a DataFrame
+    intermedio = pd.read_csv(ingresso)
+    
+    # Sort the DataFrame by group variable
+    intermedio = intermedio.sort_values(by=[vargru])
+    
+    # Calculate total sum of signal for each group
+    somma = intermedio.groupby([vargru]).sum().reset_index()[[vargru, variab]]
+    somma.columns = [vargru, 'vartot']
+    
+    # Load additional dataset and merge with the sum DataFrame
+    datototeff = pd.read_csv(datototeff)
+    somma = pd.merge(somma, datototeff, how='inner', on=[vargru])
+    
+    # Calculate difference between total sum and target value
+    somma['diff'] = somma['vartot'] - effettiva
+    
+    # Merge the DataFrame with differences back to the original DataFrame
+    intermedio = pd.merge(intermedio, somma[['vargru', 'diff']], how='inner', on=[vargru])
+    
+    # Sort the DataFrame by group variable and signal value in descending order
+    intermedio = intermedio.sort_values(by=[vargru, variab], ascending=[True, False])
+    
+    # Assign a unique signal to each group
+    intermedio['segnale'] = np.arange(len(intermedio)) + 1
+    
+    # Keep only the first row for each group
+    segnali = intermedio.groupby([vargru]).first().reset_index()[[vargru, 'segnale']]
+    
+    # Adjust signal based on difference
+    intermedio['variab'] = np.where(intermedio[vargru].shift(-1) < segnali['segnale'] + abs(intermedio['diff']), 
+                                     np.where(intermedio['diff'] < 0, intermedio['variab'] + 1, 
+                                              np.maximum(intermedio['variab'] - 1, 0)), 
+                                     intermedio['variab'])
+    
+    # Drop unnecessary columns and save the DataFrame to a csv file
+    intermedio = intermedio.drop(['diff', 'segnale'], axis=1)
+    intermedio.to_csv(uscita, index=False)
+```

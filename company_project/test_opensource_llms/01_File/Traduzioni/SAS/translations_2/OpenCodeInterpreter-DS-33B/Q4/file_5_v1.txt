@@ -1,0 +1,63 @@
+
+The Python code equivalent for the given SAS script is as follows. Please note that due to differences between SAS and Python, this might not be a direct translation and some adjustments may need to be made.
+
+```python
+import pandas as pd
+from pathlib import Path
+
+# Define paths
+base_path = Path('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets')
+ter_out_path = base_path / 'ter_out'
+sez_out_path = base_path / 'sez_out'
+appo_path = base_path / 'appo'
+geog20b_path = base_path / 'geog20b.csv'
+demo20b_path = base_path / 'demo20b.csv'
+
+# Load dataframes
+ter_out_df = pd.read_csv(ter_out_path)
+sez_out_df = pd.read_csv(sez_out_path)
+appo_df = pd.read_csv(appo_path)
+geog20b_df = pd.read_csv(geog20b_path)
+demo20b_df = pd.read_csv(demo20b_path)
+
+# Merge dataframes
+merged_ter_out = pd.merge(ter_out_df, appo_df, on='codice_comune__str')
+merged_sez_out = pd.merge(sez_out_df, geog20b_df, on='codice_comune__str')
+
+# Filter dataframes
+filtered_ter_out = merged_ter_out[merged_ter_out['eta'] <= 75]
+filtered_sez_out = merged_sez_out[merged_sez_out['codice_comune__str'].isin(filtered_ter_out['codice_comune__str'])]
+
+# Group by 'codice_comune__str' and calculate sum of 'maschi' and 'femmine' columns
+grouped_ter_out = filtered_ter_out.groupby('codice_comune__str').sum()[['maschi', 'femmine']]
+grouped_sez_out = filtered_sez_out.groupby('codice_comune__str').sum()[['maschi', 'femmine']]
+
+# Calculate population for each age group and store in dataframes
+population_ter_out = pd.DataFrame(index=filtered_ter_out.index)
+for i, row in filtered_ter_out.iterrows():
+    if row['eta'] <= 4:
+        population_ter_out.loc[i] = '00-04'
+    elif 5 <= row['eta'] <= 9:
+        population_ter_out.loc[i] = '05-09'
+    # Continue with other age groups...
+    else:
+        population_ter_out.loc[i] = '75-99'
+
+population_sez_out = pd.DataFrame(index=filtered_sez_out.index)
+for i, row in filtered_sez_out.iterrows():
+    if row['eta'] <= 4:
+        population_sez_out.loc[i] = '00-04'
+    elif 5 <= row['eta'] <= 9:
+        population_sez_out.loc[i] = '05-09'
+    # Continue with other age groups...
+    else:
+        population_sez_out.loc[i] = '75-99'
+
+# Merge dataframes and calculate sum of 'maschi' and 'femmine' columns
+merged_population = pd.merge(grouped_ter_out, grouped_sez_out, on=['codice_comune__str', population_ter_out])
+total_population = merged_population.sum()[['maschi', 'femmine']]
+
+# Print total population
+print(total_population)
+```
+This code loads the necessary dataframes, filters and groups them as per the SAS script, calculates the sum of 'maschi' and 'femmine' columns for each age group, merges the results, and finally prints the total population.

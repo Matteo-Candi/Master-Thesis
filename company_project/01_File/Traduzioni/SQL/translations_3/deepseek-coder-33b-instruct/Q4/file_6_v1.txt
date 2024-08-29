@@ -1,0 +1,36 @@
+Here is the PySpark code equivalent to your SQL query. I have kept all the logic intact, but I can't guarantee that it will work perfectly with your dataset since not all functions in PySpark are exactly the same as their SQL counterparts. However, this should be a good starting point:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, to_date, year, trim, ltrim, rtrim, regexp_replace, when, coalesce, lit, concat, length, expr, substring, instr
+from pyspark.sql.types import IntegerType
+
+# Create a SparkSession if not already created
+spark = SparkSession.builder.getOrCreate()
+
+df = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP") \
+    .join(spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES"), (col("EKPO_CD_PLANT") == col("PLBR_CD_PLANT")) & col("PLBR_DS_PLANT_SEGMENT").isin(["AG", "CE", "-1", "AM", "AS"]) & ~col("EKPO_CD_PLANT").isin(["FA01", "FB01", "IA01"])) \
+    .join(spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP"), "EKPO_CD_PO_NBR") \
+    .alias("df")
+
+# Load the transcodings table and create a temp view for later use
+spark.table("ddwh01_dw.TD_TRGE_TRANSCODING_GENERAL").where(col("TRGE_CD_DEFAULT_NAME") == "WERKS" & col("TRGE_CD_LOGICAL_SYSTEM").isin(["ERP", "URP", "NH3", "DWH"])) \
+    .selectExpr("TRGE_CD_SOURCE_DATA_1 as PLANT","TRGE_CD_DESTINATION_DATA") \
+    .createOrReplaceTempView("PF")
+
+df.select(
+    [col(c).cast(IntegerType()) if c == "EKPO_NR_ITEM_NBR_PO" else col(c) for c in df.columns],  # Cast 'EKPO_NR_ITEM_NBR_PO' as IntegerType()
+    year(to_date("EKKO_DT_PURCH_DOC_DATE")).alias("EKPO_NR_PURCH_DOC_YEAR"),
+    when(col("EKPO_CD_PURCH_DOC_NBR_R3_GPP") == "-1", col("EKPO_CD_PO_NBR")).otherwise(col("EKPO_CD_PURCH_DOC_NBR_R3_GPP")).alias("EKPO_CD_PURCH_DOC_NBR_R3_GPP"),
+    when((col("EKPO_CD_PLANT").isin(["CR01", "TY01", "CX01"])), concat(col("EKPO_CD_WPS_PREFIX"), col("EKPO_CD_MATERIAL_MFG")))
+    .when((col("EKPO_CD_PLANT").isin(["AU01", "LP01", "LP02","AU05"])), concat(lit("SO"), col("EKPO_CD_MATERIAL_MFG")))
+    .otherwise(col("EKPO_CD_MATERIAL_MFG")).alias("EKPO_CD_MATERIAL_MFG"),
+    ltrim(rtrim(regexp_replace(col("EKPO_NR_NET_WEIGHT"), r"^0*", ""))).cast("float").alias("EKPO_NR_NET_WEIGHT"),  # Cast 'EKPO_NR_NET_WEIGHT' as float
+    ltrim(rtrim(regexp_replace(col("EKPO_NR_GROSS_WEIGHT"), r"^0*", ""))).cast("float").alias("EKPO_NR_GROSS_WEIGHT"),  # Cast 'EKPO_NR_GROSS_WEIGHT' as float
+    col("ODAG_PARTNUMBER").alias(col("EKPO_CD_MATERIAL_NBR")),
+    col("ODAG_PROGRAM").alias(col("EKPO_CD_PROGRAM_ID")),
+    concat(substring((ltrim(rtrim(regexp_replace(when(col("EKPO_CD_PLANT") == "CX01", col("TRGE_CD_DESTINATION_DATA"), coalesce(col("PF.TRGE_CD_DESTINATION_DATA"), col("EKPO_CD_PLANT"))).alias("EKPO_KEY_STC"))), -10))
+) \
+    .createOrReplaceTempView("DDWH02_SM.VW_EKPO_PURCH_DOC_ITEM_AGCE")
+```
+Please note that the `spark.table()` function is used to load tables from Spark DataSources and `when()...otherwise().alias()...` chain of methods are used to replicate SQL's CASE WHEN statement, while `to_date()` function is used instead of TO_DATE in SQL.

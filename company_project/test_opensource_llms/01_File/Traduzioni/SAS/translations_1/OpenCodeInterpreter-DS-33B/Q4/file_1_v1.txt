@@ -1,0 +1,39 @@
+
+Here is the translated code from SAS to Python. Please note that this translation might not be perfect as some SAS specific functionalities are not available in Python or may behave differently.
+
+```python
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    # Print warning message
+    print("\nWARNING- ============================================================\n")
+    print("WARNING: I nomi")
+    print("WARNING- somma quadrare")
+    print("WARNING- identificano data set ausiliari della macro quadraturagruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni\n")
+    print("WARNING- ============================================================\n")
+    
+    # Sort the 'daquadrare' DataFrame by 'vargruppo'
+    daquadrare.sort_values(by=[vargruppo])
+    
+    # Use groupby to find sum of 'daquad' for each 'vargruppo' in 'daquadrare' and store it in a new DataFrame 'somma'
+    somma = daquadrare.groupby(vargruppo)[daquad].sum().reset_index()
+    
+    # Sort the 'totpergru' DataFrame by 'vargruppo'
+    totpergru.sort_values(by=[vargruppo])
+    
+    # Merge 'somma' and 'totpergru' DataFrames on 'vargruppo'
+    somma = pd.merge(somma, totpergru,  how='inner', left_on=[vargruppo], right_on = [vargruppo])
+    
+    # Merge 'daquadrare' and 'somma' DataFrames on 'vargruppo'
+    quadrare = pd.merge(daquadrare, somma,  how='inner', left_on=[vargruppo], right_on = [vargruppo])
+    
+    # Calculate 'giaquad' for each row in the merged DataFrame 'quadrare'
+    quadrare[giaquad] = quadrare[daquad] * quadrare[perquad] / quadrare['datot']
+    
+    # Store the resultant DataFrame in 'quadrato'
+    quadrato = quadrare.copy()
+    
+    # Drop unnecessary columns from 'quadrato' DataFrame
+    quadrato.drop([daquad, 'datot', perquad], axis=1, inplace=True)
+    
+    return quadrato
+```

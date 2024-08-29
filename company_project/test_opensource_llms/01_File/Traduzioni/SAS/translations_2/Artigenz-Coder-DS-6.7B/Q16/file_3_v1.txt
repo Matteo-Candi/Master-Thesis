@@ -1,0 +1,129 @@
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise. 
+
+@@Instruction 
+Translate the following code from SAS to Python:
+
+
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+options mergenoby = warn;
+
+data xclasse;
+	set ter.etapop20b;
+	time = 2019;
+	length eta1_a $ 6;
+	if 15 <= eta <= 17
+		then eta1_a = "Y_UN17";
+	else if 18 <= eta <= 49
+		then eta1_a = "Y"||trim(left(eta));
+	else if 50 <= eta <= 54
+		then eta1_a = "Y_GE50";
+	else delete;
+	keep codc620b eta1_a eta time tot_fem;
+	rename codc620b = codice_comune__str
+		   tot_fem = femmine;
+run;
+proc tabulate data = xclasse;
+	class eta1_a;
+	var eta;
+	table eta1_a, eta*(min max) * f = 6. /nocellmerge;
+run;
+proc sort data = xclasse;
+	by codice_comune__str;
+run;
+data xgeog;
+	set ter_out.geografica_comune;
+	keep codice_comune__str codice_provincia;
+run;
+proc sort data = xgeog;
+	by codice_comune__str;
+run;
+data xclageo;
+	merge xgeog xclasse;
+	by codice_comune__str;
+run;
+proc means data = xclageo noprint;
+	class codice_provincia eta1_a;
+	types codice_provincia * eta1_a;
+	id time;
+	output out = provinciale_donne (drop = _type_ _freq_)
+		sum(femmine) = donne_classe_eta;
+run;
+
+data nati;
+	set appo.nati_eta_madre_provincia_istat;
+	rename valore = nati;
+run;
+proc sort data = nati;
+	by codice_provincia eta1_a;
+run;
+proc sort data = provinciale_donne;
+	by codice_provincia eta1_a;
+run;
+data nati_donne;
+	merge nati provinciale_donne (drop = time);
+	by codice_provincia eta1_a;
+run; 
+
+data nati_donne_rapp;
+	set nati_donne;
+	nati_1000_donne_classe_eta = 1000 * nati / donne_classe_eta;
+run;
+
+options nolabel;
+
+
+ 
+@@Response 
+The SAS code you provided is quite complex and contains several data manipulation steps such as merging, sorting and creating new variables. Here's the Python equivalent:
+
+```python
+import pandas as pd
+
+# Load data
+ter = pd.read_csv("C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\etapop20b.csv")
+sez = pd.read_csv("C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\etapop20b.csv")
+
+ter_out = pd.read_csv("C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\geografica_comune.csv")
+sez_out = pd.read_csv("C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\geografica_comune.csv")
+
+appo = pd.read_csv("C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\nati_eta_madre_provincia_istat.csv")
+
+# Transform data
+ter['time'] = 2019
+ter['eta1_a'] = ter.apply(lambda row: 'Y_UN17' if 15 <= row['eta'] <= 17 else (
+    'Y'+str(row['eta']) if 18 <= row['eta'] <= 49 else 'Y_GE50' if 50 <= row['eta'] <= 54 else None), axis=1)
+ter = ter[['codc620b', 'eta1_a', 'eta', 'tot_fem']]
+ter = ter.rename(columns={'codc620b': 'codice_comune__str', 'tot_fem': 'femmine'})
+
+# Load geographical data
+ter_out = ter_out[['codice_comune__str', 'codice_provincia']]
+
+# Merge data
+xclageo = pd.merge(ter, ter_out, on='codice_comune__str')
+
+# Aggregate by province and age group
+provinciale_donne = xclageo.groupby(['codice_provincia', 'eta1_a'])['femmine'].sum().reset_index()
+provinciale_donne = provinciale_donne.rename(columns={'femmine': 'donne_classe_eta'})
+
+# Load national data
+nati = appo.rename(columns={'valore': 'nati'})
+
+# Merge national and provincial data
+nati_donne = pd.merge(nati, provinciale_donne, on=['codice_provincia', 'eta1_a'])
+
+# Create new column
+nati_donne['nati_1000_donne_classe_eta'] = 1000 * nati_donne['nati'] / nati_donne['donne_classe_eta']
+
+# Output data
+nati_donne_rapp = nati_donne
+nati_donne_rapp.to_csv("nati_donne_rapp.csv", index=False)
+```
+
+Please note that this Python code assumes that the input data is in CSV format and all necessary libraries are installed. Also, the SAS code used `options mergenoby = warn;` which is not available in Python. If you want to merge dataframes with different indexes, you should use `pd.merge` function and specify how to handle them.

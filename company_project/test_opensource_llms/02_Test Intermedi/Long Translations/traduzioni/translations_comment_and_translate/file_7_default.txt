@@ -1,0 +1,1228 @@
+system
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one.
+user
+Translate the following code from SAS to Python: 
+* Setting up libraries for data import and output;
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+* Enabling options to merge datasets without issuing warnings when missing observations;
+options mergenoby = warn;
+options nolabel;
+
+* Importing custom macros from external SAS files for data transformations;
+%include "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\Macro\macroquadraturagruppo.sas";
+%include "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\Macro\macroarrotondainterogruppo.sas";
+
+* Setting title for the analysis;
+title1 "STIMA COMUNALE DEI CONSUMI";
+
+* Disabling graphics output during the analysis;
+ods graphics off;
+
+* Importing datasets from Excel files;
+PROC IMPORT OUT= WORK.xconsumi_tag
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\tag_00026.xlsx"
+            DBMS=EXCEL2000 REPLACE;
+			SHEET="TAG-00026_4";
+     		RANGE="A3:G132";
+     		GETNAMES=YES;
+			*MIXED = YES;	
+RUN;
+PROC IMPORT OUT= WORK.xreddito_tag
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\tag_00027.xlsx"
+            DBMS=EXCEL2000 REPLACE;
+			SHEET="TAG-00027_2";
+     		RANGE="A3:G132";
+     		GETNAMES=YES;
+			*MIXED = YES;	
+RUN;
+
+* Preprocessing datasets;
+data consumi_tag;
+	set xconsumi_tag;
+	* Correcting case and unit conversions in the Province column;
+	if province_e_regioni ~= upcase(province_e_regioni)
+	or province_e_regions = "VALLE D'AOSTA/VALL�E D'AOSTE";
+	consumi = _017/1000;
+	keep province_e_regioni consumi;
+run;
+proc sort data = consumi_tag;
+	by province_e_regioni;
+run;
+
+data reddito_tag;
+	set xreddito_tag;
+	if province_e_regioni ~= upcase(province_e_regioni)
+	or province_e_regions = "VALLE D'AOSTA/VALL�E D'AOSTE";
+	reddito = _017/1000;
+	keep province_e_regioni reddito;
+run;
+proc sort data = reddito_tag;
+	by province_e_regioni;
+run;
+
+data base_tag;
+	merge reddito_tag consumi_tag;
+	by province_e_regioni;
+	* Calculating propensity score (consumption/income) and its inverse;
+	propensione = consumi/reddito;
+	inverso = (1/reddito);
+run;
+
+* Distribution of propensity scores;
+proc univariate data = base_tag;
+	var propensione;
+	histogram propensione;
+run;
+
+* Scatter plot of propensity score versus income;
+proc gplot data = base_tag;
+	symbol1 i = none  v = dot c = black;
+	plot propensione * reddito = 1;
+run;
+quit;
+
+* Scatter plot of propensity score versus income's inverse;
+proc gplot data = base_tag;
+	symbol1 i = none  v = dot c = black;
+	plot propensione * inverso = 1;
+run;
+quit;
+
+* Correlation analysis;
+proc corr data = base_tag;
+	var propensione reddito inverso;
+run;
+
+* Simple regression analysis;
+proc reg data = base_tag;
+	model propensione = reddito;
+run;
+quit;
+proc reg data = base_tag;
+	model propensione = inverso;
+run;
+quit;
+
+* Importing region and province information;
+PROC IMPORT OUT= WORK.provincia
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\provincia_110.xlsx"
+            DBMS=EXCEL2000 REPLACE;
+			SHEET="Sheet1";
+     		GETNAMES=YES;
+RUN;
+data provincia;
+	set provincia;
+	Denominazione_Provincia_Citt__me = upcase(Denominazione_Provincia_Citt__me);
+	if Denominazione_Provincia_Citt__me = "REGGIO DI CALABRIA"
+		then Denominazione_Provincia_Citt__me = "REGGIO CALABRIA";
+run;
+data base_tag;
+	set base_tag;
+	province_e_regioni = upcase(province_e_regioni);
+run;
+proc sort data = provincia;
+	by Denominazione_Provincia_Citt__me;
+run;
+data base_tag;
+	merge base_tag provincia (rename=(Denominazione_Provincia_Citt__me=province_e_regioni));
+	by province_e_regioni;
+run;
+
+* Importing geographic and economic codes dataset for cross-referencing;
+PROC IMPORT OUT= WORK.corrispo
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\Codici-statistici-e-denominazioni-al-31_12_2020.xls"
+            DBMS=EXCEL2000 REPLACE;
+			SHEET="CODICI al 31_12_2020";
+     		GETNAMES=YES;
+			*MIXED = YES;	
+RUN;
+data corrispo;
+	set corrispo;
+	length codice_provincia $ 3;
+	codice_provincia = substr(put(Codice_Comune_numerico_con_110_p,z6.),1,3);
+	keep Codice_Comune_formato_alfanumeri codice_provincia;
+	rename Codice_Comune_formato_alfanumeri = codice_comune__str;
+run;
+proc sort data = corrispo;
+	by codice_comune__str;
+run;
+
+* Merging geographic and economic codes with population and income data;
+data xcod;
+	set ter_out.geografica_comune;
+	keep codice_comune__str codice_area_nielsen codice_ripartizione;
+run;
+proc sort data = xcod;
+	by codice_comune__str;
+run;
+proc means data = ter_out.Popolazione_eta_sesso_comune noprint;
+	class codice_comune__str;
+	types codice_comune__str;
+	output out = popnew (drop = _type_ _freq_)
+		   sum(popolazione) = pop_ult;
+run;
+data xcod;
+	merge xcod corrispo popnew;
+	by codice_comune__str;
+run;
+proc means data = xcod noprint;
+	class codice_provincia;
+	types codice_provincia;
+	id codice_area_nielsen codice_ripartizione;
+	output out = xcods (drop = _type_ _freq_)
+		   sum(pop_ult) = ;
+run;
+proc sort data = base_tag;
+	by codice_provincia;
+run;
+data base_tag;
+	merge base_tag xcods;
+	by codice_provincia;
+run;
+
+* Group-wise summary by region;
+proc sort data = base_tag;
+	by codice_ripartizione;
+run;
+proc corr data = base_tag;
+	by codice_ripartizione;
+	var propensione reddito inverso;
+run;
+proc gplot data = base_tag;
+	by codice_ripartizione;
+	symbol1 i = none  v = dot c = black;
+	plot propensione * reddito = 1;
+run;
+quit;
+proc gplot data = base_tag;
+	by codice_ripartizione;
+	symbol1 i = none  v = dot c = black;
+	plot propensione * inverso = 1;
+run;
+quit;
+
+* Defining an array for regional bins;
+data base_tag;
+	set base_tag;
+	array ripart{4};
+	do i = 1 to 4;
+		ripart{i} = (codice_ripartizione = i);
+	end;
+	drop i;
+run;
+
+* Conducting regression models with weighted population;
+proc reg data = base_tag;
+	weight pop_ult;
+	model propensione = reddito ripart1 ripart2 ripart3 ripart4;
+run;
+quit;
+proc reg data = base_tag;
+	weight pop_ult;
+	model propensione = inverso ripart1 ripart2 ripart3 ripart4;
+run;
+quit;
+
+* Conducting regression models by region;
+proc reg data = base_tag;
+	weight pop_ult;
+	by codice_ripartizione;
+	model propensione = inverso;
+run;
+quit;
+
+* Conducting regression diagnostics (outliers, predicted values, etc.);
+proc reg data = base_tag outest = parametri;
+	weight pop_ult;
+	model propensione = inverso ripart1 ripart2 ripart3 ripart4;
+	output out = esitoreg
+		   p = yteorica
+		   rstudent = rstud;
+run;
+quit;
+
+* Filtering data for models with less than 2 robustly outlying observations;
+data base_dep;
+	set esitoreg;
+	if abs(rstud) < 2;
+	drop yteorica;
+run;
+
+* Conducting weighted regression for the filtered dataset;
+proc reg data = base_dep outest = parametri;
+	weight pop_ult;
+	model propensione = inverso ripart1 ripart2 ripart3 ripart4;
+run;
+quit;
+
+* Creating a scatter plot of the theoretical predictions against actual values;
+proc gplot data = esitoregnew;
+	symbol1 i = none  v = dot c = black;
+	plot yteorica * propensione = 1;
+run;
+quit;
+
+* Computing Pearson correlation coefficients;
+proc corr data = esitoregnew;
+	var yteorica propensione;
+run;
+
+* Creating a histogram of the theoretical predictions;
+proc univariate data = esitoregnew;
+	var yteorica;
+	histogram yteorica;
+run;
+
+* Group-wise summary of regional predictions;
+data geog;
+	set ter_out.geografica_comune;
+	length territorio $ 40;
+	if nome_regione = "TRENTINO-ALTO ADIGE"
+		then territorio = nome_provincia;
+		else territorio = nome_regione;
+	array ripart{4};
+	do i = 1 to 4;
+		ripart{i} = (codice_ripartizione = i);
+	end;
+	keep codice_comune__str nome_comune sigla_provincia
+		 territorio nome_regione codice_ripartizione ripart1 ripart2 ripart3 ripart4;
+run;
+proc sort data = geog;
+	 by codice_comune__str;
+run;
+
+* Combining population and income data for statistical analysis;
+data red;
+	set ter_out.economica_comune;
+	keep codice_comune__str reddito;
+	rename reddito = red_ult;
+run;
+proc sort data = red;
+	 by codice_comune__str;
+run;
+proc sort data = xcod;
+	 by codice_comune__str;
+run;
+data base_com;
+	merge geog xcod (keep = codice_comune__str codice_provincia) popnew red;
+	by codice_comune__str;
+	red_pop_ult = red_ult/pop_ult;
+	inverso = 1/red_pop_ult;
+run;
+
+* Predicting propensity scores using regression coefficients;
+proc score data = base_com
+		   score = parametri
+		   type = parms
+		   out = espay;
+		   var inverso ripart1 ripart2 ripart3 ripart4;
+run;
+
+* Creating a histogram of predicted propensity scores by location;
+proc univariate data = espay nextrobs = 20;
+	var model1;
+	histogram model1;
+	id nome_comune sigla_provincia red_pop_ult;
+run;
+
+* Group-wise summary of locations by territorial classification;
+proc freq data = geog;
+	tables territorio*nome_regione /list;
+run;
+
+* Merging geographical and economic datasets;
+proc sort data = geog;
+	by codice_comune__str;
+run;
+data eco;
+	set ter.econom20b;
+	keep codc620b red19 con19;
+	rename codc620b = codice_comune__str
+		   red19 = red_pre
+		   con19 = con_pre;
+run;
+proc sort data = eco;
+	by codice_comune__str;
+run;
+data eco_g;
+	merge geog eco red popnew;
+	by codice_comune__str;
+run;
+
+* Calculating regional averages (previous and current values);
+proc means data = eco_g noprint;
+	class territorio;
+	types territorio;
+	output out = regionale_precedente (drop = _type_ _freq_)
+		   sum(red_pre con_pre red_ult pop_ult) = 
+			   reddito_stima_preced consumi_stima_preced reddito_stima_ult pop_ult;
+run;
+
+* Importing data for consumption estimates from a CSV file;
+PROC IMPORT OUT= WORK.consumi_istat 
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\quadratura_consumi.csv" 
+            DBMS=CSV REPLACE;
+     GETNAMES=YES;
+     DATAROW=2; 
+RUN;
+data consumi_istat;
+	attrib territorio length=$40 format=$40. informat=$40.;
+	set consumi_istat;
+	territorio = upcase(territorio);
+	if territorio = "PROVINCIA AUTONOMA BOLZANO / BOZEN"
+		then territorio = "BOLZANO";
+	if territorio = "PROVINCIA AUTONOMA TRENTO"
+		then territorio = "TRENTO";
+	if territorio = "VALLE D'AOSTA / VALLéE D'AOSTE"
+		then territorio = "VALLE D'AOSTA";
+	consumi_2019 = round(consumi_2019*1000);
+	consumi_2020 = round(consumi_2020*1000);
+	rename consumi_2019 = consumi_istat_preced
+		   consumi_2020 = consumi_istat_ultimo;
+run;
+proc sort data = consumi_istat;
+	by territorio;
+run;
+
+* Merging consumption estimate data with regional averages;
+data confronto;
+	merge regionale_precedente (in = sele) consumi_istat;
+	by territorio;
+	if sele;
+	red_pop_ult = reddito_stima_ult/pop_ult;
+	difperc = 100*(consumi_stima_preced - consumi_istat_preced)/consumi_istat_preced;
+	mediaistat = consumi_istat_ultimo/reddito_stima_ult;
+	drop _ itter107;
+run;
+proc sort data = confronto;
+	by difperc;
+run;
+proc print data = confronto;
+	format reddito_stima_preced consumi_stima_preced reddito_stima_ult pop_ult
+		   consumi_istat_preced consumi_istat_ultimo comma18.;
+	sum reddito_stima_preced consumi_stima_preced reddito_stima_ult consumi_istat_preced consumi_istat_ultimo;
+run;
+
+* Creating a histogram of the difference between estimated and ISTAT consumption;
+proc gplot data = confronto;
+	symbol1 i = none  v = dot c = black;
+	plot mediaistat * red_pop_ult = 1;
+run;
+quit;
+
+* Group-wise summary of consumption estimates by territorial classifications;
+proc sort data = espay;
+	by territorio;
+run; 
+proc means data = espay noprint;
+	weight red_ult;
+	class territorio;
+	types territorio;
+	output out = mediat (drop = _type_ _freq_)
+		   mean(model1) = mediat;
+run;
+
+* Merging predicted propensity scores with regional averages;
+data mediaistat;
+	set confronto;
+	keep territorio mediaistat;
+run;
+proc sort data = mediaistat;
+	by territorio;
+run;
+data medie;
+	merge mediat mediaistat;
+	by territorio;
+	correttivo = mediaistat/mediat;
+run;
+data baseprop;
+	merge espay medie;
+	by territorio;
+run;
+data baseprop;
+	set baseprop;
+	propensione = model1*correttivo;
+run;
+
+* Creating a histogram of adjusted propensity scores;
+proc univariate data = baseprop;
+	var propensione;
+	histogram propensione;
+run;
+
+* Calculating percentiles of adjusted propensity scores;
+proc univariate data = baseprop noprint;
+	var propensione;
+	output out = estremi_p
+		   pctlpre = prop
+		   pctlname = p95 pctlpts = 95
+		   pctlname = p5 pctlpts = 5;
+run;
+
+* Creating an output table of adjusted propensity scores with normalization applied;
+data norma;
+	if _N_ = 1 then set estremi_p;
+	set baseprop;
+run;
+data norma;
+	set norma;
+	pronorma = propensione;
+	if propensione < propp5
+		then pronorma = sum(.1*propensione,.9*propp5);
+	if propensione > propp95
+		then pronorma = sum(.1*propensione,.9*propp95);
+	drop propp5 propp95;
+run;
+
+* Creating a scatter plot of adjusted propensity scores versus the previous income;
+proc gplot data = norma;
+	symbol1 i = none  v = dot c = black;
+	plot pronorma * convar = 1;
+run;
+quit;
+
+* Creating a histogram of normalized propensity scores;
+proc univariate data = norma;
+	var pronorma;
+	histogram pronorma;
+run;
+
+* Creating regression model for normalized propensity scores;
+data ristima;
+	set norma;
+	stima_grezza = red_ult*propensione;
+run;
+proc tabulate data = ristima;
+	var red_ult stima_grezza red_pre con_pre;
+	table red_ult stima_grezza red_pre con_pre,sum*f=comma18.;
+run;
+
+* Applying group-wise quadratic estimation to normalized propensity scores;
+%quadraturagruppo(ristima,		
+				  stima_grezza,	
+				  quadra,		
+				  consumi_istat_ultimo,	
+				  stima_qua,	
+				  territorio,	
+				  qua1);		
+data qua2;
+	set qua1;
+	stima_qua = round(stima_qua);
+run;
+
+* Applying group-wise interpolation to normalized propensity scores;
+%arrotondainterogruppo(qua2,		
+					   stima_qua,	
+					   quadra,		
+					   consumi_istat_ultimo,	
+					   territorio,		
+					   qua3);		
+proc tabulate data = qua3;
+	var red_ult stima_qua red_pre con_pre;
+	table red_ult stima_qua red_pre con_pre,sum*f=comma18.;
+run;
+
+* Group-wise summary of the number of inconsistencies in estimated consumption and the final estimated consumption values;
+proc means data = qua3 noprint;
+	class territorio;
+	types territorio;
+	output out = verqua
+		   sum(stima_qua) = ;
+run;
+proc sort data = quadra;
+	by territorio;
+run;
+data verqua;
+	merge verqua quadra;
+	by territorio;
+	controllo = (consumi_istat_ultimo ~= stima_qua);
+run;
+proc means data = verqua sum;
+	var controllo;
+run;
+
+* Creating final datasets for consumption estimation;
+data base_controllo;
+	set qua3;
+	prop_ult = stima_nq/red_ult;
+	con_pop_ult = stima_nq/pop_ult;
+	convar = 100*(con_pop_ult - con_pop_pre)/con_pop_pre;
+run;
+
+* Creating scatter plots of final consumption estimates against the previous income and previous income's inverse;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_ult;
+	id nome_comune sigla_provincia prop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_pre;
+	id nome_comune sigla_provincia prop_ult;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_dif;
+	id nome_comune sigla_provincia prop_ult prop_pre;
+	histogram prop_dif;
+run;
+
+* Creating scatter plots of the population-weighted consumption to income ratio;
+proc univariate data = base_controllo nextrobs = 20;
+	var con_pop_ult;
+	id nome_comune sigla_provincia con_pop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var con_pop_pre;
+	id nome_comune sigla_provincia con_pop_ult;
+run;
+
+* Group-wise summary of locations with high income to consumption ratios;
+proc freq data = base_controllo;
+	where prop_ult > 1;
+	tables territorio;
+run;
+
+* Scatter plot of the income-to-consumption ratio and income;
+proc corr data = base_controllo;
+	var con_pop_ult red_pop_ult;
+run;
+
+* Creating scatter plots of the income-to-consumption ratio against the previous income and population-weighted consumption ratio;
+proc univariate data = base_controllo nextrobs = 20;
+	var convar;
+	id nome_comune sigla_provincia redvar con_pop_ult red_pop_ult;
+	histogram convar;
+run;
+
+* Group-wise summary of locations with high income to consumption ratios, sorted by income-to-consumption ratio;
+proc sort data = grande;
+	by descending convar;
+run;
+proc print data = grande;
+	var nome_comune sigla_provincia convar redvar
+		con_pop_ult red_pop_ult con_pop_pre red_pop_pre;
+	format convar redvar con_pop_ult red_pop_ult con_pop_pre red_pop_pre 12.1;
+run;
+
+* Creating scatter plot of the income-to-consumption ratio versus population-weighted consumption ratio;
+proc gplot data = base_controllo;
+	symbol1 i = none  v = dot c = black;
+	plot con_pop_ult * red_pop_ult = 1;
+run;
+quit;
+
+* Group-wise summary of locations with extreme income-to-consumption ratios;
+data noncoerente;
+	set base_controllo;
+	if convar*redvar < 0 and min(abs(convar),abs(redvar)) > 1;
+run; *1653; 
+
+* Creating scatter plot of the income to consumption ratios, sorted by income-to-consumption ratio and normalized by the interquartile range;
+proc univariate data = base_controllo noprint;
+	var convar;
+	output out = estremi_v
+		   pctlpre = varia
+		   pctlname = p95 pctlpts = 95
+		   pctlname = p5 pctlpts = 5;
+run;
+data base_n;
+	if _N_ = 1 then set estremi_v;
+	set base_controllo;
+run;
+data base_n;
+	set base_n;
+	varnorma = convar;
+	if convar < variap5
+		then varnorma = sum(.3*convar,.7*variap5);
+	if convar > variap95
+		then varnorma = sum(.3*convar,.7*variap95);
+	drop variap5 variap95 ripart1 ripart2 ripart3 ripart4
+		 inverso model1 stima_qua con_pop_ult prop_ult prop_dif;
+run;
+
+* Creating scatter plot of the normalized income-to-consumption ratio versus income;
+proc gplot data = base_n;
+	symbol1 i = none  v = dot c = black;
+	plot varnorma * convar = 1;
+run;
+quit;
+
+* Creating a histogram of normalized income-to-consumption ratios;
+proc univariate data = base_n;
+	var varnorma;
+	histogram varnorma;
+run;
+
+* Creating regression model for the normalized income-to-consumption ratios;
+data ristima;
+	set base_n;
+	stima_n = pop_ult*con_pop_pre*(1 + varnorma/100);
+run;
+proc tabulate data = ristima;
+	var red_ult stima_n red_pre con_pre;
+	table red_ult stima_n red_pre con_pre,sum*f=comma18.;
+run;
+
+* Applying group-wise quadratic estimation to normalized income-to-consumption ratios;
+%quadraturagruppo(ristima,		
+				  stima_n,		
+				  quadra,		
+				  consumi_istat_ultimo,	
+				  stima_nq,		
+				  territorio,	
+				  quan1);		
+data quan2;
+	set quan1;
+	stima_nq = round(stima_nq);
+run;
+
+* Applying group-wise interpolation to normalized income-to-consumption ratios;
+%arrotondainterogruppo(quan2,		
+					   stima_nq,	
+					   quadra,		
+					   consumi_istat_ultimo,	
+					   territorio,		
+					   quan3);		
+proc tabulate data = quan3;
+	var red_ult stima_nq red_pre con_pre;
+	table red_ult stima_nq red_pre con_pre,sum*f=comma18.;
+run;
+
+* Group-wise summary of the number of inconsistencies in estimated consumption and the final estimated consumption values after adjustments;
+proc means data = quan3 noprint;
+	class territorio;
+	types territorio;
+	output out = verqua
+		   sum(stima_nq) = ;
+run;
+proc sort data = quadra;
+	by territorio;
+run;
+data verqua;
+	merge verqua quadra;
+	by territorio;
+	controllo = (consumi_istat_ultimo ~= stima_nq);
+run;
+proc means data = verqua sum;
+	var controllo;
+run;
+
+* Creating final datasets for consumption estimation with additional adjustments;
+data base_controllo;
+	set quan3;
+	prop_ult = stima_nq/red_ult;
+	con_pop_ult = stima_nq/pop_ult;
+	convar = 100*(con_pop_ult - con_pop_pre)/con_pop_pre;
+run;
+
+* Scatter plots of the consumption estimates for locations with extreme income-to-consumption ratios;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_ult;
+	id nome_comune sigla_provincia prop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_pre;
+	id nome_comune sigla_provincia prop_ult;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var con_pop_ult;
+	id nome_comune sigla_provincia con_pop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var con_pop_pre;
+	id nome_comune sigla_provincia con_pop_ult;
+run;
+
+* Group-wise summary of locations with extreme income-to-consumption ratios and sorted by consumption estimates;
+proc sort data = grande;
+	by prop_ult;
+run;
+proc print data = grande;
+	var nome_comune sigla_provincia convar redvar
+		con_pop_ult red_pop_ult con_pop_pre red_pop_pre;
+	format convar redvar con_pop_ult red_pop_ult con_pop_pre red_pop_pre 12.1;
+run;
+
+* Creating a scatter plot of the adjusted consumption estimates versus the previous income and population-weighted consumption ratio;
+proc gplot data = base_controllo;
+	symbol1 i = none  v = dot c = black;
+	plot con_pop_ult * red_pop_ult = 1;
+run;
+quit;
+
+* Group-wise summary of locations with extreme income-to-consumption ratios and low predicted income;
+data noncoerente;
+	set base_controllo;
+	if convar*redvar < 0 and min(abs(convar),abs(redvar)) > 1;
+run; *1653; 
+
+* Creating final datasets including the predicted total consumption;
+data attuale;
+	set ter_out.economica_comune;
+	drop consumi_totali;
+run;
+proc sort data = attuale;
+	by codice_comune__str;
+run;
+proc sort data = base_controllo;
+	by codice_comune__str;
+run;
+data nuova;
+	merge attuale base_controllo (keep = codice_comune__str stima_nq);
+	by codice_comune__str;
+	rename stima_nq = consumi_totali;
+run;
+
+* Creating an output table for the final estimated consumption;
+data ordinata;
+	retain codice_comune__str
+		   reddito
+		   consumi_totali
+		   anno_riferimento
+		   release;
+	set nuova;
+run;
+
+* Generating a summary of the estimated consumption data;
+proc freq data = ordinata;
+	tables codice_comune__str;
+run;
+
+* ... [Remaining code not included here due to its length and complexity] ...
+assistant
+Here is the converted Python code:
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Libraries for data import and output
+ter = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+sez = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+ter_out = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+sez_out = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+appo = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+
+# Options to merge datasets
+pd.options.mode.chained_assignment = None
+
+# Enabling options
+pd.set_option('display.max_columns', None)
+pd.set_option('display.expand_frame_repr', False)
+pd.set_option('precision', 15)
+
+# Import custom macros
+import macrosquadraturagruppo
+import macroarrotondainterogruppo
+
+# Setting title for the analysis
+print("STIMA COMUNALE DEI CONSUMI")
+
+# Disabling graphics output during the analysis
+plt.close('all')
+
+# Importing datasets from Excel files
+xconsumi_tag = pd.read_excel('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\tag_00026.xlsx', sheet_name='TAG-00026_4', usecols='A:G')
+xreddito_tag = pd.read_excel('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\tag_00027.xlsx', sheet_name='TAG-00027_2', usecols='A:G')
+
+# Preprocessing datasets
+xconsumi_tag['province_e_regioni'] = xconsumi_tag['province_e_regioni'].apply(lambda x: x.upper())
+xreddito_tag['province_e_regions'] = xreddito_tag['province_e_regions'].apply(lambda x: x.upper())
+xreddito_tag['province_e_regiones'] = xreddito_tag['province_e_regiones'].replace({'VALLE D''AOSTA/VALL�E D''AOSTE': 'VALLE D''AOSTA'})
+xconsumi_tag['consumi'] = xconsumi_tag['_017'] / 1000
+consumi_tag = xconsumi_tag[['province_e_regioni', 'consumi']]
+consumi_tag = consumi_tag.sort_values(by='province_e_regioni')
+
+xreddito_tag['province_e_regions'] = xreddito_tag['province_e_regions'].replace({'VALLE D''AOSTA/VALL�E D''AOSTE': 'VALLE D''AOSTA'})
+xreddito_tag['reddito'] = xreddito_tag['_017'] / 1000
+reddito_tag = xreddito_tag[['province_e_regiones', 'reddito']]
+reddito_tag = reddito_tag.sort_values(by='province_e_regioni')
+
+base_tag = pd.merge(reddito_tag, consumi_tag, on='province_e_regioni')
+base_tag['propensione'] = base_tag['consumi'] / base_tag['reddito']
+base_tag['inverso'] = (1 / base_tag['reddito'])
+
+# Distribution of propensity scores
+base_tag['propensione'].hist(bins=20)
+plt.title('Distribution of Propensity Scores')
+plt.xlabel('Propensity Score')
+plt.ylabel('Frequency')
+plt.show()
+
+# Scatter plot of propensity score versus income
+plt.scatter(base_tag['reddito'], base_tag['propensione'])
+plt.title('Propensity Score vs. Income')
+plt.xlabel('Income')
+plt.ylabel('Propensity Score')
+plt.show()
+
+# Scatter plot of propensity score versus income's inverse
+plt.scatter(base_tag['inverso'], base_tag['propensione'])
+plt.title('Propensity Score vs. Inverse Income')
+plt.xlabel('Inverse Income')
+plt.ylabel('Propensity Score')
+plt.show()
+
+# Correlation analysis
+print('Correlation:')
+print(base_tag[['propensione', 'reddito', 'inverso']].corr())
+
+# Simple regression analysis
+plt.scatter(base_tag['reddito'], base_tag['propensione'])
+plt.plot(base_tag['reddito'], base_tag['propensione'].mean(), color='red')
+plt.title('Simple Regression Analysis of Propensity Score vs. Income')
+plt.xlabel('Income')
+plt.ylabel('Propensity Score')
+plt.show()
+
+plt.scatter(base_tag['inverso'], base_tag['propensione'])
+plt.plot(base_tag['inverso'], base_tag['propensione'].mean(), color='red')
+plt.title('Simple Regression Analysis of Propensity Score vs. Inverse Income')
+plt.xlabel('Inverse Income')
+plt.ylabel('Propensity Score')
+plt.show()
+
+# Importing region and province information
+provincia = pd.read_excel('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\provincia_110.xlsx', sheet_name='Sheet1', usecols='A:E')
+provincia['Denominazione_Provincia_Citt__me'] = provincia['Denominazione_Provincia_Citt__me'].apply(lambda x: x.upper())
+provincia['Denominazione_Provincia_Citt__me'] = provincia['Denominazione_Provincia_Citt__me'].replace({'REGGIO DI CALABRIA': 'REGGIO CALABRIA'})
+
+# Merging region and province information
+base_tag['province_e_regioni'] = base_tag['province_e_regioni'].apply(lambda x: x.upper())
+base_tag = pd.merge(base_tag, provincia, left_on='province_e_regioni', right_on='Denominazione_Provincia_Citt__me')
+base_tag.drop('Denominazione_Provincia_Citt__me', axis=1, inplace=True)
+
+# Importing geographic and economic codes dataset for cross-referencing
+corrispo = pd.read_excel('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\Codici-statistici-e-denominazioni-al-31_12_2020.xls', sheet_name='CODICI al 31_12_2020', usecols='A:B')
+corrispo.rename(columns={'Codice_Comune_numerico_con_110_p': 'codice_comune__str'}, inplace=True)
+corrispo['codice_provincia'] = corrispo['Codice_Comune_numerico_con_110_p'].astype(str).str[:3]
+corrispo['codice_comune__str'] = corrispo['codice_comune__str'].apply(lambda x: '0' + x)
+
+# Merging geographic and economic codes with population and income data
+xcod = ter_out.geografica_comune[['codice_comune__str', 'codice_area_nielsen', 'codice_ripartizione']]
+popnew = ter_out.Popolazione_eta_sesso_comune.groupby('codice_comune__str').sum()[['popolazione']]
+popnew.rename(columns={'popolazione': 'pop_ult'}, inplace=True)
+xcod = pd.merge(xcod, corrispo, on='codice_comune__str')
+xcod = pd.merge(xcod, popnew, on='codice_comune__str')
+
+xcods = xcod.groupby('codice_provincia').sum()[['pop_ult']]
+
+base_tag = pd.merge(base_tag, xcods, on='codice_provincia')
+
+# Group-wise summary by region
+base_tag['codice_ripartizione'] = base_tag['codice_ripartizione'].astype(int)
+print('Group-wise summary by region:')
+print(base_tag.groupby('codice_ripartizione')[['propensione', 'reddito', 'inverso']].describe())
+
+# Scatter plot of propensity score versus income
+plt.scatter(base_tag['reddito'], base_tag['propensione'])
+plt.title('Propensity Score vs. Income by Region')
+plt.xlabel('Income')
+plt.ylabel('Propensity Score')
+plt.show()
+
+# Scatter plot of propensity score versus income's inverse
+plt.scatter(base_tag['inverso'], base_tag['propensione'])
+plt.title('Propensity Score vs. Inverse Income by Region')
+plt.xlabel('Inverse Income')
+plt.ylabel('Propensity Score')
+plt.show()
+
+# Conducting regression models with weighted population
+base_tag['pop_ult'] = base_tag['pop_ult'].astype(float)
+model1 = smf.ols(formula='propensione ~ reddito + ripart1 + ripart2 + ripart3 + ripart4', data=base_tag)
+model2 = smf.ols(formula='propensione ~ inverso + ripart1 + ripart2 + ripart3 + ripart4', data=base_tag)
+
+results1 = model1.fit(cov_type='HC0')
+print('Regression Model 1 Summary:')
+print(results1.summary())
+
+results2 = model2.fit(cov_type='HC0')
+print('Regression Model 2 Summary:')
+print(results2.summary())
+
+# Conducting regression models by region
+model3 = smf.ols(formula='propensione ~ inverso', data=base_tag)
+
+results3 = model3.fit(cov_type='HC0')
+print('Regression Model 3 Summary:')
+print(results3.summary())
+
+# Conducting regression diagnostics (outliers, predicted values, etc.)
+predictions = results3.get_prediction(base_tag)
+base_tag['yteorica'] = predictions.predicted
+base_tag['rstud'] = predictions.resid_response
+
+# Filtering data for models with less than 2 robustly outlying observations
+base_dep = base_tag[abs(base_tag['rstud']) < 2]
+
+# Conducting weighted regression for the filtered dataset
+model4 = smf.ols(formula='propensione ~ inverso + ripart1 + ripart2 + ripart3 + ripart4', data=base_dep)
+
+results4 = model4.fit(cov_type='HC0')
+print('Regression Model 4 Summary:')
+print(results4.summary())
+
+# Creating a scatter plot of the theoretical predictions against actual values
+plt.scatter(base_dep['propensione'], base_dep['yteorica'])
+plt.title('Theoretical Predictions vs. Actual Values')
+plt.xlabel('Actual Propensity Score')
+plt.ylabel('Theoretical Propensity Score')
+plt.show()
+
+# Computing Pearson correlation coefficients
+print('Pearson correlation coefficients:')
+print(base_dep[['yteorica', 'propensione']].corr())
+
+# Creating a histogram of the theoretical predictions
+base_dep['yteorica'].hist(bins=20)
+plt.title('Histogram of Theoretical Predictions')
+plt.xlabel('Theoretical Propensity Score')
+plt.ylabel('Frequency')
+plt.show()
+
+# Group-wise summary of regional predictions
+print('Group-wise summary of regional predictions:')
+print(base_dep.groupby('codice_ripartizione')[['yteorica', 'propensione']].describe())
+
+# Predicting propensity scores using regression coefficients
+xcod.rename(columns={'Codice_Comune_numerico_con_110_p': 'codice_comune__str'}, inplace=True)
+xcod['codice_provincia'] = xcod['Codice_Comune_numerico_con_110_p'].astype(str).str[:3]
+xcod['codice_comune__str'] = xcod['codice_comune__str'].apply(lambda x: '0' + x)
+
+xcod_copy = xcod.copy()
+xcod_copy['codice_ripartizione'] = results3.params['codice_ripartizione'].index.values
+
+geog = xcod_copy.merge(xcod, on='codice_comune__str')
+geog['territory'] = geog['Denominazione_Provincia_Citt__me']
+geog['territory'] = geog['territory'].replace({'REGGIO DI CALABRIA': 'REGGIO CALABRIA'})
+geog.drop('Denominazione_Provincia_Citt__me', axis=1, inplace=True)
+
+eco = ter.econom20b[['codc620b', 'red19', 'con19']]
+eco.rename(columns={'codc620b': 'codice_comune__str', 'red19': 'red_pre', 'con19': 'con_pre'}, inplace=True)
+
+eco_g = geog.merge(eco, on='codice_comune__str')
+
+# Calculating regional averages (previous and current values)
+regionale_precedente = eco_g.groupby('territory').sum()[['red_pre', 'con_pre', 'pop_ult']]
+regionale_precedente['red_pop_ult'] = regionale_precedente['red_pre'] / regionale_precedente['pop_ult']
+regionale_precedente['con_pop_ult'] = regionale_precedente['con_pre'] / regionale_precedente['pop_ult']
+regionale_precedente['red_pop_pre'] = regionale_precedente['red_pop_ult'].shift(1)
+regionale_precedente['con_pop_pre'] = regionale_precedente['con_pop_ult'].shift(1)
+regionale_precedente['convar'] = 100 * (regionale_precedente['con_pop_ult'] - regionale_precedente['con_pop_pre']) / regionale_precedente['con_pop_pre']
+
+# Importing data for consumption estimates from a CSV file
+consumi_istat = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\quadratura_consumi.csv')
+consumi_istat['territory'] = consumi_istat['territory'].apply(lambda x: x.upper())
+consumi_istat.replace({'PROVINCIA AUTONOMA BOLZANO / BOZEN': 'BOLZANO',
+                       'PROVINCIA AUTONOMA TRENTO': 'TRENTO',
+                       'VALLE D''AOSTA / VALLéE D''AOSTE': 'VALLE D''AOSTA'}, inplace=True)
+consumi_istat['consumi_istat_preced'] = consumi_istat['consumi_2019'] * 1000
+consumi_istat['consumi_istat_ultimo'] = consumi_istat['consumi_2020'] * 1000
+
+# Merging consumption estimate data with regional averages
+confronto = regionale_precedente.merge(consumi_istat, on='territory')
+confronto['red_pop_ult'] = confronto['red_pre'] / confronto['pop_ult']
+confronto['difperc'] = 100 * (confronto['consumi_istat_preced'] - confronto['consumi_istat_preced']) / confronto['consumi_istat_preced']
+confronto['mediaistat'] = confronto['consumi_istat_ultimo'] / confronto['red_pre']
+confronto.drop(columns=['red_pre', 'pop_ult'], inplace=True)
+
+confronto.sort_values(by='difperc', inplace=True)
+print('Confronto:')
+print(confronto)
+
+# Creating a histogram of the difference between estimated and ISTAT consumption
+confronto['mediaistat'].hist(bins=20)
+plt.title('Histogram of the Difference between Estimated and ISTAT Consumption')
+plt.xlabel('Consumption Difference')
+plt.ylabel('Frequency')
+plt.show()
+
+# Group-wise summary of consumption estimates by territorial classifications
+print('Group-wise summary of consumption estimates by territorial classifications:')
+print(confronto.groupby('territory').describe())
+
+# Merging predicted propensity scores with regional averages
+medie = results3.params['codice_ripartizione'].to_frame().T
+medie.index.name = 'territory'
+
+confronto = confronto.merge(medie, left_on='territory', right_index=True)
+confronto['propensione'] = confronto['propensione'] * confronto['codice_ripartizione']
+
+# Creating a histogram of adjusted propensity scores
+confronto['propensione'].hist(bins=20)
+plt.title('Histogram of Adjusted Propensity Scores')
+plt.xlabel('Adjusted Propensity Score')
+plt.ylabel('Frequency')
+plt.show()
+
+# Calculating percentiles of adjusted propensity scores
+confronto['perc5'] = np.percentile(confronto['propensione'], 5)
+confronto['perc95'] = np.percentile(confronto['propensione'], 95)
+
+# Creating an output table of adjusted propensity scores with normalization applied
+confronto['pronorma'] = confronto['propensione']
+confronto.loc[confronto['propensione'] < confronto['perc5'], 'pronorma'] = 0.1 * confronto['propensione'] + 0.9 * confronto['perc5']
+confronto.loc[confronto['propensione'] > confronto['perc95'], 'pronorma'] = 0.1 * confronto['propensione'] + 0.9 * confronto['perc95']
+
+# Creating a scatter plot of adjusted propensity scores versus the previous income
+plt.scatter(confronto['red_pop_ult'], confronto['pronorma'])
+plt.title('Adjusted Propensity Scores vs. Previous Income')
+plt.xlabel('Previous Income')
+plt.ylabel('Adjusted Propensity Score')
+plt.show()
+
+# Creating a histogram of normalized propensity scores
+confronto['pronorma'].hist(bins=20)
+plt.title('Histogram of Normalized Propensity Scores')
+plt.xlabel('Normalized Propensity Score')
+plt.ylabel('Frequency')
+plt.show()
+
+# Creating regression model for normalized propensity scores
+stima_grezza = confronto['red_pop_ult'] * confronto['propensione']
+ristima = confronto.copy()
+ristima['stima_grezza'] = stima_grezza
+
+# Applying group-wise quadratic estimation to normalized propensity scores
+quadra = macrosquadraturagruppo.quadratura_gruppo(ristima, 'stima_grezza', 'quadra', 'consumi_istat_ultimo', 'stima_qua', 'territory', 'qua1')
+qua2 = quadra.merge(ristima[['territory', 'codice_ripartizione']])
+
+# Applying group-wise interpolation to normalized propensity scores
+qua3 = macroarrotondainterogruppo.arrotondai_intero_gruppo(qua2, 'stima_qua', 'quadra', 'consumi_istat_ultimo', 'territory', 'qua3')
+
+# Group-wise summary of the number of inconsistencies in estimated consumption and the final estimated consumption values
+verqua = qua3.groupby('territory').sum()[['stima_qua']]
+qua3 = qua3.merge(quadra[['territory', 'codice_ripartizione']])
+
+verqua['controllo'] = qua3['consumi_istat_ultimo'] != verqua['stima_qua']
+verqua.groupby('controllo').size()
+
+# Creating final datasets for consumption estimation
+base_controllo = qua3.copy()
+base_controllo['prop_ult'] = base_controllo['stima_nq'] / base_controllo['red_pop_ult']
+base_controllo['con_pop_ult'] = base_controllo['stima_nq'] / base_controllo['pop_ult']
+base_controllo['convar'] = 100 * (base_controllo['con_pop_ult'] - base_controllo['con_pop_pre']) / base_controllo['con_pop_pre']
+
+# Scatter plots of the consumption estimates for locations with extreme income-to-consumption ratios
+plt.scatter(base_controllo['prop_ult'], base_controllo['red_pop_ult'])
+plt.title('Consumption Estimates vs. Previous Income for Extreme Income-to-Consumption Ratios')
+plt.xlabel('Previous Income')
+plt.ylabel('Consumption Estimate')
+plt.show()
+
+plt.scatter(base_controllo['prop_pre'], base_controllo['red_pop_ult'])
+plt.title('Consumption Estimates vs. Previous Income for Extreme Income-to-Consumption Ratios')
+plt.xlabel('Previous Income')
+plt.ylabel('Consumption Estimate')
+plt.show()
+
+plt.scatter(base_controllo['con_pop_ult'], base_controllo['red_pop_ult'])
+plt.title('Consumption Estimates vs. Previous Income for Extreme Income-to-Consumption Ratios')
+plt.xlabel('Previous Income')
+plt.ylabel('Consumption Estimate')
+plt.show()
+
+plt.scatter(base_controllo['con_pop_pre'], base_controllo['red_pop_ult'])
+plt.title('Consumption Estimates vs. Previous Income for Extreme Income-to-Consumption Ratios')
+plt.xlabel('Previous Income')
+plt.ylabel('Consumption Estimate')
+plt.show()
+
+# Group-wise summary of locations with extreme income-to-consumption ratios and sorted by consumption estimates
+base_controllo['prop_dif'] = base_controllo['prop_ult'] - base_controllo['prop_pre']
+base_controllo.sort_values(by='prop_dif', ascending=False, inplace=True)
+print('Locations with extreme income-to-consumption ratios:')
+print(base_controllo[['nome_comune', 'sigla_provincia', 'convar', 'redvar', 'con_pop_ult', 'red_pop_ult', 'con_pop_pre', 'red_pop_pre']])
+
+# Scatter plot of the income to consumption ratio and income
+plt.scatter(base_controllo['red_pop_ult'], base_controllo['convar'])
+plt.title('Income-to-Consumption Ratio vs. Income')
+plt.xlabel('Income')
+plt.ylabel('Income-to-Consumption Ratio')
+plt.show()
+
+# Creating scatter plots of the income-to-consumption ratio against the previous income and population-weighted consumption ratio
+plt.scatter(base_controllo['red_pop_ult'], base_controllo['con_pop_ult'])
+plt.title('Income-to-Consumption Ratio vs. Population-Weighted Consumption Ratio')
+plt.xlabel('Previous Income')
+plt.ylabel('Income-to-Consumption Ratio')
+plt.show()
+
+# Creating scatter plots of the income-to-consumption ratio versus income, sorted by income-to-consumption ratio
+base_controllo.sort_values(by='convar', ascending=False, inplace=True)
+plt.scatter(base_controllo['convar'], base_controllo['red_pop_ult'])
+plt.title('Income-to-Consumption Ratio vs. Income, Sorted by Income-to-Consumption Ratio')
+plt.xlabel('Income-to-Consumption Ratio')
+plt.ylabel('Income')
+plt.show()
+
+# Creating scatter plot of the income to consumption ratio, sorted by income-to-consumption ratio and normalized by the interquartile range
+plt.scatter(base_controllo['convar'], base_controllo['red_pop_ult'])
+plt.title('Normalized Income-to-Consumption Ratio vs. Income')
+plt.xlabel('Normalized Income-to-Consumption Ratio')
+plt.ylabel('Income')
+plt.show()
+
+# Creating a histogram of normalized income-to-consumption ratios
+base_controllo['varnorma'] = base_controllo['convar']
+base_controllo['varnorma'].loc[base_controllo['convar'] < base_controllo['perc5'], 'varnorma'] = 0.3 * base_controllo['convar'] + 0.7 * base_controllo['perc5']
+base_controllo['varnorma'].loc[base_controllo['convar'] > base_controllo['perc95'], 'varnorma'] = 0.3 * base_controllo['convar'] + 0.7 * base_controllo['perc95']
+
+# Creating a scatter plot of the normalized income-to-consumption ratio versus income
+plt.scatter(base_controllo['varnorma'], base_controllo['red_pop_ult'])
+plt.title('Normalized Income-to-Consumption Ratio vs. Income')
+plt.xlabel('Normalized Income-to-Consumption Ratio')
+plt.ylabel('Income')
+plt.show()
+
+# Creating a histogram of normalized income-to-consumption ratios
+base_controllo['varnorma'].hist(bins=20)
+plt.title('Histogram of Normalized Income-to-Consumption Ratios')
+plt.xlabel('Normalized Income-to-Consumption Ratio')
+plt.ylabel('Frequency')
+plt.show()
+
+# Creating regression model for the normalized income-to-consumption ratios
+stima_n = base_controllo['pop_ult'] * base_controllo['con_pop_pre'] * (1 + base_controllo['varnorma'] / 100)
+ristima = base_controllo.copy()
+ristima['stima_n'] = stima_n
+
+# Applying group-wise quadratic estimation to normalized income-to-consumption ratios
+quadra = macrosquadraturagruppo.quadratura_gruppo(ristima, 'stima_n', 'quadra', 'consumi_istat_ultimo', 'stima_nq', 'territory', 'quan1')
+quan2 = quadra.merge(ristima[['territory', 'codice_ripartizione']])
+
+# Applying group-wise interpolation to normalized income-to-consumption ratios
+quan3 = macroarrotondainterogruppo.arrotondai_intero_gruppo(quan2, 'stima_nq', 'quadra', 'consumi_istat_ultimo', 'territory', 'quan3')
+
+# Group-wise summary of the number of inconsistencies in estimated consumption and the final estimated consumption values after adjustments
+verqua = quan3.groupby('territory').sum()[['stima_nq']]
+quan3 = quan3.merge(quadra[['territory', 'codice_ripartizione']])
+
+verqua['controllo'] = quan3['consumi_istat_ultimo'] != verqua['stima_nq']
+verqua.groupby('controllo').size()
+
+# Creating final datasets including the predicted total consumption
+attuale = ter.economica_comune[['codice_comune__str', 'consumi_totali']].drop_duplicates()
+
+base_controllo = base_controllo.merge(attuale, left_on='codice_comune__str', right_on='codice_comune__str', how='left')
+base_controllo['consumi_totali'] = base_controllo['consumi_totali'].fillna(0)
+
+# Creating an output table for the final estimated consumption
+nuova = base_controllo.copy()
+
+# Generating a summary of the estimated consumption data
+print('Summary of the Estimated Consumption Data:')
+print(nuova.groupby('codice_comune__str').size())
+
+# Creating an output table for the final estimated consumption with additional adjustments
+attuale.columns = ['codice_comune__str', 'consumi_totali']
+nuova = nuova.merge(attuale, on='codice_comune__str', how='left')
+nuova['consumi_totali'] = nuova['consumi_totali'].fillna(0)
+```
+
+Please note that this code requires the installation of the following Python packages: pandas, numpy, matplotlib, statsmodels, and functions defined in the `macroquadraturagruppo` and `macroarrotondainterogruppo` modules which are not provided here.

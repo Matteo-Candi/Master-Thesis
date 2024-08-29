@@ -1,0 +1,53 @@
+Here is the PySpark code equivalent to your SQL query. This assumes that you have already created a DataFrame `df` from your source table `ddwh00_sa.ts_aemi0004_us_aem` and it has all the columns used in your query.
+
+```python
+# Import required libraries
+from pyspark.sql import SparkSession, functions as F
+from pyspark.sql.window import Window
+
+# Create a Spark session if not created already
+spark = SparkSession.builder.getOrCreate()
+
+# Filter data based on conditions and create new columns
+df_filtered = df \
+    .filter((F.col("company_id").isin(["JIC", "FOR"])) & (F.col("frequency_id") == 'M') & 
+            ((F.when((F.col("product_id").isin(['CEB0', 'CEE2', 'CEE3', 'CEF0', 'CEG0'])), F.lit('010')) \
+              .otherwise(F.lit('011'))) == F.expr("lpad(activity_id, 3, '0')")) & (F.col("attribute_id") == '99'))
+
+df_transformed = df_filtered \
+    .withColumn("aemr_cd_scenario", F.when((F.date_format(F.col("postdate"), "yyyyMM") == F.date_format(F.col("rdate"), "yyyyMM")), 
+                                           F.lit('COMPANY DATA')).otherwise(F.lit('COMPANY REVISION'))) \
+    .withColumn("aemr_cd_rep_company_code", F.col("company_id")) \
+    .withColumn("aemr_cd_program_code", F.expr("substring(product_id, 1, 2)")) \
+    .withColumn("aemr_cd_prodruct_code", F.expr("substring(product_id, 3, 2)")) \
+    .withColumn("aemr_cd_model_chart", F.col("chart_id")) \
+    .withColumn("aemr_cd_rep_frequency", F.col("frequency_id")) \
+    .withColumn("aemr_cd_activity_code", F.expr("lpad(activity_id, 3, '0')")) \
+    .withColumn("aemr_cd_size_code", F.col("size_id")) \
+    .withColumn("aemr_cd_upper_size", F.lit(None)) \
+    .withColumn("aemr_cd_lower_size", F.lit(None)) \
+    .withColumn("aemr_cd_year", F.col("cd_year")) \
+    .withColumn("aemr_cd_month", F.expr("lpad(period, 2, '0')")) \
+    .withColumn("aemr_dt_rdate", F.col("rdate")) \
+    .withColumn("aemr_dt_post_date", F.col("postdate")) \
+    .withColumn("aemr_cd_fips_country_code", F.expr("substring(geography_id, 1, 3)")) \
+    .withColumn("aemr_cd_fips_state_code", F.expr("substring(geography_id, 4, 3)")) \
+    .withColumn("aemr_cd_fips_county_code", F.expr("substring(geography_id, 7, 3)")) \
+    .withColumn("aemr_cd_fips_sub_county_code", F.expr("substring(geography_id, 10, 3)")) \
+    .withColumn("aemr_cd_customer_type_code", F.expr("lpad(customer_type_id, 3, '0')")) \
+    .withColumn("aemr_cd_end_use_code", F.expr("lpad(end_use_id, 3, '0')")) \
+    .withColumn("aemr_cd_attribute", F.lit(None)) \
+    .withColumn("aemr_qt_retail_qty", F.col("count_id")) \
+    .withColumn("aemr_cd_source_system", F.lit('US AEM')) \
+    .withColumn("aemr_id_batch_id", F.lit(1)) \
+    .withColumn("aemr_cd_vin", F.lit(None)) \
+    .withColumn("aemr_cd_model_id", F.col("chart_id")) 
+
+# Create a new column with sequence for each row
+window = Window.orderBy('a1')
+df_transformed = df_transformed.withColumn("aemr_id_retail_history", F.row_number().over(window))
+
+# Write transformed data to the target table
+df_transformed.write.format("parquet").mode("append").insertInto("ddwh01_dw.td_aemr_retail_history")
+```
+Please replace `'ddwh01_dw.seq_aemr_td00001.nextval'` with the equivalent sequence in PySpark as PySpark doesn't have built-in support for sequences like SQL. Also, please note that this code assumes you are using a SparkSession and not a HiveContext. If your environment is different, adjust accordingly.

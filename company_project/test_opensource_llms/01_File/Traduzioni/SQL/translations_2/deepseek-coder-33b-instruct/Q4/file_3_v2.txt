@@ -1,0 +1,45 @@
+Here is the PySpark version of your SQL code:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, year, length, substring, when, lit
+from pyspark.sql.window import Window
+
+# Create a Spark Session
+spark = SparkSession.builder.getOrCreate()
+
+# Read the tables
+EKPO_PURCH_DOC_ITEM_GPP = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+PLBR_PLANT_BRANCHES = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+SUPM_SUPPLIER_GPP = spark.table("ddwh01_dw.TM_SUPM_SUPPLIER_GPP")
+EKKO_PURCH_DOC_HEADER_GPP = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+
+# Filter the EKPO_PURCH_DOC_ITEM_GPP dataframe
+AGCE = EKPO_PURCH_DOC_ITEM_GPP.join(PLBR_PLANT_BRANCHES, (EKPO_PURCH_DOC_ITEM_GPP["EKPO_CD_PLANT"] == PLBR_PLANT_BRANCHES["PLBR_CD_PLANT"]) & 
+                                     PLBR_PLANT_BRANCHES["PLBR_DS_PLANT_SEGMENT"].isin(["AG", "CE", "-1", "AM", "AS"])) \
+                               .filter((col("EKPO_CD_PLANT") != 'FA01') & (col("EKPO_CD_PLANT") != 'FB01') & 
+                                       (col("EKPO_CD_PLANT").notlike('00%'))) \
+                               .select(EKPO_PURCH_DOC_ITEM_GPP["EKPO_CD_PO_NBR"]).distinct()
+
+# Filter the SUPM_SUPPLIER_GPP dataframe
+SUPM = SUPM_SUPPLIER_GPP.select(SUPM_SUPPLIER_GPP["SUPM_CD_ACCOUNT_NBR"], 
+                                 when(length(SUPM_SUPPLIER_GPP["SUPM_CD_COMP_TRADING_PARTNER"]) > 1, 'Intercompany').otherwise('Third Party') \
+                                .alias("Supplier_Type")).distinct()
+
+# Join the dataframes and select columns
+df = EKKO_PURCH_DOC_HEADER_GPP.join(AGCE, EKKO_PURCH_DOC_HEADER_GPP["EKKO_CD_PURCH_DOC_NBR"] == AGCE["EKPO_CD_PO_NBR"], 'inner') \
+                               .join(SUPM, EKKO_PURCH_DOC_HEADER_GPP["EKKO_CD_VENDOR_ACCOUNT_NBR"] == SUPM["SUPM_CD_ACCOUNT_NBR"], 'left') \
+                               .select(EKKO_PURCH_DOC_HEADER_GPP["*"], 
+                                       year(EKKO_PURCH_DOC_HEADER_GPP["EKKO_DT_PURCH_DOC_DATE"]).alias("EKKO_NR_PURCH_DOC_YEAR"), 
+                                       lit('').alias("PLBR_DS_PLANT_SEGMENT"), 
+                                       EKKO_PURCH_DOC_HEADER_GPP["EKKO_CD_PURCH_DOCTYPE"].alias("ODAG_PODOCUMENTTYPE"), 
+                                       EKKO_PURCH_DOC_HEADER_GPP["EKKO_CD_VENDOR_ACCOUNT_NBR"].alias("ODAG_SUPPLIERCODE"), 
+                                       year(coalesce(EKKO_PURCH_DOC_HEADER_GPP["EKKO_DT_CONTRACT_END_DATE"], EKKO_PURCH_DOC_HEADER_GPP["EKKO_DT_RECORD_CREATED_ON"])).alias("EKKO_DT_RETENTION_YEAR"), 
+                                       year(EKKO_PURCH_DOC_HEADER_GPP["EKKO_DT_PURCH_DOC_DATE"]).alias("ODAG_PODOCUMENTYEAR"), 
+                                       substring('0000000000' + EKKO_PURCH_DOC_HEADER_GPP["EKKO_CD_PURCH_DOC_NBR"], -10).alias("EKKO_CD_PURCH_DOC_NBR10"), 
+                                       SUPM["Supplier_Type"].alias("EKKO_CD_SUPPLIER_TYPE"))
+
+# Create a view with the dataframe
+df.createOrReplaceTempView("VW_EKKO_PURCH_DOC_HEADER_AGCE")
+```
+This PySpark code reads tables from the database and joins them, then selects columns for the final result. The 'createOrReplaceTempView' method is used to create a temporary view in Spark that can be accessed by other parts of your application. Please replace `"ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP"` and similar with the actual table names from your database.

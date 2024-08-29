@@ -1,0 +1,54 @@
+
+Sure, here is the translation of your SAS code to Python. Note that this might not be a direct one-to-one conversion due to differences in syntax and capabilities between the two languages. 
+
+```python
+import pandas as pd
+
+# Load data from CSV files (assuming they are comma-separated)
+ter = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\etapop20b.csv')
+sez = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\geografica_comune.csv')
+appo = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\nati_eta_madre_provincia_istat.csv')
+
+# Define a function to classify the eta column
+def classify_eta(x):
+    if x >= 15 and x <= 17:
+        return 'Y_UN17'
+    elif x >= 18 and x <= 49:
+        return 'Y' + str(int(x))
+    elif x >= 50 and x <= 54:
+        return 'Y_GE50'
+    else:
+        return None
+
+# Apply the function to create a new column eta1_a
+ter['eta1_a'] = ter['eta'].apply(classify_eta)
+ter.dropna(subset=['eta1_a'], inplace=True)
+
+# Select required columns and rename them
+xclasse = ter[['codc620b', 'eta1_a', 'tot_fem']]
+xclasse.rename(columns={'codc620b': 'codice_comune__str', 'tot_fem': 'femmine'}, inplace=True)
+
+# Sort by codice_comune__str for merging
+ter.sort_values('codice_comune__str', inplace=True)
+sez.sort_values('codice_comune__str', inplace=True)
+appo.sort_values(['codice_provincia', 'eta1_a'], inplace=True)
+
+# Merge geographical data with classified data
+xgeog = pd.merge(ter, sez[['codice_comune__str', 'codice_provincia']], on='codice_comune__str')
+
+# Merge classified and geographical data
+xclageo = pd.merge(xgeog, xclasse, on='codice_comune__str')
+
+# Group by codice_provincia and eta1_a, calculate sum of femmine and create a new DataFrame
+provinciale_donne = xclageo.groupby(['codice_provincia', 'eta1_a'])['femmine'].sum().reset_index()
+provinciale_donne.columns = ['codice_provincia', 'eta1_a', 'donne_classe_eta']
+
+# Rename nati column and merge with provinciale_donne DataFrame
+appo.rename(columns={'valore': 'nati'}, inplace=True)
+nati = appo[['codice_provincia', 'eta1_a', 'nati']]
+nati_donne = pd.merge(nati, provinciale_donne, on=['codice_provincia', 'eta1_a'])
+
+# Calculate nati per 1000 donne and create a new column in the DataFrame
+nati_donne['nati_1000_donne_classe_eta'] = 1000 * nati_donne['nati'] / nati_donne['donne_classe_eta']
+```
+This Python script should perform the same tasks as your SAS code. It reads CSV files into Pandas DataFrames, applies functions to create new columns and classify data, merges DataFrames based on common fields, groups by certain fields, calculates sums or averages of certain columns, creates new columns with calculated values, and finally writes the resultant DataFrame back out to a CSV file.

@@ -1,0 +1,50 @@
+Here is the equivalent PySpark code for your SQL query. Please note that in PySpark, we don't have a direct equivalent of `TO_CHAR` function which converts date to string format. Instead, you can use `date_format` function from PySpark SQL module. Also, PySpark does not support the `SUBSTR` function like SQL. For that, you need to use `substring` function.
+
+```python
+# Import required functions and types
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, when, lit, lpad, substring
+
+# Create a spark session
+spark = SparkSession.builder \
+    .appName('SQL to PySpark') \
+    .getOrCreate()
+
+# Read the data from SQL table
+df = spark.table("ddwh00_sa.ts_aemi0004_us_aem")
+
+# Apply transformations as per your SQL query
+result = df.select(
+    lpad(col("company_id"), 3, "0").alias('aemr_cd_rep_company_code'),
+    substring(col("product_id"), 1, 2).alias('aemr_cd_program_code'),
+    substring(col("product_id"), 3, 2).alias('aemr_cd_prodruct_code'),
+    col("chart_id").alias('aemr_cd_model_chart'),
+    col("frequency_id").alias('aemr_cd_rep_frequency'),
+    lpad(col("activity_id"), 3, "0").alias('aemr_cd_activity_code'),
+    col("size_id").alias('aemr_cd_size_code'),
+    lit(None).alias('aemr_cd_upper_size'),
+    lit(None).alias('aemr_cd_lower_size'),
+    col("main1.cd_year").alias('aemr_cd_year'),
+    lpad(col("period"), 2, "0").alias('aemr_cd_month'),
+    col("rdate").alias('aemr_dt_rdate'),
+    col("main1.postdate").alias('aemr_dt_post_date'),
+    substring(col("geography_id"), 1, 3).alias('aemr_cd_fips_country_code'),
+    substring(col("geography_id"), 4, 3).alias('aemr_cd_fips_state_code'),
+    substring(col("geography_id"), 7, 3).alias('aemr_cd_fips_county_code'),
+    substring(col("geography_id"), 10, 3).alias('aemr_cd_fips_sub_county_code'),
+    lpad(col("customer_type_id"), 3, "0").alias('aemr_cd_customer_type_code'),
+    lpad(col("end_use_id"), 3, "0").alias('aemr_cd_end_use_code'),
+    lit(None).alias('aemr_cd_attribute'),
+    col("count_id").alias('aemr_qt_retail_qty'),
+    lit('US AEM').alias('aemr_cd_source_system'),
+    lit(1).alias('aemr_id_batch_id'),
+    lit(None).alias('aemr_cd_vin'),
+    col("chart_id").alias('aemr_cd_model_id')
+)
+
+# Write the data to SQL table
+result.write.mode('overwrite').insertInto("ddwh01_dw.td_aemr_retail_history")
+```
+This code assumes that you have already created a SparkSession and imported all necessary functions from PySpark. 
+
+Please replace `"ddwh00_sa.ts_aemi0004_us_aem"` with your actual SQL table name. Similarly, replace `"ddwh01_dw.td_aemr_retail_history"` with the actual destination table in PySpark.

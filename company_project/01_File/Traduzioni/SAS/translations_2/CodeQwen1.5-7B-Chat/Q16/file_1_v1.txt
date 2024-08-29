@@ -1,0 +1,107 @@
+system
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise.
+user
+Translate the following code from SAS to Python:
+%macro quadraturagruppo(daquadrare,		
+						daquad,			
+						totpergru,		
+						perquad,		
+						giaquad,		
+						vargruppo,		
+						quadrato);		
+
+
+
+
+
+%put;
+%put %str(WARNING- ============================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- somma quadrare);
+%put %str(WARNING- identificano data set ausiliari della macro quadraturagruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni        );
+%put %str(WARNING- ============================================================);
+%put;
+
+
+proc sort data = &daquadrare;
+	by &vargruppo;
+run;
+proc means data = &daquadrare noprint;
+	by &vargruppo;
+	output out = somma (keep = &vargruppo datot)
+		   sum(&daquad) = datot;
+run;
+proc sort data = &totpergru;
+	by &vargruppo;
+run;
+data somma;
+	merge somma (in = inso) &totpergru (in = into);
+	by &vargruppo;
+	if inso and into;
+	keep &vargruppo datot &perquad;
+run; 
+
+
+data quadrare;
+	merge &daquadrare somma (in = presente);
+	by &vargruppo;
+	if presente;
+	&giaquad = &daquad*&perquad/datot;
+run;
+
+
+data &quadrato;
+	set quadrare;
+	drop &daquad datot &perquad;
+run;
+
+
+proc datasets library = work;
+	delete somma quadrare;
+run;
+quit;
+
+%mend quadraturagruppo;
+
+assistant
+Here is the Python version of the SAS macro you provided:
+
+```python
+import pandas as pd
+
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    print("WARNING- ============================================================")
+    print("WARNING: I nomi")
+    print("WARNING- somma quadrare")
+    print("WARNING- identificano data set ausiliari della macro quadraturagruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni        ")
+    print("WARNING- ============================================================")
+
+    # Sort the data by vargruppo
+    daquadrare = daquadrare.sort_values(by=vargruppo)
+
+    # Compute the sum of daquad by vargruppo
+    somma = daquadrare.groupby(vargruppo)[daquad].sum().reset_index()
+    somma.rename(columns={daquad: 'datot'}, inplace=True)
+
+    # Sort the data by vargruppo
+    totpergru = totpergru.sort_values(by=vargruppo)
+
+    # Merge somma and totpergru
+    somma = somma.merge(totpergru, on=vargruppo, how='inner')
+
+    # Compute the quadrare dataframe
+    quadrare = daquadrare.merge(somma, on=vargruppo, how='inner')
+    quadrare[giaquad] = quadrare[daquad] * quadrare[perquad] / quadrare['datot']
+
+    # Drop unnecessary columns
+    quadrato = quadrare.drop(columns=[daquad, 'datot', perquad])
+
+    # Drop temporary dataframes
+    del somma, quadrare
+
+    return quadrato
+```
+
+Please note that this is a direct translation of the SAS macro to Python. It assumes that the input dataframes are already defined and accessible in the Python environment. If not, you will need to load the dataframes from files or other sources before calling the function. The function returns the resulting dataframe after performing the calculations.

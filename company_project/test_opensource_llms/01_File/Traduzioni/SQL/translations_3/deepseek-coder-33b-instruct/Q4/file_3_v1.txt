@@ -1,0 +1,39 @@
+Here is the PySpark code that translates your SQL query:
+
+```python
+from pyspark.sql import SparkSession, functions as F
+
+# Create a Spark session
+spark = SparkSession.builder \
+    .appName('example') \
+    .getOrCreate()
+    
+df_EKKO = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+
+df_EKPO = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP").alias('EKPO') \
+    .join(spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES").alias('PLBR'), (F.col('EKPO.EKPO_CD_PLANT') == F.col('PLBR.PLBR_CD_PLANT')) 
+          & (F.col('PLBR.PLBR_DS_PLANT_SEGMENT').isin(['AG', 'CE', '-1', 'AM', 'AS'])) 
+          & ~(F.col('EKPO.EKPO_CD_PLANT').isin(['FA01', 'FB01', 'IA01']) | F.col('EKPO.EKPO_CD_PLANT').like("00%")), "inner") \
+    .select(F.col('EKPO.EKPO_CD_PO_NBR'))
+    
+df_SUPM = spark.table("ddwh01_dw.TM_SUPM_SUPPLIER_GPP").alias('SUPM') \
+    .select(F.col('SUPM.SUPM_CD_ACCOUNT_NBR'), 
+            F.when(F.length(F.col('SUPM.SUPM_CD_COMP_TRADING_PARTNER')) > 1, "Intercompany").otherwise("Third Party").alias("Supplier_Type"))
+    
+df = df_EKKO \
+    .join(df_EKPO, df_EKO['EKKO_CD_PURCH_DOC_NBR'] == df_EKPO['EKPO.EKPO_CD_PO_NBR'], "inner") \
+    .join(df_SUPM, df_EKO['EKKO_CD_VENDOR_ACCOUNT_NBR'] == df_SUPM['SUPM.SUPM_CD_ACCOUNT_NBR'], "left") \
+    .selectExpr("EKKO.*", 
+               "SUBSTR('0000000000' || EKKO_CD_PURCH_DOC_NBR, -10) as EKKO_CD_PURCH_DOC_NBR10", 
+               "EKPO.EKPO_CD_PLANT AS PLBR_DS_PLANT_SEGMENT", 
+               "TO_NUMBER(YEAR(EKKO_DT_PURCH_DOC_DATE)) as EKKO_NR_PURCH_DOC_YEAR", 
+               "CAST(EKKO_CD_PURCH_DOCTYPE AS STRING) as ODAG_PODOCUMENTTYPE", 
+               "CAST(EKKO_CD_VENDOR_ACCOUNT_NBR AS STRING) as ODAG_SUPPLIERCODE", 
+               "TO_NUMBER(YEAR(COALESCE(EKKO_DT_CONTRACT_END_DATE, EKKO_DT_RECORD_CREATED_ON))) as EKKO_DT_RETENTION_YEAR", 
+               "TO_NUMBER(YEAR(EKKO_DT_PURCH_DOC_DATE)) as ODAG_PODOCUMENTYEAR") \
+    .withColumnRenamed("Supplier_Type", "EKKO_CD_SUPPLIER_TYPE")  # Rename column from 'Supplier_Type' to 'EKKO_CD_SUPPLIER_TYPE'
+    
+df.createOrReplaceTempView('VW_EKKO_PURCH_DOC_HEADER_AGCE')  # Create or replace a temporary view with this dataframe
+```
+
+Please replace the placeholder "ddwh01_dw" in `spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")`, `spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")` and `spark.table("ddwh01_dw.TM_SUPM_SUPPLIER_GPP")` with your actual database name.

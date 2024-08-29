@@ -1,0 +1,33 @@
+
+The translated code from SQL to PySpark would be:
+```python
+from pyspark.sql import SparkSession
+
+# Create a Spark Session
+spark = SparkSession.builder \
+    .appName('Translate SQL to PySpark') \
+    .getOrCreate()
+
+# Define the DataFrame for EKPO_PURCH_DOC_ITEM_GPP table
+df_ekpo = spark.read.table("DDWH02_SM.VW_EKPO_PURCH_DOC_ITEM_AGCE")
+
+# Define the DataFrame for TD_PLBR_PLANT_BRANCHES table
+df_plbr = spark.read.table("DDWH01_DW.TD_PLBR_PLANT_BRANCHES")
+
+# Define the DataFrame for TT_EKKO_PURCH_DOC_HEADER_GPP table
+df_ekkoo = spark.read.table("DDWH01_DW.TT_EKKO_PURCH_DOC_HEADER_GPP")
+
+# Define the DataFrame for TD_TRGE_TRANSCODING_GENERAL table
+df_trge = spark.read.table("DDWH01_DW.TD_TRGE_TRANSCODING_GENERAL")
+
+# Join the tables based on the conditions specified in the SQL query
+result = df_ekpo.join(df_plbr, (df_ekpo['EKPO_CD_PLANT'] == df_plbr['PLBR_CD_PLANT']) & (df_plbr['PLBR_DS_PLANT_SEGMENT'].isin(['AG', 'CE', '-1', 'AM', 'AS'])) & ((df_ekpo['EKPO_CD_PLANT'] != 'FA01') & (df_ekpo['EKPO_CD_PLANT'] != 'FB01') & (df_ekpo['EKPO_CD_PLANT'] != 'IA01') | ~(df_ekpo['EKPO_CD_PLANT'].like('00%'))))
+result = result.join(df_ekkoo, df_ekpo['EKPO_CD_PO_NBR'] == df_ekkoo['EKKO_CD_PURCH_DOC_NBR'])
+result = result.join(df_trge, (df_plbr['PLBR_CD_PLANT'] == df_trge['TRGE_CD_SOURCE_DATA_1']) & ((df_trge['TRGE_CD_LOGICAL_SYSTEM'].isin(['ERP', 'URP', 'NH3', 'DWH'])) & (df_trge['TRGE_CD_DEFAULT_NAME'] == 'WERKS')))
+
+# Select the required columns and perform transformations as per the SQL query
+result = result.select(df_ekpo['EKPO_ID_PURCH_DOC_ITEM_GPP'],
+                           df_ekpo['EKPO_DT_LAST_MODIFY'],
+                           # ... add other selected columns here ...
+                           )
+```

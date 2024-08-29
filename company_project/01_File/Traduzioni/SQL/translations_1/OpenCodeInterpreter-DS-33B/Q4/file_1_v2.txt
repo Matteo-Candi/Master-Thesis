@@ -1,0 +1,49 @@
+
+In PySpark, the equivalent code for translating SQL to PySpark would be as follows. Please note that this is a simplified translation and some details might not be fully translated due to differences between SQL and PySpark syntax:
+```python
+from pyspark.sql import SparkSession
+
+# create spark session
+spark = SparkSession.builder \
+    .appName('Translate SQL to PySpark') \
+    .getOrCreate()
+
+# read data from database
+df1 = spark.read.format("jdbc").option("url", "jdbc:postgresql://localhost/ddwh00_sa") \
+    .option("dbtable", "TS_VENL0001_WW_GPP") \
+    .option("user", "username") \
+    .option("password", "password") \
+    .load()
+
+df2 = spark.read.format("jdbc").option("url", "jdbc:postgresql://localhost/ddwh01_dw") \
+    .option("dbtable", "TM_VENL_MASTER_LINK") \
+    .option("user", "username") \
+    .option("password", "password") \
+    .load()
+    
+# perform merge operation
+df2 = df1.join(df2, (df1.CLIENT == df2.VENL_CD_CLIENT) & (df1.PARTNER_GUID == df2.VENL_CD_PARTNER_GUID), 'left') \
+    .whenMatchedUpdate(set={
+        "VENL_CD_VENDOR": df1.VENDOR,
+        "VENL_CD_USER": df1.CRUSER,
+        "VENL_DT_DATE": df1.CRDAT,
+        "VENL_DT_TIME": df1.CRTIM,
+        "VENL_DT_LAST_MODIFY": current_date(),
+        "VENL_ID_BATCH_LAST_MODIFY": NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) 
+    }) \
+    .whenNotMatchedInsert(values={
+        "VENL_ID_LINK": DDWH01_DW.SEQ_TM_VENL.NEXTVAL(),
+        "VENL_CD_CLIENT": df1.CLIENT,
+        "VENL_CD_PARTNER_GUID": df1.PARTNER_GUID,
+        "VENL_CD_VENDOR": df1.VENDOR,
+        "VENL_CD_USER": df1.CRUSER,
+        "VENL_DT_DATE": df1.CRDAT,
+        "VENL_DT_TIME": df1.CRTIM,
+        "VENL_ID_BATCH_ID": NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG),
+        "VENL_DT_START_VALIDITY": to_date('01/01/1900', 'DD/MM/YYYY'),
+        "VENL_DT_END_VALIDITY": to_date('31/12/9999', 'DD/MM/YYYY'),
+        "VENL_DT_INSERT": current_date(),
+        "VENL_ID_BATCH_LAST_MODIFY": NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG),
+        "VENL_DT_LAST_MODIFY": current_date() 
+    })
+```

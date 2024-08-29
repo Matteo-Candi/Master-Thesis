@@ -1,0 +1,45 @@
+Here is the PySpark code for the provided SQL query:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, to_date, year, lit, when, coalesce, concat, ltrim, regexp_replace, length, expr
+from pyspark.sql.types import IntegerType
+
+# Initialize Spark Session
+spark = SparkSession.builder.appName("sql_to_pyspark").getOrCreate()
+
+# Read the tables
+TT_EKPO_PURCH_DOC_ITEM_GPP = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+TD_PLBR_PLANT_BRANCHES = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+TT_EKKO_PURCH_DOC_HEADER_GPP = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+TD_TRGE_TRANSCODING_GENERAL = spark.table("ddwh01_dw.TD_TRGE_TRANSCODING_GENERAL").select('TRGE_CD_SOURCE_DATA_1', 'TRGE_CD_DESTINATION_DATA').where((col('TRGE_CD_DEFAULT_NAME') == lit('WERKS')) & (col('TRGE_CD_LOGICAL_SYSTEM').isin(['ERP','URP','NH3','DWH'])))
+
+# Perform join operations
+df = TT_EKPO_PURCH_DOC_ITEM_GPP.join(TD_PLBR_PLANT_BRANCHES, (TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'] == TD_PLBR_PLANT_BRANCHES['PLBR_CD_PLANT']) & (TD_PLBR_PLANT_BRANCHES['PLBR_DS_PLANT_SEGMENT'].isin(['AG','CE','-1','AM','AS'])) & ~(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'].rlike('00%')))\
+    .join(TT_EKKO_PURCH_DOC_HEADER_GPP, TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PO_NBR'] == TT_EKKO_PURCH_DOC_HEADER_GPP['EKKO_CD_PURCH_DOC_NBR'])\
+    .join(TD_TRGE_TRANSCODING_GENERAL, TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'] == TD_TRGE_TRANSCODING_GENERAL['TRGE_CD_SOURCE_DATA_1'], 'left')
+
+# Perform transformations
+df = df.select(
+    *[col(c).alias(c) for c in df.columns],  # Select all columns from the dataframe
+    year(to_date(TT_EKPO_PURCH_DOC_ITEM_GPP['EKKO_DT_PURCH_DOC_DATE'], 'yyyy')).alias('EKPO_NR_PURCH_DOC_YEAR'),  # Convert date to year
+    when(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PURCH_DOC_NBR_R3_GPP'] == '-1', TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PO_NBR']).otherwise(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PURCH_DOC_NBR_R3_GPP']).alias('EKPO_CD_PURCH_DOC_NBR_R3_GPP'),  # Case statement
+    when(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'].isin(['CR01','TY01','CX01']), concat(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_WPS_PREFIX'], TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_MFG'])).when(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'].isin(['AU01','LP01','LP02','AU05']), lit('SO').concat(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_MFG'])).otherwise(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_MFG']).alias('EKPO_CD_MATERIAL_MFG'),  # Case statement
+    TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_DS_PLANT_SEGMENT'],  # Select a column
+    TD_PLBR_PLANT_BRANCHES['PLBR_DS_PLANT_SEGMENT'],  # Select a column
+    TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_NBR'].alias('ODAG_PARTNUMBER'),  # Rename a column
+    TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PROGRAM_ID'].alias('ODAG_PROGRAM'),  # Rename a column
+    year(coalesce(TT_EKKO_PURCH_DOC_HEADER_GPP['EKKO_DT_CONTRACT_END_DATE'], TT_EKKO_PURCH_DOC_HEADER_GPP['EKKO_DT_RECORD_CREATED_ON'])).alias('EKPO_DT_RETENTION_YEAR'),  # Convert date to year
+    concat(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PO_NBR'], lit('-'), TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_NR_ITEM_NBR_PO']).alias('ODAG_PODOCUMENT'),  # Concatenate columns
+    (TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_NR_NET_WEIGHT'] / 1000).cast(IntegerType()).alias('EKPO_NR_NET_WEIGHT'),  # Divide and cast to integer
+    (TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_NR_GROSS_WEIGHT'] / 1000).cast(IntegerType()).alias('EKPO_NR_GROSS_WEIGHT'),  # Divide and cast to integer
+    TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_UNIT_OF_WEIGHT'],  # Select a column
+    coalesce(TD_TRGE_TRANSCODING_GENERAL['TRGE_CD_DESTINATION_DATA'], TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT']).alias('EKPO_CD_PLANT_R3_STC'),  # Coalesce
+    expr("substr('0000000000' || EKPO_CD_PO_NBR, -10)").cast(IntegerType()).alias('EKPO_CD_PO_NBR10'),  # Substring and cast to integer
+    expr("substr('00000' || EKPO_NR_ITEM_NBR_PO, -5)").cast(IntegerType()).alias('EKPO_NR_ITEM_NBR_PO5'),  # Substring and cast to integer
+    regexp_replace(ltrim(regexp_replace(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_NBR'], '0', ' ')), ' ', '0').alias('EKPO_CD_MATERIAL_NBR_TRIM'),  # Replace and trim
+    regexp_replace(ltrim(regexp_replace(when(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'].isin(['CR01','TY01','CX01']), concat(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_WPS_PREFIX'], TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_MFG'])).when(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'].isin(['AU01','LP01','LP02','AU05']), lit('SO').concat(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_MFG'])).otherwise(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_MFG']), '0', ' ')), ' ', '0').alias('EKPO_CD_MATERIAL_MFG_TRIM'),  # Replace and trim
+    expr("substr('0000000000' || EKPO_CD_PURCH_DOC_NBR_R3_GPP, -10)").cast(IntegerType()).alias('EKPO_CD_PURCH_DOC_NBR_R3_GPP10'),  # Substring and cast to integer
+    when((TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'] == 'CX01'), regexp_replace(ltrim(regexp_replace(concat(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_WPS_PREFIX'], TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_MATERIAL_MFG']), '0', ' ')), ' ', '0')).when(TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'].isin(['AU01','LP01','LP02','AU05']), expr("substr(regexp_replace(ltrim(regexp_replace(concat('SO', EKPO_CD_MATERIAL_MFG), '0', ' ')), ' ', '0'), 0, instr(regexp_replace(ltrim(regexp_replace(concat('SO', EKPO_CD_MATERIAL_MFG), '0', ' ')), ' ', '0'), '+SC')-1))")).when((TT_EKPO_PURCH_DOC_ITEM_GPP['EKPO_CD_PLANT'].isin(['CR01','TY01'])), expr("substr(regexp_replace(ltrim(regexp_replace(concat(EKPO_CD_WPS_PREFIX, EKPO_CD_MATERIAL_MFG), '0', ' ')), ' ', '0'), 0, instr(regexp_replace(ltrim(regexp_replace(concat(EKPO_CD_WPS_PREFIX, EKPO_CD_MATERIAL_MFG), '0', ' ')), ' ', '0'), '+SC')-1))").otherwise(expr("substr(regexp_replace(ltrim(regexp_replace(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', '0'), 0, instr(regexp_replace(ltrim(regexp_replace(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', '0'), '+SC')-1)"))).otherwise(regexp_replace(ltrim(regexp_replace(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', '0')).alias('EKPO_KEY_STC')  # Complex case statement
+)
+```

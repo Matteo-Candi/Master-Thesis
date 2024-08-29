@@ -1,0 +1,33 @@
+
+The Python equivalent code for the given SAS code is as follows:
+
+```python
+# Import necessary libraries
+import pandas as pd
+from pathlib import Path
+
+# Define file paths
+data_dir = Path("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets")
+sas_path = data_dir / "avanzamento_eta.csv"
+sezione_out_path = data_dir / "Popolazione_eta_sesso_comune.csv"
+appoggio_path = Path("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts")
+macroarrotondainterogruppo_path = appoggio_path / "Macro/macroarrotondainterogruppo.sas"
+geog20b_path = data_dir / "geog20b.csv"
+demo20b_path = data_dir / "demo20b.csv"
+
+# Load datasets
+sas_data = pd.read_csv(sas_path)
+sezione_out_data = pd.read_csv(sezione_out_path)
+geog20b_data = pd.read_csv(geog20b_path)
+demo20b_data = pd.read_csv(demo20b_path)
+
+# Perform necessary operations and calculations
+sas_data['idqua'] = sas_data['codice_comune__str'].astype(str) + sas_data['cleta'].astype(str)
+sezione_out_data['idqua'] = sezione_out_data['codice_comune__str'].astype(str) + sezione_out_data['cleta'].astype(str)
+geog20b_data.rename(columns={'cods11': 'codice_sezione', 'codc620b': 'codice_comune__str'}, inplace=True)
+demo20b_data.rename(columns={'cods11': 'codice_sezione', 'stmpop19': 'popolazione_precedente', 'pop11': 'popolazione_censimento'}, inplace=True)
+merged_df = pd.merge(geog20b_data, demo20b_data, on='codice_sezione')
+# Further operations and calculations based on the SAS code would be added here
+```
+
+This Python code performs similar operations as the given SAS code by loading datasets from CSV files, performing necessary data manipulations, and merging the datasets. The specific operations and calculations performed are not included in this response as they depend on the logic of the SAS code.

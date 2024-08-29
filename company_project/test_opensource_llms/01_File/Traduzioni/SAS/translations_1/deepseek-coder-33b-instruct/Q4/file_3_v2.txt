@@ -1,0 +1,40 @@
+The SAS code you've provided is a series of data manipulations and analysis. The Python equivalent can be quite lengthy due to the lack of direct equivalents for some SAS procedures in Python, such as `PROC TABULATE` or `PROC MEANS`. However, here is a translation of your code using pandas, which is a popular data manipulation library in Python:
+
+```python
+import pandas as pd
+
+# Define the file paths
+ter_path = "C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets"
+sez_path = ter_path
+ter_out_path = ter_path
+sez_out_path = ter_path
+appo_path = ter_path
+
+# Load the data from SAS datasets
+etapop20b = pd.read_csv(f"{ter_path}/etapop20b.csv")  # Assuming CSV format for simplicity
+geografica_comune = pd.read_csv(f"{ter_out_path}/geografica_comune.csv")  # Assuming CSV format for simplicity
+nati_eta_madre_provincia_istat = pd.read_csv(f"{appo_path}/nati_eta_madre_provincia_istat.csv")  # Assuming CSV format for simplicity
+
+# Perform the data manipulations and analysis
+etapop20b['time'] = 2019
+etapop20b['eta1_a'] = etapop20b['eta'].apply(lambda x: 'Y_UN17' if 15 <= x <= 17 else ('Y'+str(x) if 18 <= x <= 49 else 'Y_GE50' if 50 <= x <= 54 else None))
+etapop20b.dropna(subset=['eta1_a'], inplace=True)
+etapop20b = etapop20b[['codc620b', 'eta1_a', 'time', 'tot_fem']]
+etapop20b.rename(columns={'codc620b': 'codice_comune__str', 'tot_fem': 'femmine'}, inplace=True)
+print('Summary of eta by eta1_a:')
+print(etapop20b.groupby('eta1_a')['eta'].describe())
+etapop20b = etapop20b.sort_values('codice_comune__str')
+geografica_comune = geografica_comune[['codice_comune__str', 'codice_provincia']]
+geografica_comune = geografica_comune.sort_values('codice_comune__str')
+xclageo = pd.merge(geografica_comune, etapop20b, on='codice_comune__str')
+provinciale_donne = xclageo.groupby(['codice_provincia', 'eta1_a']).sum().reset_index()
+provinciale_donne.rename(columns={'femmine': 'donne_classe_eta'}, inplace=True)
+nati_eta_madre_provincia_istat.rename(columns={'valore': 'nati'}, inplace=True)
+nati = nati_eta_madre_provincia_istat[['codice_provincia', 'eta1_a', 'nati']]
+nati_donne = pd.merge(nati, provinciale_donne, on=['codice_provincia', 'eta1_a'])
+nati_donne['nati_1000_donne_classe_eta'] = 1000 * nati_donne['nati'] / nati_donne['donne_classe_eta']
+```
+
+Please note that this code assumes the input data is in CSV format. If your data are in a different format, you may need to adjust the `pd.read_csv` calls accordingly. Also, please ensure your Python environment has all necessary packages installed (pandas). 
+
+The translation might not be perfect due to the differences between SAS and Python data processing libraries. For more complex tasks, it's recommended to use a tool that supports both languages like R or Julia.

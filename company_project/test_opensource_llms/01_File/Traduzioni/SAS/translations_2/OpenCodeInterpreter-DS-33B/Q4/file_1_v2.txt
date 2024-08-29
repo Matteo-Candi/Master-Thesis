@@ -1,0 +1,33 @@
+
+The SAS code you have provided is a macro function that performs various operations on a dataset. Here's how it can be translated to Python, using Pandas library for data manipulation and manipulating file paths:
+
+```python
+import pandas as pd
+from pathlib import Path
+
+# Define the function
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    # Load data from CSV files
+    df_daquadrare = pd.read_csv(Path(daquadrare))
+    df_totpergru = pd.read_csv(Path(totpergru))
+    
+    # Sort the dataframes by vargruppo column
+    df_daquadrare = df_daquadrare.sort_values(by=vargruppo)
+    df_totpergru = df_totpergru.sort_values(by=vargruppo)
+    
+    # Group the dataframes by vargruppo and calculate sum of daquad column
+    df_somma = df_daquadrare.groupby(vargruppo)[[daquad]].sum().reset_index()
+    df_somma.columns = [vargruppo, 'datot']
+    
+    # Merge the two dataframes on vargruppo and keep only rows where both dataframes have a match
+    df_somma = pd.merge(df_somma, df_totpergru, how='inner', on=vargruppo)
+    
+    # Merge the original dataframe with the calculated sum dataframe on vargruppo and calculate giaquad column
+    df_quadrare = pd.merge(df_daquadrare, df_somma, how='inner', on=vargruppo)
+    df_quadrare[giaquad] = df_quadrare[daquad] * df_quadrare[perquad] / df_quadrare['datot']
+    
+    # Save the final dataframe to a CSV file
+    df_quadrato = df_quadrare.drop(columns=[daquad, 'datot', perquad])
+    df_quadrato.to_csv(Path(quadrato), index=False)
+```
+Please note that this translation assumes that the input CSV files are in the same directory as your Python script or notebook, and they have column names matching those used in the SAS code. Also, make sure to handle any exceptions that may occur during execution.

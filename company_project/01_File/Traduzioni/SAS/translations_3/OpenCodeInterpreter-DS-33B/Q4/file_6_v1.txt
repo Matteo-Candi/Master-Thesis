@@ -1,0 +1,60 @@
+
+Translating the SAS code to Python would require using specific libraries in python such as pandas and numpy. The code could look something like this:
+
+```python
+import pandas as pd
+import numpy as np
+
+# Load data
+ter = pd.read_csv('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/etapop20b')
+sez = pd.read_csv('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_sezione')
+ter_out = pd.read_csv('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/etapop20b')
+appo = pd.read_csv('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/nati_eta_madre_rapporto')
+popolazione_comune = pd.read_csv('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/Popolazione_eta_sesso_comune')
+popolazione_sezione = pd.read_csv('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/nati_1000_donne_classe_eta')
+
+# Clean data and create variables
+base_sezione = sez[['codice_sezione', 'codice_comune__str']]
+x_base_eta = ter.copy()
+x_base_eta['cleta'] = np.where(x_base_eta['eta'] <= 4, "00-04", 
+                                        np.where(x_base_eta['eta'] <= 9, "05-09", 
+                                                    np.where(x_base_eta['eta'] <= 14, "10-14", 
+                                                                np.where(x_base_eta['eta'] <= 19, "15-19", 
+                                                                            np.where(x_base_eta['eta'] <= 24, "20-24", 
+                                                                                        np.where(x_base_eta['eta'] <= 29, "25-29", 
+                                                                                                    np.where(x_base_eta['eta'] <= 34, "30-34", 
+                                                                                                            np.where(x_base_eta['eta'] <= 39, "35-39", 
+                                                                                                                        np.where(x_base_eta['eta'] <= 44, "40-44", 
+                                                                                                                                                            np.where(x_base_eta['eta'] <= 49, "45-49", 
+                                                                                                                                                                        np.where(x_base_eta['eta'] <= 54, "50-54", 
+                                                                                                                                                                                np.where(x_base_eta['eta'] <= 59, "55-59", 
+                                                                                                                                                                                            np.where(x_base_eta['eta'] <= 64, "60-64", 
+                                                                                                                                                                                                                                np.where(x_base_eta['eta'] <= 69, "65-69", 
+                                                                                                                                                                                                                                    np.where(x_base_eta['eta'] <= 74, "70-74", 
+                                                                                                                                                                                                                                                            "75-99"))))))))))
+title1 = 'AVANZAMENTO DELLE ETÀ'
+attuale = ter[['codc620b', 'cleta', 'stmmas19', 'stmfem19']]
+
+# Merge dataframes and calculate percentages
+base_sezione_eta = pd.merge(base_sezione, x_base_eta, how='inner')
+attuale.columns = ['codice_comune__str', 'cleta', 'stmmas19', 'stmfem19']
+base_sezione_eta = pd.merge(base_sezione_eta, attuale, how='inner')
+tot_classe_com = base_sezione_eta.groupby(['codc620b', 'cleta'])['stmmas19', 'stmfem19'].sum()
+tot_classe_com.columns = ['tot_mas', 'tot_fem']
+base_sezione_eta = pd.merge(base_sezione_eta, tot_classe_com, how='inner')
+base_sezione_eta['percentuale_maschi'] = 100 * base_sezione_eta['tot_mas'] / base_sezione_eta['tot_classe_com_sum']
+base_sezione_eta['percentuale_femmine'] = 100 * base_sezione_eta['tot_fem'] / base_sezione_eta['tot_classe_com_sum']
+
+# Calculate stima per sezione
+base_sezione_eta = pd.merge(base_sezione_eta, popolazione_comune[['codice_comune__str', 'maschi_perc']], how='inner')
+base_sezione_eta['maschi_distribuiti'] = base_sezione_eta['stmmas19'] * base_sezione_eta['percentuale_maschi'] / 100
+base_sezione_eta['femmine_distribuite'] = base_sezione_eta['stmfem19'] * base_sezione_eta['percentuale_femmine'] / 100
+
+# Calculate totali di controllo per sezione e provincia
+totali_controllo = base_sezione_eta.groupby(['codice_comune__str', 'cleta'])['maschi_distribuiti', 'femmine_distribuite'].sum()
+
+# Calculate stima per età e madre
+base_sezione_eta = pd.merge(base_sezione_eta, appo[['codice_provincia', 'eta1_a', 'nati_1000_donne_classe_eta']], how='inner')
+totali_stima = base_sezione_eta.groupby(['codice_comune__str'])['maschi_distribuiti', 'femmine_distribuite'].sum()
+``` 
+This Python code translates the SAS code. However, it does not perform a comprehensive analysis and output as in the original SAS code, you'd need to add those parts manually. Also, keep in mind that this is only translation of the logic used in the SAS script and might not directly translate some aspects into Python due to differences between RDBMS like SQL Server (SAS) and pandas DataFrame structure (Python).

@@ -1,0 +1,118 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+### Instruction:
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise.
+Translate the following code from SQL to PySpark:
+INSERT INTO ddwh01_dw.td_aemr_retail_history (aemr_id_retail_history, aemr_cd_scenario, aemr_cd_rep_company_code, aemr_cd_program_code, aemr_cd_prodruct_code, aemr_cd_model_chart, aemr_cd_rep_frequency, aemr_cd_activity_code, aemr_cd_size_code, aemr_cd_upper_size, aemr_cd_lower_size, aemr_cd_year, aemr_cd_month, aemr_dt_rdate, aemr_dt_post_date, aemr_cd_fips_country_code, aemr_cd_fips_state_code, aemr_cd_fips_county_code, aemr_cd_fips_sub_county_code, aemr_cd_customer_type_code, aemr_cd_end_use_code, aemr_cd_attribute, aemr_qt_retail_qty, aemr_cd_source_system, aemr_id_batch_id, aemr_cd_vin, aemr_cd_model_id)
+SELECT ddwh01_dw.seq_aemr_td00001.nextval,
+       CASE
+           WHEN TO_CHAR (main1.postdate,
+                         'YYYYMM') = TO_CHAR (main1.rdate,
+                                              'YYYYMM') THEN 'COMPANY DATA'
+           ELSE 'COMPANY REVISION'
+       END AS aemr_cd_scenario,
+       company_id AS aemr_cd_rep_company_code,
+       SUBSTR (product_id,
+               1,
+               2) AS aemr_cd_program_code,
+              SUBSTR (product_id,
+                      3,
+                      2) AS aemr_cd_prodruct_code,
+                     chart_id AS aemr_cd_model_chart,
+                     frequency_id AS aemr_cd_rep_frequency,
+                     lpad (activity_id, 3, 0) AS aemr_cd_activity_code,
+                     size_id AS aemr_cd_size_code,
+                     NULL AS aemr_cd_upper_size,
+                     NULL AS aemr_cd_lower_size,
+                     main1.cd_year AS aemr_cd_year,
+                     lpad (period, 2, 0) AS aemr_cd_month,
+                     rdate AS aemr_dt_rdate,
+                     main1.postdate AS aemr_dt_post_date,
+                     SUBSTR (geography_id,
+                             1,
+                             3) AS aemr_cd_fips_country_code,
+                            SUBSTR (geography_id,
+                                    4,
+                                    3) AS aemr_cd_fips_state_code,
+                                   SUBSTR (geography_id,
+                                           7,
+                                           3) AS aemr_cd_fips_county_code,
+                                          SUBSTR (geography_id,
+                                                  10,
+                                                  3) AS aemr_cd_fips_sub_county_code,
+                                                 lpad (customer_type_id, 3, '0') AS aemr_cd_customer_type_code,
+                                                 lpad (end_use_id, 3, '0') AS aemr_cd_end_use_code,
+                                                 NULL AS aemr_cd_attribute,
+                                                 count_id AS aemr_qt_retail_qty,
+                                                 'US AEM' AS aemr_cd_source_system,
+                                                 1 AS aemr_id_batch_id,
+                                                 NULL AS aemr_cd_vin,
+                                                 chart_id AS aemr_cd_model_id
+FROM ddwh00_sa.ts_aemi0004_us_aem main1
+WHERE company_id IN ('JIC',
+                     'FOR')
+  AND frequency_id = 'M'
+  AND CASE
+          WHEN product_id IN ('CEB0',
+                              'CEE2',
+                              'CEE3',
+                              'CEF0',
+                              'CEG0') THEN '010'
+          ELSE '011'
+      END = lpad (activity_id, 3, '0')
+  AND attribute_id = '99' ;
+### Response:
+Unfortunately, you cannot perform INSERT operations with PySpark the same way you would do in a traditional SQL environment. The PySpark DataFrame API provides a simple way to create new DataFrame by running SQL queries or by combining existing DataFrames. However, it does not support SQL's INSERT INTO command.
+
+In PySpark, you can achieve data transformation and manipulation functionality similar to what you have in your SQL query, with Spark SQL and DataFrame API. We can convert the SQL query into equivalent PySpark code using DataFrame transformations and actions which can be much readable and efficient than running a raw SQL query. Here's how we could translate your SQL query into PySpark:
+
+```python
+from pyspark.sql.functions import col, to_date, split, monotonically_increasing_id, when, lpad, substr
+from pyspark.sql import SparkSession
+
+# assuming spark is your SparkSession instance
+df = spark.read.format("jdbc").options(
+    url="jdbc:postgresql:host=hostname;port=5432;database=database;user=username;password=password",
+    dbtable="ddwh00_sa.ts_aemi0004_us_aem").load()
+
+df = df.filter((df.company_id.isin(['JIC', 'FOR'])) & (df.frequency_id == 'M'))
+
+df = df.withColumn("aemr_id_retail_history", monotonically_increasing_id())
+df = df.withColumn("aemr_cd_scenario", 
+                   when(to_date(df.postdate).year == to_date(df.rdate).year, "COMPANY DATA")
+                   .otherwise("COMPANY REVISION"))
+df = df.withColumn("aemr_cd_rep_company_code", df.company_id)
+df = df.withColumn("aemr_cd_program_code", substr(df.product_id, 1, 2))
+df = df.withColumn("aemr_cd_prodruct_code", substr(df.product_id, 3, 2))
+df = df.withColumn("aemr_cd_model_chart", df.chart_id)
+df = df.withColumn("aemr_cd_rep_frequency", df.frequency_id )
+df = df.withColumn("aemr_cd_activity_code", lpad(df.activity_id, 3, "0"))
+df = df.withColumn("aemr_cd_size_code", df.size_id)
+df = df.withColumn("aemr_cd_year", df.cd_year)
+df = df.withColumn("aemr_cd_month", lpad(df.period, 2, "0"))
+df = df.withColumn("aemr_dt_rdate", df.rdate)
+df = df.withColumn("aemr_dt_post_date", df.postdate)
+df = df.withColumn("aemr_cd_fips_country_code", substr(df.geography_id, 1, 3))
+df = df.withColumn("aemr_cd_fips_state_code", substr(df.geography_id, 4, 3))
+df = df.withColumn("aemr_cd_fips_county_code", substr(df.geography_id, 7, 3))
+df = df.withColumn("aemr_cd_fips_sub_county_code", substr(df.geography_id, 10, 3))
+df = df.withColumn("aemr_cd_customer_type_code", lpad(df.customer_type_id, 3, "0"))
+df = df.withColumn("aemr_cd_end_use_code", lpad(df.end_use_id, 3, "0"))
+df = df.withColumn("aemr_qt_retail_qty", df.count_id)
+df = df.withColumn("aemr_cd_source_system", lit("US AEM"))
+df = df.withColumn("aemr_id_batch_id", lit(1)) 
+df = df.withColumn("aemr_cd_model_id", df.chart_id)
+
+df.write.format("jdbc").options(
+    url="jdbc:postgresql:host=hostname;port=5432;database=database;user=username;password=password",
+    dbtable="ddwh01_dw.td_aemr_retail_history",
+    driver="com.postgresql.jdbc.Driver").save()
+```
+
+Please note that you would need to replace some parts with values according to your environment like "hostname", "database", "username", "password".
+
+In the above code, I am:
+
+1) Read a table from a PostgreSQL database.
+2) Filtered rows based on provided conditions.
+3) Defined new columns based on your original SQL query using PySpark's column and dataframe transformations.
+4) Write the transformed DataFrame back into a PostgreSQL Database.

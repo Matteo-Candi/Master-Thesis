@@ -1,0 +1,119 @@
+You are an expert in translating code from SQL to PySpark. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+INSERT INTO ddwh01_dw.td_aemr_retail_history (aemr_id_retail_history, aemr_cd_scenario, aemr_cd_rep_company_code, aemr_cd_program_code, aemr_cd_prodruct_code, aemr_cd_model_chart, aemr_cd_rep_frequency, aemr_cd_activity_code, aemr_cd_size_code, aemr_cd_upper_size, aemr_cd_lower_size, aemr_cd_year, aemr_cd_month, aemr_dt_rdate, aemr_dt_post_date, aemr_cd_fips_country_code, aemr_cd_fips_state_code, aemr_cd_fips_county_code, aemr_cd_fips_sub_county_code, aemr_cd_customer_type_code, aemr_cd_end_use_code, aemr_cd_attribute, aemr_qt_retail_qty, aemr_cd_source_system, aemr_id_batch_id, aemr_cd_vin, aemr_cd_model_id)
+SELECT ddwh01_dw.seq_aemr_td00001.nextval,
+       CASE
+           WHEN TO_CHAR (main1.postdate,
+                         'YYYYMM') = TO_CHAR (main1.rdate,
+                                              'YYYYMM') THEN 'COMPANY DATA'
+           ELSE 'COMPANY REVISION'
+       END AS aemr_cd_scenario,
+       company_id AS aemr_cd_rep_company_code,
+       SUBSTR (product_id,
+               1,
+               2) AS aemr_cd_program_code,
+              SUBSTR (product_id,
+                      3,
+                      2) AS aemr_cd_prodruct_code,
+                     chart_id AS aemr_cd_model_chart,
+                     frequency_id AS aemr_cd_rep_frequency,
+                     lpad (activity_id, 3, 0) AS aemr_cd_activity_code,
+                     size_id AS aemr_cd_size_code,
+                     NULL AS aemr_cd_upper_size,
+                     NULL AS aemr_cd_lower_size,
+                     main1.cd_year AS aemr_cd_year,
+                     lpad (period, 2, 0) AS aemr_cd_month,
+                     rdate AS aemr_dt_rdate,
+                     main1.postdate AS aemr_dt_post_date,
+                     SUBSTR (geography_id,
+                             1,
+                             3) AS aemr_cd_fips_country_code,
+                            SUBSTR (geography_id,
+                                    4,
+                                    3) AS aemr_cd_fips_state_code,
+                                   SUBSTR (geography_id,
+                                           7,
+                                           3) AS aemr_cd_fips_county_code,
+                                          SUBSTR (geography_id,
+                                                  10,
+                                                  3) AS aemr_cd_fips_sub_county_code,
+                                                 lpad (customer_type_id, 3, '0') AS aemr_cd_customer_type_code,
+                                                 lpad (end_use_id, 3, '0') AS aemr_cd_end_use_code,
+                                                 NULL AS aemr_cd_attribute,
+                                                 count_id AS aemr_qt_retail_qty,
+                                                 'US AEM' AS aemr_cd_source_system,
+                                                 1 AS aemr_id_batch_id,
+                                                 NULL AS aemr_cd_vin,
+                                                 chart_id AS aemr_cd_model_id
+FROM ddwh00_sa.ts_aemi0004_us_aem main1
+WHERE company_id IN ('JIC',
+                     'FOR')
+  AND frequency_id = 'M'
+  AND CASE
+          WHEN product_id IN ('CEB0',
+                              'CEE2',
+                              'CEE3',
+                              'CEF0',
+                              'CEG0') THEN '010'
+          ELSE '011'
+      END = lpad (activity_id, 3, '0')
+  AND attribute_id = '99' ; 
+@@Response
+PySpark code:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.types import StringType, IntegerType
+
+spark = SparkSession.builder.appName("your_app_name").getOrCreate()
+
+# Read the data
+main1 = spark.read.format("jdbc").option("url", "jdbc:oracle:thin:@your_host:your_port:your_db").option("dbtable", "ts_aemi0004_us_aem").option("user", "your_username").option("password", "your_password").load()
+
+# Filter the data
+main1 = main1.filter((main1.company_id.isin(['JIC', 'FOR'])) & (main1.frequency_id == 'M') & ((main1.product_id.isin(['CEB0', 'CEE2', 'CEE3', 'CEF0', 'CEG0'])) & (main1.attribute_id == '99')) & (F.lpad(main1.activity_id, 3, '0') == main1.activity_id))
+
+# Define the function for scenario
+def scenario(postdate, rdate):
+    if F.date_format(postdate, 'yyyyMM') == F.date_format(rdate, 'yyyyMM'):
+        return 'COMPANY DATA'
+    else:
+        return 'COMPANY REVISION'
+
+# Define the function for model_id
+def model_id(chart_id):
+    return chart_id
+
+# Apply the functions to the DataFrame
+main1 = main1.withColumn("aemr_cd_scenario", scenario(main1.postdate, main1.rdate))
+main1 = main1.withColumn("aemr_cd_model_id", model_id(main1.chart_id))
+
+# Select the columns
+main1 = main1.select(F.monotonically_increasing_id().alias("aemr_id_retail_history"),
+                     "aemr_cd_scenario", "company_id",
+                     F.expr("substr(product_id, 1, 2)").alias("aemr_cd_program_code"),
+                     F.expr("substr(product_id, 3, 2)").alias("aemr_cd_prodruct_code"),
+                     "chart_id", "frequency_id",
+                     F.expr("lpad(activity_id, 3, 0)").alias("aemr_cd_activity_code"),
+                     "size_id", "aemr_cd_upper_size", "aemr_cd_lower_size",
+                     "cd_year", F.expr("lpad(period, 2, 0)").alias("aemr_cd_month"),
+                     "rdate", "postdate",
+                     F.expr("substr(geography_id, 1, 3)").alias("aemr_cd_fips_country_code"),
+                     F.expr("substr(geography_id, 4, 3)").alias("aemr_cd_fips_state_code"),
+                     F.expr("substr(geography_id, 7, 3)").alias("aemr_cd_fips_county_code"),
+                     F.expr("substr(geography_id, 10, 3)").alias("aemr_cd_fips_sub_county_code"),
+                     F.expr("lpad(customer_type_id, 3, '0')").alias("aemr_cd_customer_type_code"),
+                     F.expr("lpad(end_use_id, 3, '0')").alias("aemr_cd_end_use_code"),
+                     "aemr_cd_attribute", "count_id", "aemr_cd_source_system",
+                     F.lit(1).alias("aemr_id_batch_id"), "aemr_cd_vin", "aemr_cd_model_id")
+
+# Write the data to the table
+main1.write.format("jdbc").option("url", "jdbc:oracle:thin:@your_host:your_port:your_db").option("dbtable", "td_aemr_retail_history").option("user", "your_username").option("password", "your_password").save()
+```
+
+Please replace `'jdbc:oracle:thin:@your_host:your_port:your_db'`, `'your_username'`, `'your_password'` with your actual Oracle database connection string, username, and password. Also, replace `'your_app_name'` with the name of your application.
+
+This code reads the data from the Oracle database, filters it according to the conditions in the SQL query, and then applies the defined functions to the DataFrame. Finally, it writes the resulting DataFrame back to the Oracle database table.

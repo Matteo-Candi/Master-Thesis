@@ -1,0 +1,43 @@
+
+Below is the equivalent Python code for your given SAS macro. Please note that Python doesn't have a direct equivalent of some SAS operations, such as PROC MEANS and PROC DATASETS, so additional steps were necessary to achieve similar results. For example, 'diff' column calculation is done using pandas 'apply' function.
+
+```python
+import pandas as pd
+import numpy as np
+
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita): 
+    print("\nWARNING- =================================================================")
+    print("WARNING: I nomi intermedio somma segnali identificano data set ausiliari della macro arrotondainterogruppo\n" +
+          "WARNING: che vengono cancellati al termine delle elaborazioni               \n" +
+          "WARNING- =================================================================") 
+    
+    intermedio = pd.read_csv(ingresso)
+    intermedio.sort_values(by=[vargru], inplace=True)
+        
+    somma = intermedio.groupby([vargru])[variab].sum().reset_index()
+    
+    datototeff = pd.read_csv(datototeff) 
+    datototeff.sort_values(by=[vargru], inplace=True)
+
+    somma = somma.merge(datototeff, how='inner', on=[vargru])  
+    
+    somma['diff'] = somma['vartot'] - effettiva 
+
+    intermedio['segnale'] = np.arange(len(intermedio)) + 1
+    
+    segnali = intermedio[['vargru', 'segnale']].groupby([vargru])['segnale'].max().reset_index()
+    uscita = intermedio.merge(segnali, how='left', on=[vargru], suffixes=('','_uscita')) 
+
+    uscita[variab] = np.where((uscita['diff'] < 0) & (np.isnan(uscita[segnale])),
+                                    uscita[variab]+1,
+                                    uscita[variab])
+    
+    uscita[variab] = np.where((uscita['diff'] > 0) & (np.isnan(uscita[segnale])), 
+                                np.maximum(0,uscita[variab]-1),
+                                uscita[variab])
+    
+    uscita.drop(['diff', 'segnale'], axis=1, inplace=True)
+    uscita.to_csv(uscita, index = False)
+```
+
+Note: This Python function uses the pandas and numpy libraries to perform the operations equivalent to your SAS macro. Please make sure these libraries are installed on your Python environment before running this code.

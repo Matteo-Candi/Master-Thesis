@@ -1,0 +1,23 @@
+Here is the equivalent code in Python. Note that Python does not have a direct equivalent to SAS's macros, so this code will be run as a standalone function:
+
+```python
+def quadratura_gruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    print("\nWARNING- ============================================================")
+    print("WARNING: I nomi\nWARNING- somma quadrare\nWARNING- identificano data set ausiliari della macro quadraturagruppo\nWARNING- che vengono cancellati al termine delle elaborazioni\nWARNING- ============================================================\n")
+    
+    daquadrare = daquadrare.sort_values(by=[vargruppo])
+    somma = daquadrare.groupby([vargruppo]).sum().reset_index()[[vargruppo, daquad]]
+    somma.columns = [vargruppo, 'datot']
+    
+    totpergru = totpergru.sort_values(by=[vargruppo])
+    somma = somma.merge(totpergru, on=[vargruppo], how='inner')
+    somma = somma[[vargruppo, 'datot', perquad]]
+    
+    quadrare = daquadrare.merge(somma, on=[vargruppo], how='inner')
+    quadrare[giaquad] = quadrare[daquad] * quadrare[perquad] / quadrare['datot']
+    
+    quadrato = quadrare.drop(columns=[daquad, 'datot', perquad])
+    
+    return quadrato
+```
+Please note that Python uses different data structures and libraries compared to SAS. This code assumes you have pandas library installed in your Python environment which is used for DataFrames. The function `sort_values`, `groupby`, `merge` are used from the pandas library while the rest of the functions like print, etc., are built-in python functions.

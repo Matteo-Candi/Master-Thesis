@@ -1,0 +1,155 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+### Instruction:
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one.
+Translate the following code from SAS to Python:
+%macro arrotondainterogruppo(ingresso,		
+							 variab,		
+							 datototeff,	
+							 effettiva,		
+							 vargru,		
+							 uscita);		
+
+
+
+
+%put;
+%put %str(WARNING- =================================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- intermedio somma segnali);
+%put %str(WARNING- identificano data set ausiliari della macro arrotondainterogruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni             );
+%put %str(WARNING- =================================================================);
+%put;
+
+
+data intermedio;
+	set &ingresso;
+run;
+proc sort data = intermedio;
+	by &vargru;
+run;
+proc means data = intermedio noprint;
+	by &vargru;
+	output out = somma (keep = &vargru vartot)
+		   sum(&variab) = vartot;
+run;
+proc sort data = &datototeff;
+	by &vargru;
+run;
+data somma;
+	merge somma (in = inso) &datototeff (in = inda);
+	by &vargru;
+	if inso and inda;
+	keep &vargru vartot &effettiva;
+run;
+
+
+data somma;
+	set somma;
+	diff = vartot - &effettiva;
+	keep &vargru diff;
+run;
+
+
+data intermedio;
+	merge intermedio somma (in = presente);
+	by &vargru;
+	if presente;
+run; 
+
+
+proc sort data = intermedio;
+	by &vargru descending &variab;
+run;
+
+
+data intermedio;
+	set intermedio;
+	by &vargru;
+	if first.&vargru then segnale = _N_;
+run;
+data segnali;
+	set intermedio;
+	by &vargru;
+	if first.&vargru;
+	keep &vargru segnale;
+run;
+
+
+data &uscita;
+	merge intermedio (drop = segnale) segnali;
+	by &vargru;
+	if _N_ < segnale + abs(diff) then
+		if diff < 0 then &variab = &variab + 1;
+		else &variab = max(&variab - 1,0);
+	drop diff segnale;
+run;
+
+
+proc datasets library = work;
+	delete intermedio somma segnali;
+run;
+quit;
+
+%mend arrotondainterogruppo;
+
+### Response:
+Here is the translated Python code for the given SAS code:
+
+```python
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+    # Warning message
+    print("WARNING- =================================================================")
+    print("WARNING: I nomi intermedio somma segnali")
+    print("WARNING- identificano data set ausiliari della macro arrotondainterogruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni             ")
+    print("WARNING- =================================================================")
+
+    # Data preparation
+    import pandas as pd
+    intermedio = pd.read_csv(ingresso)
+    intermedio.sort_values(by=[vargru], inplace=True)
+
+    # Calculate sum of variables by group
+    somma = intermedio.groupby(vargru)[variab].sum().reset_index()
+
+    # Merge with totals data
+    somma = pd.merge(somma, pd.read_csv(datototeff), on=[vargru])
+
+    # Calculate difference and adjust variable
+    somma['diff'] = somma['vartot'] - effettiva
+    intermedio = pd.merge(intermedio, somma, on=[vargru])
+
+    # Sort data by group and variable
+    intermedio.sort_values(by=[vargru, variab], ascending=[True, False], inplace=True)
+
+    # Add signal column
+    intermedio['segnale'] = intermedio.groupby(vargru).cumcount()
+
+    # Prepare signals data
+    segnali = intermedio.drop_duplicates(subset=[vargru], keep='first').reset_index(drop=True)
+    segnali = segnali[[vargru, 'segnale']]
+
+    # Adjust variable based on signal
+    for index, row in intermedio.iterrows():
+        if index < segnali.loc[row[vargru], 'segnale'] + abs(row['diff']):
+            if row['diff'] < 0:
+                intermedio.at[index, variab] = intermedio.at[index, variab] + 1
+            else:
+                intermedio.at[index, variab] = max(intermedio.at[index, variab] - 1, 0)
+
+    # Prepare final data
+    final = pd.merge(intermedio.drop(['diff', 'segnale'], axis=1), segnali, on=[vargru])
+
+    # Save to output file
+    final.to_csv(uscita, index=False)
+
+    # Delete temporary datasets
+    import os
+    os.remove('intermedio.csv')
+    os.remove('somma.csv')
+    os.remove('segnali.csv')
+
+```
+
+Please note that this Python code assumes that the input data is in CSV format and the output data will also be in CSV format. The code also assumes that the input data files (ingresso, datototeff, uscita) exist in the same directory as the Python script.

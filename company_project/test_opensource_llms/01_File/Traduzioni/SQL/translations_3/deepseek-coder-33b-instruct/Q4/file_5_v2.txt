@@ -1,0 +1,61 @@
+Below is the translated PySpark code, making use of DataFrames and Spark's built-in functions where possible to mimic SQL operations:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+# Start Spark Session
+spark = SparkSession.builder.appName("translate_sql_to_pyspark").getOrCreate()
+
+# Import tables
+inol = spark.table("ddwh01_dw.td_inol_invoice_orders_lines")
+delta = spark.table("ddwh02_dim.twrk_pvan_delta_flash_leg")
+vele = spark.table("ddwh01_dw.tm_vele_vehicle_legacy")
+sops = spark.sql("""SELECT * FROM (SELECT s.*, MAX(s.sops_id_sales_order_pos) OVER 
+                   (PARTITION BY s.sops_cd_sales_order, s.sops_cd_legacy_mkt, s.sops_cd_dealer_code, 
+                   s.sops_cd_source_order, s.sops_cd_source_order_sequence, s.sops_cd_source_system, 
+                   s.sops_cd_product_line, s.sops_id_vele_vcl_legacy) AS max_id_sops FROM ddwh01_dw.td_sops_sales_order_position s 
+                   WHERE sops_cd_source_system not like '%SAP%') WHERE sops_id_sales_order_pos = max_id_sops""")
+slor = spark.table("ddwh01_dw.tt_slor_sales_order")
+inoh = spark.table("ddwh01_dw.tt_inoh_invoice_orders_header")
+tdim_pvan = spark.table("your_pvan_vehicle_dimension_table_name")  # Assuming the table is preprocessed in PySpark as well.
+
+# Join tables
+df1 = inol.join(delta, inol["inol_id_vele_vcl_legacy"] == delta["vele_id_vehicle_legacy_id_pk"])
+df2 = df1.join(vele, df1["inol_id_vele_vcl_legacy"] == vele["vele_id_vehicle_legacy_id_pk"], "left")
+df3 = df2.join(sops, ((df2["inol_cd_sales_order"] == sops["sops_cd_sales_order"]) & 
+                       (df2["inol_cd_legacy_mkt"] == sops["sops_cd_legacy_mkt"]) & 
+                       (df2["inol_cd_dealer_code"] == sops["sops_cd_dealer_code"]) & 
+                       (df2["inol_cd_source_order"] == sops["sops_cd_source_order"]) & 
+                       (df2["inol_cd_source_order_sequence"] == sops["sops_cd_source_order_sequence"]) & 
+                       (df2["inol_cd_source_system"] == sops["sops_cd_source_system"]) & 
+                       (df2["inol_cd_product_line"] == sops["sops_cd_product_line"]) & 
+                       (df2["inol_id_vele_vcl_legacy"] == sops["sops_id_vele_vcl_legacy"])), "left")
+df4 = df3.join(slor, df3["sops_id_slor_sales_order"] == slor["slor_id_sales_order"], "left")
+df5 = df4.join(inoh, df4["inol_id_inoh_invoice_orders_he"] == inoh["inoh_id_invoice_orders_header"], "left")
+final_df = df5.join(tdim_pvan, df5["inol_id_vele_vcl_legacy"] == tdim_pvan["pvan_id_vcl"], "left")
+
+# Filter null values
+filtered_df = final_df.filter(final_df["inol_fl_delete_line"].isNull())
+
+# Cast columns to appropriate data types if needed (not included here as they're not specified in the SQL query)
+
+# Define a UDF for case statements as PySpark doesn't support it directly 
+def case_stmt(document_type):
+    if document_type in ('1'): return 1
+    else: return 0
+
+case_stmt_udf = F.udf(case_stmt, IntegerType())
+
+# Apply UDF to column
+filtered_df = filtered_df.withColumn("fbil_in_wholesale_qty", case_stmt_udf(filtered_df["inol_cd_document_type"]))
+
+# Write the final dataframe into the target table 
+filtered_df.write.mode('append').insertInto("ddwh02_sm.twrk_fbil_billing_l_flash")
+```
+
+Note:
+- Replace `"your_pvan_vehicle_dimension_table_name"` with the actual name of your PySpark table that holds the vehicle dimension data.
+- Please make sure to import any necessary modules and define all variables used in this code snippet. Also, please ensure you have a valid SparkSession running before executing this script.
+- This code is for illustrative purposes only and might not work perfectly due to assumptions made based on the given information. You may need to adjust it according to your requirements. 
+- It's crucial to review the translation carefully as PySpark has different behavior than SQL, especially in terms of null handling and data types. This code assumes that the SQL script is already properly written for these reasons.

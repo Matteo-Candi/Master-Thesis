@@ -1,0 +1,56 @@
+Here is the equivalent code in Python. Please note that Python does not have a direct equivalent of SAS Macros, so we will define a function instead. We'll also use pandas library for data manipulation which is similar to SAS proc means and SQL operations. Also, please replace 'your_file_path' with the actual file path where your dataset is stored.
+
+```python
+import pandas as pd
+
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    """
+    This function takes in several parameters and performs a series of operations to calculate the 
+    square of sums for each group. It then saves the result into a new dataframe.
+    
+    Parameters:
+        daquadrare (str): The name of the dataset to be processed.
+        daquad (str): The column in 'daquadrare' that needs to be squared and summed up for each group.
+        totpergru (str): The total number of groups in the dataset.
+        perquad (str): The percentage associated with each group.
+        giaquad (str): The new variable where we will store the result.
+        vargruppo (str): The column that identifies each group.
+        quadrato (str): The name of the output dataframe.
+    
+    Returns:
+        None. It saves the results in a new dataframe and deletes intermediate dataframes.
+    """
+  
+    # Load dataset from csv file
+    df = pd.read_csv('your_file_path/' + daquadrare)
+    
+    print("\nWARNING- -------------------------------------------------------------")
+    print("WARNING: I nomi\n"+
+          "WARNING- somma quadrare\n"+
+          "WARNING- identificano data set ausiliari della macro quadraturagruppo\n"+
+          "WARNING- che vengono cancellati al termine delle elaborazioni\n" +        
+          "WARNING- -------------------------------------------------------------")
+    
+    # Sort the dataset by vargruppo
+    df = df.sort_values(by=[vargruppo])
+    
+    # Create a new dataframe 'somma' with sum of daquad for each group
+    somma = df.groupby([vargruppo]).sum().reset_index()[[vargruppo, daquad]]
+    
+    # Merge 'totpergru' dataset into 'somma'
+    totpergru_df = pd.read_csv('your_file_path/' + totpergru)
+    somma = somma.merge(totpergru_df, on=vargruppo)
+    
+    # Create a new dataframe 'quadrare' with the calculated square of sums for each group
+    quadrare = df.merge(somma, on=vargruppo)
+    quadrare[giaquad] = quadrare[daquad] * quadrare[perquad] / quadrare[daquad+'_y']  # assuming 'datot' is the column name in somma dataframe
+    
+    # Drop unnecessary columns and save the final result into a new csv file
+    df_result = quadrare.drop(columns=[daquad, daquad+'_y', perquad])
+    df_result.to_csv('your_file_path/' + quadrato, index=False)
+    
+    # Delete intermediate dataframes
+    del somma, quadrare
+```
+
+Please note that Python does not support SAS-style macro variables like &daquadrare. Instead, you need to pass the actual dataset names as strings when calling this function. Also, please replace 'your_file_path' with the actual file path where your datasets are stored.

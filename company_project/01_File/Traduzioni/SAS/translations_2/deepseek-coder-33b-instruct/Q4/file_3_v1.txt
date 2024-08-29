@@ -1,0 +1,62 @@
+Here is the equivalent Python code using pandas for data manipulation and merging. Please note that pandas does not support SAS-like libraries like libname. Instead, you should use os or shutil to manage your file paths and read/write files.
+
+```python
+import pandas as pd
+from pathlib import Path
+
+# Define the directory where data is stored
+data_dir = Path("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets")
+
+# Load datasets
+ter = pd.read_csv(data_dir / "etapop20b.csv")  # Assuming the file is in csv format
+sez = pd.read_csv(data_dir / "sez.csv")  # Assuming the file is in csv format
+ter_out = pd.read_csv(data_dir / "geografica_comune.csv")  # Assuming the file is in csv format
+appo = pd.read_csv(data_dir / "nati_eta_madre_provincia_istat.csv")  # Assuming the file is in csv format
+
+# Define time variable
+ter['time'] = 2019
+
+# Create new column 'eta1_a' based on conditions
+def create_eta1_a(row):
+    if 15 <= row['eta'] <= 17:
+        return "Y_UN17"
+    elif 18 <= row['eta'] <= 49:
+        return f"Y{row['eta']}"
+    elif 50 <= row['eta'] <= 54:
+        return "Y_GE50"
+ter['eta1_a'] = ter.apply(create_eta1_a, axis=1)
+
+# Filter out rows where 'eta1_a' is null
+ter = ter[~ter['eta1_a'].isnull()]
+
+# Keep only certain columns
+ter = ter[['codc620b', 'eta1_a', 'time', 'tot_fem']]
+
+# Rename columns
+ter.rename(columns={'codc620b':'codice_comune__str', 'tot_fem':'femmine'}, inplace=True)
+
+# Print the tabulation of 'eta1_a' and 'eta'
+print(ter[['eta1_a','eta']].describe())
+
+# Sort by 'codice_comune__str'
+ter = ter.sort_values('codice_comune__str')
+
+# Keep only certain columns in geografica_comune dataset and sort it
+xgeog = ter_out[['codice_comune__str', 'codice_provincia']].sort_values('codice_comune__str')
+
+# Merge the two datasets on 'codice_comune__str'
+xclageo = pd.merge(ter, xgeog, on='codice_comune__str')
+
+# Group by 'codice_provincia' and 'eta1_a', then sum 'femmine'
+provinciale_donne = xclageo.groupby(['codice_provincia','eta1_a'])['femmine'].sum().reset_index()
+provinciale_donne.rename(columns={'femmine':'donne_classe_eta'}, inplace=True)
+
+# Rename 'valore' column to 'nati' and sort by 'codice_provincia' and 'eta1_a'
+nati = appo.rename(columns={'valore':'nati'}).sort_values(['codice_provincia','eta1_a'])
+
+# Merge the two datasets on 'codice_provincia' and 'eta1_a'
+nati_donne = pd.merge(nati, provinciale_donne, on=['codice_provincia', 'eta1_a'])
+
+# Create new column 'nati_1000_donne_classe_eta'
+nati_donne['nati_1000_donne_classe_eta'] = 1000 * nati_donne['nati'] / nati_donne['donne_classe_eta']
+```

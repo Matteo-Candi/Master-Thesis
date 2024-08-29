@@ -1,0 +1,32 @@
+Here is the PySpark code equivalent to your SQL query. Please make sure that all columns used in this code exist in your DataFrame `main1`. If they don't, please replace them with valid ones from your DataFrame. Also, ensure to have a sequence generator for `aemr_id_retail_history`.
+
+```python
+from pyspark.sql import SparkSession, functions as F
+
+# Creating a Spark Session
+spark = SparkSession.builder.getOrCreate()
+
+df = spark.table("ddwh00_sa.ts_aemi0004_us_aem")
+
+df = df \
+    .filter((F.col("company_id").isin(["JIC", "FOR"])) & (F.col("frequency_id") == 'M')) \
+    .withColumn("case_condition", F.when(F.split(F.col("product_id"), ",").isin(['CEB0', 'CEE2', 'CEE3', 'CEF0', 'CEG0']), '010').otherwise('011')) \
+    .filter(F.col("case_condition") == F.expr("lpad(activity_id, 3, '0')")) \
+    .filter(F.col("attribute_id") == '99') \
+    .withColumn("aemr_cd_scenario", F.when((F.date_format('postdate', "yyyyMM") == F.date_format('rdate', "yyyyMM")), 'COMPANY DATA').otherwise('COMPANY REVISION')) \
+    .withColumn("aemr_cd_rep_company_code", F.col("company_id")) \
+    .withColumn("aemr_cd_program_code", F.substring(F.col("product_id"), 1, 2)) \
+    .withColumn("aemr_cd_prodruct_code", F.substring(F.col("product_id"), 3, 2)) \
+    .withColumn("aemr_cd_model_chart", F.col("chart_id")) \
+    .withColumn("aemr_cd_rep_frequency", F.col("frequency_id")) \
+    .withColumn("aemr_cd_activity_code", F.expr("lpad(activity_id, 3, '0')")) \
+    .withColumn("aemr_cd_size_code", F.col("size_id")) \
+    .withColumn("aemr_qt_retail_qty", F.col("count_id")) \
+    .select(F.lit('US AEM').alias('aemr_cd_source_system'),
+            F.expr("sequence(ddwh01_dw.seq_aemr_td00001)").alias('aemr_id_retail_history'),
+            'aemr_cd_scenario', 
+            # add other columns as needed
+           )
+
+df.write.mode("append").insertInto("ddwh01_dw.td_aemr_retail_history")
+```

@@ -1,0 +1,34 @@
+Here is the PySpark code that performs the same operations as your SQL query:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, when, to_date, year, ltrim, regexp_replace, coalesce, trim, length, expr, concat, lit
+from pyspark.sql.window import Window
+
+# Create a spark session
+spark = SparkSession.builder.getOrCreate()
+
+# Read the data from SQL tables
+ekpo = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+plbr = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+ekko = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+trge = spark.table("DDWH01_DW.TD_TRGE_TRANSCODING_GENERAL").filter((col("TRGE_CD_DEFAULT_NAME") == 'WERKS') & (col("TRGE_CD_LOGICAL_SYSTEM").isin(['ERP', 'URP', 'NH3', 'DWH'])))
+
+# Join the tables
+df = ekpo.join(plbr, (ekpo["EKPO_CD_PLANT"] == plbr["PLBR_CD_PLANT"]) & plbr["PLBR_DS_PLANT_SEGMENT"].isin(['AG', 'CE', '-1', 'AM', 'AS']) & ~(ekpo["EKPO_CD_PLANT"].isin(['FA01', 'FB01', 'IA01'])) & ~(ekpo["EKPO_CD_PLANT"].like('00%')), "inner") \
+         .join(ekko, "EKPO_CD_PO_NBR" == ekko["EKKO_CD_PURCH_DOC_NBR"], "inner") \
+         .join(trge, ekpo["EKPO_CD_PLANT"] == trge["TRGE_CD_SOURCE_DATA_1"], "left")
+
+# Select the necessary columns and perform transformations
+df = df.select([col(c).alias(c) for c in df.columns] + [
+    year(to_date(ekko["EKKO_DT_PURCH_DOC_DATE"])).cast("int").alias("EKPO_NR_PURCH_DOC_YEAR"),
+    when((col("EKPO_CD_PURCH_DOC_NBR_R3_GPP") == '-1'), col("EKPO_CD_PO_NBR")).otherwise(col("EKPO_CD_PURCH_DOC_NBR_R3_GPP")).alias("EKPO_CD_PURCH_DOC_NBR_R3_GPP"),
+    when((col("EKPO_CD_PLANT").isin(['CR01', 'TY01', 'CX01'])), concat(col("EKPO_CD_WPS_PREFIX"), col("EKPO_CD_MATERIAL_MFG")))
+    .when((col("EKPO_CD_PLANT").isin(['AU01', 'LP01', 'LP02', 'AU05'])), lit('SO' + col("EKPO_CD_MATERIAL_MFG")))
+    .otherwise(col("EKPO_CD_MATERIAL_MFG")).alias("EKPO_CD_MATERIAL_MFG"),
+    coalesce(trge["TRGE_CD_DESTINATION_DATA"], col("EKPO_CD_PLANT")).alias("EKPO_KEY_STC")])
+
+# Write the data to a view
+df.createOrReplaceTempView("VW_EKPO_PURCH_DOC_ITEM_AGCE")
+```
+Please note that the above code is an approximation of your SQL query and might not work as expected if there are some specific edge cases in your database schema or data which were not considered. Also, it's assumed that all necessary tables (`TT_EKPO_PURCH_DOC_ITEM_GPP`, `TD_PLBR_PLANT_BRANCHES`, `TT_EKKO_PURCH_DOC_HEADER_GPP`, and `TD_TRGE_TRANSCODING_GENERAL`) are present in the database.

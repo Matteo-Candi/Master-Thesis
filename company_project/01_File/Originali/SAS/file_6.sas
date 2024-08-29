@@ -1,0 +1,342 @@
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+title1 "AVANZAMENTO DELLE ET�";
+
+
+data base_sezione;
+	set sez_out.geografica_sezione (keep = codice_sezione codice_comune__str);
+run;
+data x_base_eta;
+	set ter.etapop20b;
+	if eta <= 4 then cleta = "00-04";
+	else if eta <= 9 then cleta = "05-09";
+	else if eta <= 14 then cleta = "10-14";
+	else if eta <= 19 then cleta = "15-19";
+	else if eta <= 24 then cleta = "20-24";
+	else if eta <= 29 then cleta = "25-29";
+	else if eta <= 34 then cleta = "30-34";
+	else if eta <= 39 then cleta = "35-39";
+	else if eta <= 44 then cleta = "40-44";
+	else if eta <= 49 then cleta = "45-49";
+	else if eta <= 54 then cleta = "50-54";
+	else if eta <= 59 then cleta = "55-59";
+	else if eta <= 64 then cleta = "60-64";
+	else if eta <= 69 then cleta = "65-69";
+	else if eta <= 74 then cleta = "70-74";
+	else cleta = "75-99";
+run;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = x_base_eta min max maxdec = 0;
+	class cleta;
+	var eta;
+run;
+proc freq data = x_base_eta noprint;
+	tables eta*cleta /out = base_eta (drop = count percent);
+run;
+proc sql;
+	create table base_sezione_eta as select *
+	from base_sezione, base_eta;
+quit;
+
+proc sort data = base_sezione_eta;
+	by codice_sezione cleta;
+run;
+data attuale;
+	set sez.pop_eta_sez20b (keep = cods11 cleta stmmas19 stmfem19
+							rename=(cods11=codice_sezione
+									stmmas19=stmmas
+									stmfem19=stmfem));
+run;
+proc sort data = attuale;
+	by codice_sezione cleta;
+run;
+data base_sezione_eta;
+	merge base_sezione_eta attuale;
+	by codice_sezione cleta;
+run;
+
+proc sort data = x_base_eta;
+	by codc620b cleta;
+run;
+proc means data = x_base_eta noprint;
+	by codc620b cleta;
+	output out = tot_classe_com (drop = _type_ _freq_)
+		   sum(tot_mas tot_fem) = totcla_mas totcla_fem;
+run;
+data x_base_eta;
+	merge x_base_eta tot_classe_com;
+	by codc620b cleta;
+run;
+data x_base_eta;
+	set x_base_eta;
+	if totcla_mas > 0
+		then percentuale_maschi = 100*tot_mas/totcla_mas;
+		else percentuale_maschi = 0;
+	if totcla_fem > 0
+		then percentuale_femmine = 100*tot_fem/totcla_fem;
+		else percentuale_femmine = 0;
+run;
+
+proc sort data = base_sezione_eta;
+	by codice_comune__str eta;
+run;
+data base_sezione_eta;
+	merge base_sezione_eta x_base_eta (keep = codc620b eta percentuale_maschi percentuale_femmine
+									   rename=(codc620b=codice_comune__str));
+	by codice_comune__str eta;
+run;
+
+data base_sezione_eta;
+	set base_sezione_eta;
+	maschi_distribuiti = stmmas*percentuale_maschi/100;
+	femmine_distribuite = stmfem*percentuale_femmine/100;
+run;
+title2 "TOTALI DI CONTROLLO DA TABELLA DEI DATI RIDITRIBUITI";
+proc tabulate data = base_sezione_eta;
+	var maschi_distribuiti femmine_distribuite;
+	table maschi_distribuiti femmine_distribuite,sum*f=comma12.;
+run;
+title2 "TOTALI DI CONTROLLO DA TABELLA COMUNALE";
+proc tabulate data = x_base_eta;
+	var tot_mas tot_fem;
+	table tot_mas tot_fem,sum*f=comma12.;
+run;
+
+
+data base_sezione_eta_piu;
+	set base_sezione_eta;
+	eta = min(eta + 1, 100);
+run;
+proc means data = base_sezione_eta_piu noprint;
+	class codice_sezione eta;
+	types codice_sezione*eta;
+	id codice_comune__str;
+	output out = base_sezione_eta_piu_1 (drop = _type_ _freq_)
+		sum(maschi_distribuiti femmine_distribuite) = ;
+run;
+
+data base_sezione_eta_madre;
+	set base_sezione_eta_piu_1;
+	length eta1_a $ 6;
+	if 15 <= eta <= 17 then eta1_a = "Y_UN17";
+	else if 18 <= eta <= 49 then eta1_a = "Y"||trim(left(eta));
+	else if 50 <= eta <= 54 then eta1_a = "Y_GE50";
+	else delete;
+run; *16.107.120;
+proc sort data = base_sezione_eta_madre;
+	by codice_comune__str;
+run;
+data rapporto_nascita;
+	set ter_out.Popolazione_eta_sesso_comune;
+	if eta = 0;
+	if popolazione > 0 then maschi_perc = maschi/popolazione;
+	keep codice_comune__str maschi_perc;
+run; 
+proc sort data = rapporto_nascita;
+	by codice_comune__str;
+run;
+data base_sezione_eta_madre;
+	merge base_sezione_eta_madre (in = a) rapporto_nascita (in = b);
+	by codice_comune__str;
+run; *16.107.120;
+data codici;
+	set ter_out.geografica_comune;
+	keep codice_comune__str codice_provincia;
+run;
+proc sort data = codici;
+	by codice_comune__str;
+run;
+data base_sezione_eta_madre;
+	merge codici base_sezione_eta_madre;
+	by codice_comune__str;
+run;
+
+proc sort data = base_sezione_eta_madre;
+	by codice_provincia eta1_a;
+run;
+data nati_eta_madre_rapporto;
+	set appo.nati_eta_madre_rapporto;
+run;
+proc sort data = nati_eta_madre_rapporto;
+	by codice_provincia eta1_a;
+run; *3.638;
+data base_sezione_eta_madre;
+	merge base_sezione_eta_madre (in = a)
+		  nati_eta_madre_rapporto (in = b keep = codice_provincia eta1_a nati_1000_donne_classe_eta);
+	by codice_provincia eta1_a;
+run; *16.107.120;
+
+data nati_stima;
+	set base_sezione_eta_madre;
+	if maschi_perc ~= . then
+		do;
+			mas_0_sez = maschi_perc*femmine_distribuite*nati_1000_donne_classe_eta/1000;
+			fem_0_sez = (1 - maschi_perc)*femmine_distribuite*nati_1000_donne_classe_eta/1000;
+		end;
+	else
+		do;
+			mas_0_sez = 0;
+			fem_0_sez = 0;
+		end;
+run;
+proc means data = nati_stima noprint;
+	class codice_sezione;
+	types codice_sezione;
+	id codice_comune__str;
+	output out = nati_stima_s (drop = _type_ _freq_)
+		   sum(mas_0_sez fem_0_sez) = maschi_distribuiti femmine_distribuite;
+run;
+title2 "TOTALI DI CONTROLLO - NATI: STIMA PER SEZIONE";
+proc tabulate data = nati_stima_s;
+	var maschi_distribuiti femmine_distribuite;
+	table maschi_distribuiti femmine_distribuite,sum*f=comma12. / nocellmerge;
+run;
+title2 "TOTALI DI CONTROLLO - NATI: DATI COMUNALI";
+proc tabulate data = ter_out.Popolazione_eta_sesso_comune;
+	where eta = 0;
+	var maschi femmine;
+	table maschi femmine,sum*f=comma12. /nocellmerge;
+run;
+title2 "TOTALI DI CONTROLLO - NATI: DATI PER ET� DELLA MADRE";
+proc tabulate data = appo.nati_eta_madre_rapporto;
+	var nati;
+	table nati,sum*f=comma12. /nocellmerge;
+run;
+data nati_stima_s;
+	set nati_stima_s;
+	eta = 0;
+run;
+
+data Base_sezione_eta_completata;
+	set nati_stima_s Base_sezione_eta_piu_1;
+run; 
+
+
+data Base_sezione_eta_completata;
+	set Base_sezione_eta_completata;
+	if eta <= 4 then cleta = "00-04";
+	else if eta <= 9 then cleta = "05-09";
+	else if eta <= 14 then cleta = "10-14";
+	else if eta <= 19 then cleta = "15-19";
+	else if eta <= 24 then cleta = "20-24";
+	else if eta <= 29 then cleta = "25-29";
+	else if eta <= 34 then cleta = "30-34";
+	else if eta <= 39 then cleta = "35-39";
+	else if eta <= 44 then cleta = "40-44";
+	else if eta <= 49 then cleta = "45-49";
+	else if eta <= 54 then cleta = "50-54";
+	else if eta <= 59 then cleta = "55-59";
+	else if eta <= 64 then cleta = "60-64";
+	else if eta <= 69 then cleta = "65-69";
+	else if eta <= 74 then cleta = "70-74";
+	else cleta = "75-99";
+run;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = Base_sezione_eta_completata min max maxdec = 0;
+	class cleta;
+	var eta;
+run;
+proc sort data = Base_sezione_eta_completata;
+	by codice_comune__str cleta;
+run;
+proc means data = Base_sezione_eta_completata noprint;
+	by codice_comune__str cleta;
+	output out = tot_st_cleta (drop = _type_ _freq_)
+		sum(maschi_distribuiti femmine_distribuite) = /autoname;
+run; *126.448;
+data etaxqua;
+	set ter_out.Popolazione_eta_sesso_comune;
+	if eta <= 4 then cleta = "00-04";
+	else if eta <= 9 then cleta = "05-09";
+	else if eta <= 14 then cleta = "10-14";
+	else if eta <= 19 then cleta = "15-19";
+	else if eta <= 24 then cleta = "20-24";
+	else if eta <= 29 then cleta = "25-29";
+	else if eta <= 34 then cleta = "30-34";
+	else if eta <= 39 then cleta = "35-39";
+	else if eta <= 44 then cleta = "40-44";
+	else if eta <= 49 then cleta = "45-49";
+	else if eta <= 54 then cleta = "50-54";
+	else if eta <= 59 then cleta = "55-59";
+	else if eta <= 64 then cleta = "60-64";
+	else if eta <= 69 then cleta = "65-69";
+	else if eta <= 74 then cleta = "70-74";
+	else cleta = "75-99";
+run;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = etaxqua min max maxdec = 0;
+	class cleta;
+	var eta;
+run;
+proc sort data = etaxqua;
+	by codice_comune__str cleta;
+run;
+proc means data = etaxqua noprint;
+	by codice_comune__str cleta;
+	output out = tot_qua_cleta (drop = _type_ _freq_)
+		sum(maschi femmine) = / autoname autolabel;
+run;
+data tot_coef_cleta;
+	merge tot_st_cleta tot_qua_cleta;
+	by codice_comune__str cleta;
+	if maschi_distribuiti_sum > 0 then mas_coef = maschi_sum / maschi_distribuiti_sum;
+	if femmine_distribuite_sum > 0 then fem_coef = femmine_sum / femmine_distribuite_sum;
+run;
+data mancante;
+	set tot_coef_cleta;
+	if mas_coef = . or fem_coef = . ;
+run; *762 casi;
+data Base_sezione_eta_completata;
+	merge Base_sezione_eta_completata
+		  tot_coef_cleta (keep = codice_comune__str cleta mas_coef fem_coef);
+	by codice_comune__str cleta;
+run;
+data Base_sezione_eta_riquadrata;
+	set Base_sezione_eta_completata;
+	if mas_coef ~= . 
+		then maschi_distribuiti = maschi_distribuiti*mas_coef;
+		else maschi_distribuiti = 0;
+	if fem_coef ~= . 
+		then femmine_distribuite = femmine_distribuite*fem_coef;
+		else femmine_distribuite = 0;
+	drop  mas_coef fem_coef;
+run;
+title3 "TOTALI DELLE STIME RIQUADRATE";
+proc tabulate data = Base_sezione_eta_riquadrata;
+	var maschi_distribuiti femmine_distribuite;
+	table maschi_distribuiti femmine_distribuite, sum * f = comma12. / nocellmerge;
+run;
+title3 "TOTALI DEI DATI COMUNALI";
+proc tabulate data = ter_out.Popolazione_eta_sesso_comune;
+	var maschi femmine;
+	table maschi femmine, sum * f = comma12. / nocellmerge;
+run;
+title3 "DISTRIBUZIONE DELLE STIME FINALI: MASCHI";
+proc univariate data = Base_sezione_eta_riquadrata;
+	where maschi_distribuiti > 0;
+	var maschi_distribuiti;
+run;
+title3 "DISTRIBUZIONE DELLE STIME FINALI: FEMMINE";
+proc univariate data = Base_sezione_eta_riquadrata;
+	where femmine_distribuite > 0;
+	var femmine_distribuite;
+run;
+
+%let tracc = codice_sezione codice_comune__str eta cleta maschi_distribuiti femmine_distribuite;
+data ordinato;
+	retain &tracc;
+	set Base_sezione_eta_riquadrata;
+	keep &tracc;
+run;
+proc sort data = ordinato;
+	by codice_sezione eta;
+run;
+options nolabel;
+
+

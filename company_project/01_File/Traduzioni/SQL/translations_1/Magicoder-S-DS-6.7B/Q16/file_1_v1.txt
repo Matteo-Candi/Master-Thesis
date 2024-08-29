@@ -1,0 +1,91 @@
+You are an expert in translating code from SQL to PySpark. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE); 
+@@Response
+The provided SQL code is a MERGE statement which performs an UPDATE on matched rows and an INSERT on non-matched rows. PySpark does not have a direct equivalent to the MERGE statement, but we can achieve the same result by using the `.merge()` method on a DataFrame. 
+
+```python
+from pyspark.sql import functions as F
+from pyspark.sql.functions import current_date, current_timestamp, lit
+
+# Load the source data
+sa = spark.table('ddwh00_sa.TS_VENL0001_WW_GPP')
+
+# Load the target data
+target = spark.table('ddwh01_dw.TM_VENL_MASTER_LINK')
+
+# Perform the set difference operation to get the rows in SA that are not in target
+sa_minus_target = sa.subtract(target)
+
+# Perform the merge operation
+sa_minus_target.alias('sa').join(target.alias('target'), ['VENL_CD_CLIENT', 'VENL_CD_PARTNER_GUID'], 'left_anti').select(
+    F.expr('DDWH01_DW.SEQ_TM_VENL.NEXTVAL').alias('VENL_ID_LINK'),
+    'sa.VENL_CD_CLIENT',
+    'sa.VENL_CD_PARTNER_GUID',
+    'sa.VENL_CD_VENDOR',
+    'sa.VENL_CD_USER',
+    'sa.VENL_DT_DATE',
+    'sa.VENL_DT_TIME',
+    lit(None).alias('VENL_ID_BATCH_ID'),
+    lit('1900-01-01').alias('VENL_DT_START_VALIDITY'),
+    lit('9999-12-31').alias('VENL_DT_END_VALIDITY'),
+    current_timestamp().alias('VENL_DT_INSERT'),
+    lit(None).alias('VENL_ID_BATCH_LAST_MODIFY'),
+    current_date().alias('VENL_DT_LAST_MODIFY')
+).union(
+    target.alias('target').join(sa.alias('sa'), ['VENL_CD_CLIENT', 'VENL_CD_PARTNER_GUID'], 'left_semi').select(
+        'target.VENL_ID_LINK',
+        'sa.VENL_CD_CLIENT',
+        'sa.VENL_CD_PARTNER_GUID',
+        'sa.VENL_CD_VENDOR',
+        'sa.VENL_CD_USER',
+        'sa.VENL_DT_DATE',
+        'sa.VENL_DT_TIME',
+        lit(None).alias('VENL_ID_BATCH_ID'),
+        lit('1900-01-01').alias('VENL_DT_START_VALIDITY'),
+        lit('9999-12-31').alias('VENL_DT_END_VALIDITY'),
+        current_timestamp().alias('VENL_DT_INSERT'),
+        lit(None).alias('VENL_ID_BATCH_LAST_MODIFY'),
+        current_date().alias('VENL_DT_LAST_MODIFY')
+    )
+).write.mode('overwrite').insert()
+```
+
+Please note that this code assumes that the `SEQ_TM_VENL` sequence is available in the `DDWH01_DW` database, and the `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` values are available in the current session or can be replaced with the appropriate values.

@@ -1,0 +1,97 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+### Instruction:
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise.
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE);
+### Response:
+The PySpark code for the given SQL query would be as follows:
+
+```python
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+# Define the schema for the source dataframe
+source_schema = StructType([
+    StructField("CLIENT", StringType(), True),
+    StructField("PARTNER_GUID", StringType(), True),
+    StructField("VENDOR", StringType(), True),
+    StructField("CRUSER", StringType(), True),
+    StructField("CRDAT", DateType(), True),
+    StructField("CRTIM", StringType(), True)
+])
+
+# Read the source data from ddwh00_sa.TS_VENL0001_WW_GPP
+source_df = spark.read.format("jdbc").option("url", "jdbc:your_database_url").option("dbtable", "ddwh00_sa.TS_VENL0001_WW_GPP").option("user", "your_username").option("password", "your_password").option("driver", "your_driver").load()
+
+# Define the schema for the target dataframe
+target_schema = StructType([
+    StructField("VENL_ID_LINK", LongType(), True),
+    StructField("VENL_CD_CLIENT", StringType(), True),
+    StructField("VENL_CD_PARTNER_GUID", StringType(), True),
+    StructField("VENL_CD_VENDOR", StringType(), True),
+    StructField("VENL_CD_USER", StringType(), True),
+    StructField("VENL_DT_DATE", DateType(), True),
+    StructField("VENL_DT_TIME", StringType(), True),
+    StructField("VENL_ID_BATCH_ID", LongType(), True),
+    StructField("VENL_DT_START_VALIDITY", DateType(), True),
+    StructField("VENL_DT_END_VALIDITY", DateType(), True),
+    StructField("VENL_DT_INSERT", DateType(), True),
+    StructField("VENL_ID_BATCH_LAST_MODIFY", LongType(), True),
+    StructField("VENL_DT_LAST_MODIFY", DateType(), True)
+])
+
+# Read the target data from ddwh01_dw.TM_VENL_MASTER_LINK
+target_df = spark.read.format("jdbc").option("url", "jdbc:your_database_url").option("dbtable", "ddwh01_dw.TM_VENL_MASTER_LINK").option("user", "your_username").option("password", "your_password").option("driver", "your_driver").load()
+
+# Perform the merge operation
+merged_df = target_df.alias("TARGET").join(source_df.alias("SA"), (col("TARGET.VENL_CD_CLIENT") == col("SA.CLIENT")) & (col("TARGET.VENL_CD_PARTNER_GUID") == col("SA.PARTNER_GUID")), "left_outer").select("TARGET.*", "SA.*").na.fill({"VENL_CD_VENDOR": "NA", "VENL_CD_USER": "NA", "VENL_DT_DATE": "1900-01-01", "VENL_DT_TIME": "NA", "VENL_DT_LAST_MODIFY": current_date(), "VENL_ID_BATCH_LAST_MODIFY": lit(0)})
+
+# Perform the update operation
+updated_df = merged_df.where(col("SA.CLIENT").isNotNull())
+updated_df = updated_df.withColumn("VENL_DT_LAST_MODIFY", current_date()).withColumn("VENL_ID_BATCH_LAST_MODIFY", lit(0))
+
+# Perform the insert operation
+inserted_df = merged_df.where(col("SA.CLIENT").isNull())
+inserted_df = inserted_df.select("VENL_ID_LINK", "SA.CLIENT", "SA.PARTNER_GUID", "SA.VENDOR", "SA.CRUSER", "SA.CRDAT", "SA.CRTIM", lit(0).alias("VENL_ID_BATCH_ID"), lit("1900-01-01").alias("VENL_DT_START_VALIDITY"), lit("9999-12-31").alias("VENL_DT_END_VALIDITY"), current_date().alias("VENL_DT_INSERT"), lit(0).alias("VENL_ID_BATCH_LAST_MODIFY"), current_date().alias("VENL_DT_LAST_MODIFY"))
+
+# Write the updated and inserted data back to the database
+updated_df.write.format("jdbc").option("url", "jdbc:your_database_url").option("dbtable", "ddwh01_dw.TM_VENL_MASTER_LINK").option("user", "your_username").option("password", "your_password").option("driver", "your_driver").mode("overwrite").save()
+inserted_df.write.format("jdbc").option("url", "jdbc:your_database_url").option("dbtable", "ddwh01_dw.TM_VENL_MASTER_LINK").option("user", "your_username").option("password", "your_password").option("driver", "your_driver").mode("append").save()
+```
+
+Please replace "jdbc:your_database_url", "your_username", "your_password", and "your_driver" with the actual values for your database connection. Also, ensure that the column names in the select statements match the actual schema of your database tables.

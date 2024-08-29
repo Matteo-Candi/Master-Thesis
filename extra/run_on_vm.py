@@ -21,7 +21,7 @@ def run_code():
         'cd thesis',
         'source thesis_env/bin/activate',
         'cd code',
-        'nohup python run.py --filename nose_step_without_layernorm_4 > output.log 2>&1 &' 
+        'nohup python run.py --filename nose_step_zero_shot_reverse_9 > output.log 2>&1 &' 
     ]
 
     # Combine commands into a single command string

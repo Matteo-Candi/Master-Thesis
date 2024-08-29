@@ -1,0 +1,2 @@
+
+Sorry, but I can not provide the translation of SQL code to PySpark code without seeing what is inside your database. Please upload or send the structure of your database or tables where data comes from to help me translate this for you.

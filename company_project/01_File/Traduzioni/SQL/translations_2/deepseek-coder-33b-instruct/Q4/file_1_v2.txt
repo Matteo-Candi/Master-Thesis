@@ -1,0 +1,59 @@
+Here is the equivalent PySpark code for your SQL query. Please note that PySpark does not support MERGE operation directly and you have to perform operations separately for matched and unmatched records.
+
+```python
+from pyspark.sql import SparkSession, functions as F
+from datetime import datetime
+
+# Create a spark session
+spark = SparkSession.builder.getOrCreate()
+
+# Read the source table
+source_df = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+
+# Rename columns to match target schema
+source_df = source_df.select(F.col('CLIENT').alias('VENL_CD_CLIENT'), 
+                             F.col('PARTNER_GUID').alias('VENL_CD_PARTNER_GUID'), 
+                             F.col('VENDOR').alias('VENL_CD_VENDOR'), 
+                             F.col('CRUSER').alias('VENL_CD_USER'), 
+                             F.col('CRDAT').alias('VENL_DT_DATE'), 
+                             F.col('CRTIM').alias('VENL_DT_TIME'))
+
+# Read the target table
+target_df = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Identify matched and unmatched records
+match_cond = [target_df[x] == source_df[y] for x, y in zip(["VENL_CD_CLIENT", "VENL_CD_PARTNER_GUID"], ["VENL_CD_CLIENT", "VENL_CD_PARTNER_GUID"])]
+matched_df = target_df.join(source_df, match_cond, 'inner')
+unmatched_df = target_df.join(source_df, match_cond, 'leftanti')
+
+# Update matched records
+updated_df = matched_df.select('*', 
+                               F.lit(datetime.now()).alias('VENL_DT_LAST_MODIFY'), 
+                               F.when(F.col('p_ELT_ID_BATCH').isNull(), F.col('n_ELT_ID_JOB_LOG')).otherwise(F.col('p_ELT_ID_BATCH')).alias('VENL_ID_BATCH_LAST_MODIFY'))
+updated_df = updated_df.drop(*["VENL_CD_CLIENT", "VENL_CD_PARTNER_GUID", "VENL_DT_DATE", "VENL_DT_TIME"])
+target_df = target_df.join(unmatched_df, match_cond, 'leftanti').unionByName(updated_df)
+
+# Insert unmatched records
+inserted_values = {
+    "VENL_ID_LINK": F.col('DDWH01_DW.SEQ_TM_VENL.NEXTVAL'), 
+    "VENL_CD_CLIENT": F.col("VENL_CD_CLIENT"), 
+    "VENL_CD_PARTNER_GUID": F.col("VENL_CD_PARTNER_GUID"), 
+    "VENL_CD_VENDOR": F.col("VENL_CD_VENDOR"), 
+    "VENL_CD_USER": F.col("VENL_CD_USER"), 
+    "VENL_DT_DATE": F.col("VENL_DT_DATE"), 
+    "VENL_DT_TIME": F.col("VENL_DT_TIME"), 
+    "VENL_ID_BATCH_ID": F.when(F.col('p_ELT_ID_BATCH').isNull(), F.col('n_ELT_ID_JOB_LOG')).otherwise(F.col('p_ELT_ID_BATCH')), 
+    "VENL_DT_START_VALIDITY": F.to_date(F.lit("01/01/1900"), 'dd/MM/yyyy'), 
+    "VENL_DT_END_VALIDITY": F.to_date(F.lit("31/12/9999"), 'dd/MM/yyyy'), 
+    "VENL_DT_INSERT": F.current_timestamp(), 
+    "VENL_ID_BATCH_LAST_MODIFY": F.when(F.col('p_ELT_ID_BATCH').isNull(), F.col('n_ELT_ID_JOB_LOG')).otherwise(F.col('p_ELT_ID_BATCH')), 
+    "VENL_DT_LAST_MODIFY": F.current_timestamp()
+}
+inserted_df = unmatched_df.select(*[value for key, value in inserted_values.items()])
+target_df = target_df.unionByName(inserted_df)
+```
+
+Please replace the `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` with actual values or variables that you have defined in your PySpark environment. Also, make sure to write back the updated dataframe to the target table using the `write` method of Spark DataFrameWriter:
+```python
+target_df.write.insertInto("ddwh01_dw.TM_VENL_MASTER_LINK")
+```

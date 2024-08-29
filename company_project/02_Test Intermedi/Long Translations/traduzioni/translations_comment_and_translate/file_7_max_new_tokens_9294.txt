@@ -1,0 +1,7 @@
+system
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one.
+user
+Translate the following code from SAS to Python: 
+
+assistant
+Unfortunately, there is no provided code to translate from SAS to Python. Please provide the SAS code you would like me to translate so I can assist you better.

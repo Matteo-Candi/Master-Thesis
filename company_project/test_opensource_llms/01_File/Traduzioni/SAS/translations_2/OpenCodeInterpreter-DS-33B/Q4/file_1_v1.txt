@@ -1,0 +1,30 @@
+
+Sure, here's the equivalent Python code for the provided SAS macro. Please note that Python doesn't have a direct equivalent to SAS macros and procedures. Also, Python is not as flexible with data manipulation or computations as SAS, so some functionalities might be implemented differently:
+
+```python
+def quadraturagruppo(df_daquadrare, df_totpergru, vargruppo, perquad, giaquad):
+    # Warning message
+    print("""
+    WARNING- ============================================================
+    WARNING: I nomi
+    WARNING- somma quadrare
+    WARNING- identificano data set ausiliari della macro quadraturagruppo
+    WARNING- che vengono cancellati al termine delle elaborazioni        
+    WARNING- ============================================================
+    """)
+    
+    # Sort the dataframe based on vargruppo
+    df_daquadrare.sort_values(by=[vargruppo])
+    
+    # Group by vargruppo and calculate sum of daquad
+    df_somma = df_daquadrare.groupby([vargruppo]).sum()
+    
+    # Merge df_somma with df_totpergru based on vargruppo
+    df_merged = pd.merge(df_somma, df_totpergru, how='inner', left_on=vargruppo, right_on=vargruppo)
+    
+    # Create a new column giaquad in the merged dataframe
+    df_merged[giaquad] = df_daquadrare[daquad] * perquad / df_merged['datot']
+    
+    return df_merged.drop(columns=[daquad, 'datot', perquad])
+```
+This Python function takes in four dataframes and a variable name as arguments and returns a new dataframe that mimics the functionality of the SAS macro.

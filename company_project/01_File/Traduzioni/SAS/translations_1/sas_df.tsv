@@ -1,0 +1,176 @@
+	model	quantization	file	version	input_tokens	max_length	time	output_tokens	lloc	primary_errors_rank	secondary_errors_index	commented_lines	cyclomatic_complexity_index	halstead_volume	maintainability_index	syntax_error	loop	partial_code	primary_error_text
+0	CodeQwen1.5-7B-Chat	Q16	file_1	v1	486.0	1944.0	45.69	1112.0	23.0	Good	0.17	30.3	4.3	28.5	88.6		False	False	
+1	CodeQwen1.5-7B-Chat	Q16	file_2	v1	714.0	2856.0	24.66	1613.0	32.0	Good	0.06	4.0	6.2	110.4	64.6		False	False	
+2	CodeQwen1.5-7B-Chat	Q16	file_3	v1	851.0	3404.0	20.55	1603.0	22.0	Good	0.05	9.3	4.5	174.9	72.9		False	False	
+3	CodeQwen1.5-7B-Chat	Q16	file_4	v1	3127.0	12508.0	70.59	5590.0	93.0	Good	0.01	3.0	1.1	805.4	47.0		False	False	"Undefined variable 'macroquadraturagruppo'
+Undefined variable 'parametri'
+Undefined variable 'tracciato'
+Undefined variable 'macroarrotondainterogruppo'
+"
+4	CodeQwen1.5-7B-Chat	Q16	file_5	v1	3663.0	14652.0	330.78	14647.0									True	False	
+5	CodeQwen1.5-7B-Chat	Q16	file_6	v1	4533.0	18132.0	441.07	18126.0									True	False	
+6	CodeQwen1.5-7B-Chat	Q16	file_7	v1	7594.0	30376.0	138.88	12227.0								"  File ""<unknown>"", line 181
+    %quadraturagruppo(ristima, ""stima_n"", quadra, ""consumi_istat_ultimo"", ""stima_nq"", ""territorio"", ""quan1"")
+    ^
+SyntaxError: invalid syntax
+"	False	False	
+7	CodeQwen1.5-7B-Chat	Q16	file_1	v2	578.0	2312.0	12.25	1002.0	13.0	Good	0.31	31.6	7.7	15.5	96.1		False	False	
+8	CodeQwen1.5-7B-Chat	Q16	file_2	v2	806.0	3224.0	19.58	1513.0	28.0	Good	0.09	0.0	7.1	114.7	53.7		False	False	
+9	CodeQwen1.5-7B-Chat	Q16	file_3	v2	943.0	3772.0	27.29	1924.0	30.0	Good	0.02	8.2	13.3	98.1	70.2		False	False	
+10	CodeQwen1.5-7B-Chat	Q16	file_4	v2	3219.0	12876.0	70.82	5685.0	66.0	Good	0.03	25.0	1.5	492.1	68.5		False	False	"Undefined variable 'parametri'
+Undefined variable 'quadrature'
+Undefined variable 'sm'
+Undefined variable 'base_out3'
+"
+11	CodeQwen1.5-7B-Chat	Q16	file_5	v2	3755.0	15020.0	18.82	4427.0	19.0	Mediocre	0.19	19.2	5.3	96.0	82.9		False	False	"Using variable 'quadrato' before assignment
+"
+12	CodeQwen1.5-7B-Chat	Q16	file_6	v2	4625.0	18500.0	171.66	10650.0								"  File ""<unknown>"", line 15
+    np.where(x_base_eta['eta'] <= 9, '05-09',
+    
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+"	False	False	
+13	CodeQwen1.5-7B-Chat	Q16	file_7	v2	7686.0	30744.0	990.21	30739.0									True	False	
+14	Magicoder-S-DS-6.7B	Q16	file_1	v1	508.0	2032.0	12.1	874.0									False	False	
+15	Magicoder-S-DS-6.7B	Q16	file_2	v1	711.0	2844.0	22.24	1483.0	26.0	Poor	0.09	26.7	7.7	98.1	82.7		False	False	"Undefined variable 'os'
+Undefined variable 'pd'
+"
+16	Magicoder-S-DS-6.7B	Q16	file_3	v1	884.0	3536.0	28.14	1862.0	26.0	Good	0.02	26.3	3.8	50.2	84.7		False	False	
+17	Magicoder-S-DS-6.7B	Q16	file_4	v1	3260.0	13040.0	87.44	5372.0	72.0	Good	0.02	16.9	4.2	402.1	64.4		False	False	
+18	Magicoder-S-DS-6.7B	Q16	file_5	v1	3801.0	15204.0	61.98	5939.0								"  File ""<unknown>"", line 14
+    %include ""C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Macro\\macroarrotondainterogruppo.sas""
+    ^
+SyntaxError: invalid syntax
+"	False	False	
+19	Magicoder-S-DS-6.7B	Q16	file_6	v1	4719.0	16384.0	9.44	5051.0	3.0	Good	0.33	40.0	33.3	0.0	100.0		False	False	
+20	Magicoder-S-DS-6.7B	Q16	file_7	v1	7865.0	16384.0	2.75	7952.0									False	False	
+21	Magicoder-S-DS-6.7B	Q16	file_1	v2	600.0	2400.0	15.14	1149.0	16.0	Good	0.17	35.7	6.2	15.5	94.5		False	False	"Undefined variable 'pd'
+"
+22	Magicoder-S-DS-6.7B	Q16	file_2	v2	803.0	3212.0	68.55	3212.0	28.0	Poor	0.1	0.0	7.1	96.0	54.3		False	False	"Undefined variable 'pd'
+"
+23	Magicoder-S-DS-6.7B	Q16	file_3	v2	976.0	3904.0	12.93	1442.0								"  File ""<unknown>"", line 4
+    df1 = pd.read_sas('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\etapop20b.sas7bdat')
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: (unicode error) 'unicodeescape' codec can't decode bytes in position 2-3: truncated \UXXXXXXXX escape
+"	False	False	
+24	Magicoder-S-DS-6.7B	Q16	file_4	v2	3352.0	13408.0	24.31	4148.0	20.0	Good	0.03	15.2	5.0	53.8	81.9		False	False	
+25	Magicoder-S-DS-6.7B	Q16	file_5	v2	3893.0	15572.0	10.71	4279.0	3.0	Good	0.2	28.6	33.3	0.0	100.0		False	False	
+26	Magicoder-S-DS-6.7B	Q16	file_6	v2	4811.0	16384.0	16.88	5415.0	12.0	Good	0.08	20.0	8.3	0.0	100.0		False	False	
+27	Magicoder-S-DS-6.7B	Q16	file_7	v2	7957.0	16384.0	132.12	11745.0	113.0	Good	0.01	21.7	0.9	915.4	60.3		False	False	"Using variable 'qua3' before assignment
+Undefined variable 'xcod'
+Undefined variable 'espay'
+"
+28	OpenCodeInterpreter-DS-6.7B	Q16	file_1	v1	508.0	2032.0	15.04	1068.0	17.0	Good	0.16	0.0	5.9	15.5	64.7		False	False	"Undefined variable 'pd'
+"
+29	OpenCodeInterpreter-DS-6.7B	Q16	file_2	v1	711.0	2844.0	19.27	1425.0	26.0	Good	0.14	0.0	7.7	39.9	57.7		False	False	"Undefined variable 'soma'
+"
+30	OpenCodeInterpreter-DS-6.7B	Q16	file_3	v1	884.0	3536.0	7.14	1196.0									False	False	
+31	OpenCodeInterpreter-DS-6.7B	Q16	file_4	v1	3260.0	13040.0	49.56	5038.0	46.0	Good	0.01	16.7	6.5	452.4	68.1		False	False	"Undefined variable 'base_out3'
+"
+32	OpenCodeInterpreter-DS-6.7B	Q16	file_5	v1	3801.0	15204.0	63.9	5984.0	55.0	Good	0.01	16.2	1.8	216.0	68.7		False	False	
+33	OpenCodeInterpreter-DS-6.7B	Q16	file_6	v1	4719.0	16384.0	50.45	6477.0	27.0	Mediocre	0.01	24.8	3.7	25.3	86.0		False	False	"Undefined variable 'nati_eta_madre_rapporto'
+Undefined variable 'base_sezione_eta_riquadrata'
+Undefined variable 'attuale'
+Undefined variable 'tot_coef_cleta'
+Undefined variable 'base_sezione_eta'
+Undefined variable 'nati_stima_s'
+Undefined variable 'base_sezione_eta_completata'
+Undefined variable 'base_sezione_eta_piu_1'
+Undefined variable 'nati_stima'
+"
+34	OpenCodeInterpreter-DS-6.7B	Q16	file_7	v1	7865.0	16384.0	1.51	7969.0									False	False	
+35	OpenCodeInterpreter-DS-6.7B	Q16	file_1	v2	600.0	2400.0	17.93	1293.0	23.0	Good	0.26	6.9	4.3	15.5	77.5		False	False	"Using variable 'quadrato' before assignment
+Undefined variable 'vargruppo'
+Undefined variable 'quadrare'
+Undefined variable 'perquad'
+Undefined variable 'daquadrare'
+Undefined variable 'totpergru'
+Undefined variable 'pd'
+Undefined variable 'somma'
+Undefined variable 'daquad'
+Undefined variable 'giaquad'
+"
+36	OpenCodeInterpreter-DS-6.7B	Q16	file_2	v2	803.0	3212.0	23.04	1675.0	19.0	Mediocre	0.13	29.5	5.3	80.0	87.1		False	False	"Access to a protected member _N_ of a client class
+Access to a protected member _N_ of a client class
+"
+37	OpenCodeInterpreter-DS-6.7B	Q16	file_3	v2	976.0	3904.0	33.04	2180.0	22.0	Good	0.02	20.4	4.5	85.8	82.4		False	False	
+38	OpenCodeInterpreter-DS-6.7B	Q16	file_4	v2	3352.0	13408.0	57.5	5401.0	60.0	Good	0.01	8.4	5.0	408.4	59.7		False	False	
+39	OpenCodeInterpreter-DS-6.7B	Q16	file_5	v2	3893.0	15572.0	106.11	7561.0	90.0	Good	0.01	19.7	3.3	1916.0	59.0		False	False	
+40	OpenCodeInterpreter-DS-6.7B	Q16	file_6	v2	4811.0	16384.0	135.31	9303.0	73.0	Good	0.0	19.5	1.4	564.7	64.8		False	False	"Undefined variable 'base_sezione_eta_piu_1'
+"
+41	OpenCodeInterpreter-DS-6.7B	Q16	file_7	v2	7957.0	16384.0	330.48	16384.0									True	False	
+42	Artigenz-Coder-DS-6.7B	Q16	file_1	v1	508.0	2032.0	13.39	908.0	18.0	Good	0.15	0.0	5.6	15.5	64.1		False	False	"Undefined variable 'pd'
+"
+43	Artigenz-Coder-DS-6.7B	Q16	file_2	v1	711.0	2844.0	24.96	1594.0	32.0	Good	0.11	31.4	12.5	68.5	82.6		False	False	
+44	Artigenz-Coder-DS-6.7B	Q16	file_3	v1	884.0	3536.0	26.38	1816.0								"  File ""<unknown>"", line 12
+    ter['eta1_a'] = ter['eta'].apply(lambda x: 'Y_UN17' if 15 <= x <= 17 else ('Y'+str(x) if 18 <= x <= 49 else ('Y_GE50' if 50 <= x <= 54 else ''))
+                                    ^
+SyntaxError: '(' was never closed
+"	False	False	
+45	Artigenz-Coder-DS-6.7B	Q16	file_4	v1	3260.0	13040.0	5.93	3474.0									False	False	
+46	Artigenz-Coder-DS-6.7B	Q16	file_5	v1	3801.0	15204.0	8.76	4116.0	4.0	Good	0.25	42.9	25.0	4.8	100.0		False	False	
+47	Artigenz-Coder-DS-6.7B	Q16	file_6	v1	4719.0	16384.0	76.34	7345.0	48.0	Mediocre	0.01	12.2	22.9	488.5	63.4		False	False	"Using variable 'nati_stima_s' before assignment
+Undefined variable 'base_sezione_eta_piu_1'
+Undefined variable 'Base_sezione_eta_riquadrata'
+Undefined variable 'tot_st_cleta'
+Undefined variable 'tot_qua_cleta'
+"
+48	Artigenz-Coder-DS-6.7B	Q16	file_7	v1	7865.0	16384.0	17.88	8432.0	19.0	Good	0.09	17.9	5.3	15.5	87.7		False	False	
+49	Artigenz-Coder-DS-6.7B	Q16	file_1	v2	600.0	2400.0	14.43	1126.0	16.0	Good	0.15	20.0	6.2	15.5	90.4		False	False	
+50	Artigenz-Coder-DS-6.7B	Q16	file_2	v2	803.0	3212.0	24.31	1666.0	27.0	Mediocre	0.11	32.5	14.8	68.5	84.4		False	False	"Undefined variable 'pd'
+"
+51	Artigenz-Coder-DS-6.7B	Q16	file_3	v2	976.0	3904.0	30.06	2034.0	27.0	Good	0.02	19.6	14.8	185.4	77.3		False	False	
+52	Artigenz-Coder-DS-6.7B	Q16	file_4	v2	3352.0	13408.0	23.69	4172.0	15.0	Good	0.03	8.1	6.7	53.8	79.0		False	False	
+53	Artigenz-Coder-DS-6.7B	Q16	file_5	v2	3893.0	15572.0	54.07	5774.0								"  File ""<unknown>"", line 14
+    %include ""C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Macro\\macroarrotondainterogruppo.sas""
+    ^
+SyntaxError: invalid syntax
+"	False	False	
+54	Artigenz-Coder-DS-6.7B	Q16	file_6	v2	4811.0	16384.0	47.48	6462.0	31.0	Good	0.02	14.0	3.2	949.5	68.2		False	False	
+55	Artigenz-Coder-DS-6.7B	Q16	file_7	v2	7957.0	16384.0	18.23	8531.0	2.0	Good	0.12	0.0	50.0	0.0	100.0		False	False	
+56	deepseek-coder-33b-instruct	Q4	file_1	v1	508.0	2032.0	18.23	494.0	13.0	Good	0.18	0.0	7.7	15.5	67.2		False	False	
+57	deepseek-coder-33b-instruct	Q4	file_2	v1	711.0	2844.0	25.85	708.0	17.0	Mediocre	0.1	20.5	5.9	84.0	85.0		False	False	"Undefined variable 'np'
+"
+58	deepseek-coder-33b-instruct	Q4	file_3	v1	884.0	3536.0	24.36	643.0	18.0	Good	0.02	4.4	22.2	98.1	70.8		False	False	
+59	deepseek-coder-33b-instruct	Q4	file_4	v1	3260.0	13040.0	25.04	289.0									False	False	
+60	deepseek-coder-33b-instruct	Q4	file_5	v1	3801.0	15204.0	34.24	646.0	14.0	Good	0.07	18.8	7.1	36.0	87.9		False	False	
+61	deepseek-coder-33b-instruct	Q4	file_6	v1	4719.0	16384.0	47.83	934.0	23.0	Good	0.05	9.3	4.3	144.9	73.0		False	False	
+62	deepseek-coder-33b-instruct	Q4	file_7	v1	7865.0	16384.0	52.77	794.0	16.0	Good	0.22	2.6	6.2	0.0	100.0		False	False	
+63	deepseek-coder-33b-instruct	Q4	file_1	v2	600.0	2400.0	20.47	551.0	9.0	Good	0.2	19.2	11.1	15.5	99.8		False	False	
+64	deepseek-coder-33b-instruct	Q4	file_2	v2	803.0	3212.0	27.6	762.0	18.0	Good	0.17	23.9	5.6	92.0	85.6		False	False	
+65	deepseek-coder-33b-instruct	Q4	file_3	v2	976.0	3904.0	36.49	1043.0	30.0	Good	0.02	13.3	13.3	98.1	73.9		False	False	
+66	deepseek-coder-33b-instruct	Q4	file_4	v2	3352.0	13408.0	37.16	798.0	16.0	Good	0.12	20.0	6.2	0.0	100.0		False	False	
+67	deepseek-coder-33b-instruct	Q4	file_5	v2	3893.0	15572.0	30.74	523.0	14.0	Good	0.14	12.5	7.1	69.8	82.6		False	False	
+68	deepseek-coder-33b-instruct	Q4	file_6	v2	4811.0	16384.0	25.72	281.0	2.0	Good	0.25	20.0	50.0	0.0	100.0		False	False	
+69	deepseek-coder-33b-instruct	Q4	file_7	v2	7957.0	16384.0	121.83	2578.0	78.0	Good	0.03	2.7	5.1	698.7	48.1		False	False	"Using variable 'baseprop' before assignment
+Undefined variable 'espay'
+Undefined variable 'stima_n'
+Undefined variable 'variap95'
+Undefined variable 'mediaistat'
+Undefined variable 'estremi_p'
+Undefined variable 'mediat'
+Undefined variable 'red_ult'
+Undefined variable 'eco'
+Undefined variable 'correttivo'
+Undefined variable 'variap5'
+"
+70	OpenCodeInterpreter-DS-33B	Q4	file_1	v1	508.0	2032.0	22.48	623.0	16.0	Good	0.14	29.0	6.2	15.5	93.6		False	False	"Undefined variable 'pd'
+"
+71	OpenCodeInterpreter-DS-33B	Q4	file_2	v1	711.0	2844.0	28.75	805.0	20.0	Mediocre	0.1	34.8	5.0	84.0	87.2		False	False	"Undefined variable 'np'
+Undefined variable 'pd'
+"
+72	OpenCodeInterpreter-DS-33B	Q4	file_3	v1	884.0	3536.0	32.73	922.0	18.0	Good	0.02	22.2	22.2	102.0	84.2		False	False	
+73	OpenCodeInterpreter-DS-33B	Q4	file_4	v1	3260.0	13040.0	96.61	2522.0								"  File ""<unknown>"", line 5
+    with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\geografica_comune.sas7bdat') as file:
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: (unicode error) 'unicodeescape' codec can't decode bytes in position 2-3: truncated \UXXXXXXXX escape
+"	False	False	
+74	OpenCodeInterpreter-DS-33B	Q4	file_5	v1	3801.0	15204.0	18.54	157.0									False	False	
+75	OpenCodeInterpreter-DS-33B	Q4	file_6	v1	4719.0	16384.0	18.57	74.0									False	False	
+76	OpenCodeInterpreter-DS-33B	Q4	file_7	v1	7865.0	16384.0	26.85	96.0									False	False	
+77	OpenCodeInterpreter-DS-33B	Q4	file_1	v2	600.0	2400.0	26.78	593.0	10.0	Good	0.25	36.8	10.0	15.5	99.0		False	False	
+78	OpenCodeInterpreter-DS-33B	Q4	file_2	v2	803.0	3212.0	8.39	76.0									False	False	
+79	OpenCodeInterpreter-DS-33B	Q4	file_3	v2	976.0	3904.0	35.9	1016.0	30.0	Good	0.14	19.2	23.3	167.2	76.0		False	False	
+80	OpenCodeInterpreter-DS-33B	Q4	file_4	v2	3352.0	13408.0	13.85	53.0									False	False	
+81	OpenCodeInterpreter-DS-33B	Q4	file_5	v2	3893.0	15572.0	47.26	1026.0	16.0	Good	0.05	20.0	6.2	75.3	85.6		False	False	
+82	OpenCodeInterpreter-DS-33B	Q4	file_6	v2	4811.0	16384.0	17.26	28.0									False	False	
+83	OpenCodeInterpreter-DS-33B	Q4	file_7	v2	7957.0	16384.0	133.92	2884.0									False	False	

@@ -1,0 +1,41 @@
+Here is the translation of your SAS code to Python. However, note that this assumes that you have equivalent data files in CSV format and libraries are assumed to be Pandas DataFrames. Also, some SAS specific functions like PROC IMPORT, PROC MEANS etc. don't exist in pandas or other python libraries so these parts of the code might need to be rewritten:
+
+```python
+import pandas as pd
+from scipy import stats
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Loading data
+consumi_tag = pd.read_excel("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/tag_00026.xlsx", sheet_name="TAG-00026_4", usecols="A:G")
+reddito_tag = pd.read_excel("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/tag_00027.xlsx", sheet_name="TAG-00027_2", usecols="A:G")
+provincia = pd.read_excel("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/provincia_110.xlsx")
+corrispo = pd.read_excel("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/Codici-statistici-e-denominazioni-al-31_12_2020.xls", sheet_name="CODICI al 31_12_2020")
+consumi_istat = pd.read_csv("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/quadratura_consumi.csv")
+ter = pd.read_csv('path_to_file') # replace with actual path to ter file
+sez = pd.read_csv('path_to_file') # replace with actual path to sez file
+appo = pd.read_csv('path_to_file') # replace with actual path to appo file
+ter_out = pd.read_csv('path_to_file') # replace with actual path to ter_out file
+sez_out = pd.read_csv('path_to_file') # replace with actual path to sez_out file
+
+# Data cleaning and manipulation
+consumi_tag['province_e_regioni'] = consumi_tag['province_e_regioni'].str.upper()
+reddito_tag['province_e_regioni'] = reddito_tag['province_e_regioni'].str.upper()
+consumi_tag = consumi_tag[(consumi_tag['province_e_regioni'] != consumi_tag['province_e_regioni'].str.upper()) | (consumi_tag['province_e_regioni'] == "VALLE D'AOSTA/VALLÀE D'AOSTE")]
+reddito_tag = reddito_tag[(reddito_tag['province_e_regioni'] != reddito_tag['province_e_regioni'].str.upper()) | (reddito_tag['province_e_regioni'] == "VALLE D'AOSTA/VALLÀE D'AOSTE")]
+consumi_tag['consumi'] = consumi_tag['_017'] / 1000
+reddito_tag['reddito'] = reddito_tag['_017'] / 1000
+base_tag = pd.merge(reddito_tag, consumi_tag, on='province_e_regioni')
+base_tag['propensione'] = base_tag['consumi'] / base_tag['reddito']
+base_tag['inverso'] = 1 / base_tag['reddito']
+
+# Statistical analysis and visualization
+plt.hist(base_tag['propensione'])
+stats.probplot(base_tag['propensione'], plot=plt)
+plt.show()
+
+print("Correlation Matrix:")
+print(base_tag[['propensione', 'reddito', 'inverso']].corr())
+```
+
+Please note that the Python code provided is just a starting point and you will need to adjust it according to your specific needs. Also, some SAS specific functions like PROC IMPORT, PROC MEANS etc. don't exist in pandas or other python libraries so these parts of the code might need to be rewritten.

@@ -1,0 +1,59 @@
+Here is the Python equivalent code. Note that Python does not have direct equivalents for some of SAS procedures and libraries, so we had to use pandas dataframes instead.
+
+```python
+import pandas as pd
+import numpy as np
+
+ter = pd.read_csv(r"C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets\etapop20b.csv")
+sez = pd.read_csv(r"C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets\etapop20b.csv")
+ter_out = pd.read_csv(r"C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets\geografica_comune.csv")
+sez_out = pd.read_csv(r"C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets\geografica_comune.csv")
+appo = pd.read_csv(r"C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets\nati_eta_madre_provincia_istat.csv")
+
+# Create variable 'time' and assign value of 2019
+ter['time'] = 2019
+sez['time'] = 2019
+
+# Create a new column 'eta1_a' based on the conditions specified
+conditions = [(ter["eta"] >= 15) & (ter["eta"] <= 17), 
+              (ter["eta"] >= 18) & (ter["eta"] <= 49), 
+              (ter["eta"] >= 50) & (ter["eta"] <= 54)]
+choices = ['Y_UN17', 'Y' + ter['eta'].astype(str), 'Y_GE50']
+
+ter["eta1_a"] = np.select(conditions, choices, default=np.nan)
+
+# Drop rows where eta1_a is NaN (this corresponds to the delete statement in SAS)
+ter = ter[pd.notnull(ter['eta1_a'])]
+
+# Select only certain columns from dataframes and rename them
+xclasse = ter[["codc620b", "eta1_a", "time", "tot_fem"]].rename(columns={"codc620b": "codice_comune__str", "tot_fem":"femmine"})
+
+# This is not directly translatable into Python since there's no equivalent for SAS' PROC TABULATE. 
+# However, pandas dataframes have the `groupby` and `describe` functions which can be used to achieve similar results
+tabulate_data = xclasse.groupby('eta1_a')['eta'].describe()
+print(tabulate_data)
+
+xclasse = xclasse.sort_values("codice_comune__str")
+
+# Select only certain columns from dataframes and rename them
+xgeog = ter_out[["codice_comune__str", "codice_provincia"]]
+xgeog = xgeog.sort_values("codice_comune__str")
+
+# Merge the two dataframes using 'codice_comune__str' as key
+xclageo = pd.merge(xgeog, xclasse, on="codice_comune__str", how='outer')
+
+provinciale_donne = xclageo.groupby(['codice_provincia', 'eta1_a'], as_index=False)['femmine'].sum()
+
+# Select only certain columns from dataframes and rename them
+nati = appo[["valore", "codice_provincia", "eta1_a"]].rename(columns={"valore": "nati"})
+
+nati = nati.sort_values(['codice_provincia', 'eta1_a'])
+provinciale_donne = provinciale_donne.sort_values(['codice_provincia', 'eta1_a'])
+
+# Merge the two dataframes using 'codice_provincia' and 'eta1_a' as key
+nati_donne = pd.merge(nati, provinciale_donne, on=['codice_provincia', 'eta1_a'], how='outer')
+
+# Create a new column based on the existing ones
+nati_donne["nati_1000_donne_classe_eta"] = 1000 * nati_donne['nati'] / nati_donne['femmine']
+```
+Please note that you need to replace `read_csv()` with the appropriate function if your files are not CSV. You also need to install pandas and numpy (if they're not installed already). The code assumes that all file paths specified exist, otherwise it will fail. Also, in Python, we don't have an exact equivalent of SAS "libname" statement for loading datasets. We usually use Pandas `read_csv` or `read_excel` functions to load data from a CSV or Excel file respectively.

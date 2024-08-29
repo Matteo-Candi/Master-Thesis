@@ -1,0 +1,88 @@
+You are an expert in translating code from SAS to Python. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code. 
+
+@@Instruction 
+Translate the following code from SAS to Python:
+%macro quadraturagruppo(daquadrare,		
+						daquad,			
+						totpergru,		
+						perquad,		
+						giaquad,		
+						vargruppo,		
+						quadrato);		
+
+
+
+
+
+%put;
+%put %str(WARNING- ============================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- somma quadrare);
+%put %str(WARNING- identificano data set ausiliari della macro quadraturagruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni        );
+%put %str(WARNING- ============================================================);
+%put;
+
+
+proc sort data = &daquadrare;
+	by &vargruppo;
+run;
+proc means data = &daquadrare noprint;
+	by &vargruppo;
+	output out = somma (keep = &vargruppo datot)
+		   sum(&daquad) = datot;
+run;
+proc sort data = &totpergru;
+	by &vargruppo;
+run;
+data somma;
+	merge somma (in = inso) &totpergru (in = into);
+	by &vargruppo;
+	if inso and into;
+	keep &vargruppo datot &perquad;
+run; 
+
+
+data quadrare;
+	merge &daquadrare somma (in = presente);
+	by &vargruppo;
+	if presente;
+	&giaquad = &daquad*&perquad/datot;
+run;
+
+
+data &quadrato;
+	set quadrare;
+	drop &daquad datot &perquad;
+run;
+
+
+proc datasets library = work;
+	delete somma quadrare;
+run;
+quit;
+
+%mend quadraturagruppo;
+ 
+@@Response
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+
+
+    print("WARNING- ============================================================")
+    print("WARNING: I nomi")
+    print("WARNING- somma quadrare")
+    print("WARNING- identificano data set ausiliari della macro quadraturagruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni        ")
+    print("WARNING- ============================================================")
+    print()
+
+    daquadrare.sort_values(vargruppo)
+    daquadrare_sum = daquadrare.groupby(vargruppo)[daquad].sum().reset_index()
+    daquadrare_sum.columns = [vargruppo, 'datot']
+    totpergru.sort_values(vargruppo)
+    somma = pd.merge(daquadrare_sum, totpergru, on=vargruppo)
+    quadrare = pd.merge(daquadrare, somma, on=vargruppo)
+    quadrare[giaquad] = quadrare[daquad] * quadrare[perquad] / quadrare['datot']
+    quadrato = quadrare.drop([daquad, 'datot', perquad], axis=1)
+    
+    return quadrato

@@ -1,0 +1,82 @@
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE); 
+@@Response
+The PySpark version of the above SQL query is as follows:
+
+```python
+from pyspark.sql.functions import current_date, to_date
+
+# Read the data from the source and destination tables
+sa_df = spark.table('ddwh00_sa.TS_VENL0001_WW_GPP')
+dw_df = spark.table('ddwh01_dw.TM_VENL_MASTER_LINK')
+
+# Perform the set difference operation to get the rows in SA that are not in DW
+diff_df = sa_df.alias('SA').subtract(dw_df.alias('DW'))
+
+# Perform the merge operation
+merge_df = dw_df.alias('TARGET').join(diff_df.alias('SA'), 
+                                      (dw_df.VENL_CD_CLIENT == diff_df.VENL_CD_CLIENT) &
+                                      (dw_df.VENL_CD_PARTNER_GUID == diff_df.VENL_CD_PARTNER_GUID), 
+                                      'left_outer')
+
+# Perform the update and insert operations
+update_df = merge_df.withColumnRenamed('VENL_CD_CLIENT', 'VENL_CD_CLIENT_TARGET') \
+                    .withColumnRenamed('VENL_CD_PARTNER_GUID', 'VENL_CD_PARTNER_GUID_TARGET') \
+                    .withColumnRenamed('VENL_CD_VENDOR', 'VENL_CD_VENDOR_TARGET') \
+                    .withColumnRenamed('VENL_CD_USER', 'VENL_CD_USER_TARGET') \
+                    .withColumnRenamed('VENL_DT_DATE', 'VENL_DT_DATE_TARGET') \
+                    .withColumnRenamed('VENL_DT_TIME', 'VENL_DT_TIME_TARGET') \
+                    .withColumnRenamed('VENL_DT_LAST_MODIFY', 'VENL_DT_LAST_MODIFY_TARGET') \
+                    .withColumnRenamed('VENL_ID_BATCH_LAST_MODIFY', 'VENL_ID_BATCH_LAST_MODIFY_TARGET')
+
+update_df = update_df.na.fill({'VENL_ID_BATCH_LAST_MODIFY_TARGET': p_ELT_ID_BATCH, 'VENL_DT_LAST_MODIFY_TARGET': current_date()})
+
+update_df = update_df.withColumn('VENL_ID_LINK', DDWH01_DW.SEQ_TM_VENL.next())
+
+update_df = update_df.withColumn('VENL_DT_START_VALIDITY', to_date('01/01/1900', 'DD/MM/YYYY'))
+update_df = update_df.withColumn('VENL_DT_END_VALIDITY', to_date('31/12/9999', 'DD/MM/YYYY'))
+update_df = update_df.withColumn('VENL_DT_INSERT', current_date())
+
+# Write the updated data back to the target table
+update_df.write.mode('overwrite').saveAsTable('ddwh01_dw.TM_VENL_MASTER_LINK')
+```
+
+Please replace `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` with actual values or functions in your PySpark script. Also, ensure that the tables and column names used in this script are correct and exist in your Spark environment.

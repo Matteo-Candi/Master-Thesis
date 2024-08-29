@@ -1,0 +1,125 @@
+
+The corresponding PySpark code for the given SQL query would be as follows:
+```python
+from pyspark.sql import SparkSession
+
+# Create a Spark session
+spark = SparkSession.builder \
+    .appName("Translation from SQL to PySpark") \
+    .getOrCreate()
+
+# Read the table data into a DataFrame
+inol_df = spark.table("ddwh01_dw.td_inol_invoice_orders_lines")
+vele_df = spark.table("ddwh02_dim.twrk_pvan_delta_flash_legacy")
+sops_df = spark.sql("""
+    SELECT *, MAX(sops_id_sales_order_pos) OVER (PARTITION BY sops_cd_sales_order,
+                                                                sops_cd_legacy_mkt,
+                                                                sops_cd_dealer_code,
+                                                                sops_cd_source_order,
+                                                                sops_cd_source_order_sequence,
+                                                                sops_cd_source_system,
+                                                                sops_cd_product_line,
+                                                                sops_id_vele_vcl_legacy) AS max_id_sops
+    FROM ddwh01_dw.td_sops_sales_order_position
+    WHERE sops_cd_source_system NOT LIKE '%SAP%'
+""")
+slor_df = spark.table("ddwh01_dw.tt_slor_sales_order")
+inoh_df = spark.table("ddwh01_dw.tt_inoh_invoice_orders_header")
+tdim_pvan_vehicle_df = spark.table("tdim_pvan_vehicle")
+
+# Join the tables based on the conditions specified in the SQL query
+result_df = inol_df \
+    .join(vele_df, "inol_id_vele_vcl_legacy", how="inner") \
+    .join(sops_df.filter("sops_cd_source_system NOT LIKE '%SAP%'"), [
+        inol_df.inol_cd_sales_order == sops_df.sops_cd_sales_order,
+        inol_df.inol_cd_legacy_mkt == sops_df.sops_cd_legacy_mkt,
+        inol_df.inol_cd_dealer_code == sops_df.sops_cd_dealer_code,
+        inol_df.inol_cd_source_order == sops_df.sops_cd_source_order,
+        inol_df.inol_cd_source_order_sequence == sops_df.sops_cd_source_order_sequence,
+        inol_df.inol_cd_source_system == sops_df.sops_cd_source_system,
+        inol_df.inol_cd_product_line == sops_df.sops_cd_product_line,
+        inol_df.inol_id_vele_vcl_legacy == sops_df.sops_id_vele_vcl_legacy
+    ], how="left") \
+    .join(slor_df, "sops_id_slor_sales_order", how="left") \
+    .join(inoh_df, "inoh_id_invoice_orders_header", how="left") \
+    .join(tdim_pvan_vehicle_df, "pvan_id_vcl", how="left")
+
+# Filter the records based on the conditions specified in the SQL query
+result_df = result_df.filter("inol_fl_delete_line IS NULL")
+
+# Select the required columns and create a new DataFrame with the translated code
+fbil_df = result_df.select(
+    -1 AS fbil_id_comp_company,
+    '-1' AS fbil_cd_accg_doc_code,
+    to_number(to_char(inol_df.inol_dt_document_date, 'yyyy')) AS fbil_nr_accg_doc_fiscal_year,
+    inol_df.inol_cd_document_number AS fbil_cd_cmm_doc_code,
+    inol_df.inol_cd_progressive_order AS fbil_cd_cmm_doc_pos_code,
+    coalesce(inol_df.inol_id_vele_vcl_legacy, -1) AS fbil_id_pvan_vcl,
+    inol_df.inol_cd_sales_order AS fbil_cd_sls_ord_code,
+    inol_df.inol_cd_progressive_order AS fbil_cd_sls_ord_pos_code,
+    coalesce(inol_df.inol_id_inoh_invoice_orders_he, -1) AS fbil_id_cmm_doc_id,
+    coalesce(inol_df.inol_id_invoice_orders_lines, -1) AS fbil_id_cmm_doc_pos_id,
+    inol_df.inol_cd_document_type AS fbil_id_bdty_billing_doc_tp,
+    coalesce(to_number(to_char(inol_df.inol_dt_document_date, 'J')), 5373484) AS fbil_id_time_cmm_doc_date,
+    coalesce(inol_df.inol_id_cust_customer, -1) AS fbil_id_cust_payer,
+    coalesce(inol_df.inol_id_cust_customer, -1) AS fbil_id_cust_sold,
+    -2 AS fbil_id_cuty_customer_type,
+    coalesce(vele_df.vele_id_ledi_legacy_division, -1) AS fbil_id_divi_division,
+    coalesce(vele_df.vele_id_hmup_plank_key, -1) AS fbil_id_hmup_hmu_product,
+    coalesce(tdim_pvan_vehicle_df.pvan_id_prat_pr_attributes, -1) AS fbil_id_prat_pr_attributes,
+    coalesce(tdim_pvan_vehicle_df.pvan_id_prpp_prp_product, -1) AS fbil_id_prp_prpp_product,
+    5373484 AS fbil_id_time_return_date,
+    coalesce(to_number(to_char(slor_df.slor_dt_document_date, 'J')), 5373484) AS fbil_id_time_sales_order_date,
+    coalesce(slor_df.slor_id_sales_order, -1) AS fbil_id_sls_ord_id,
+    coalesce(sops_df.sops_id_sales_order_pos, -1) AS fbil_id_sls_ord_pos_id,
+    coalesce(to_number(to_char(vele_df.vele_dt_dealer_invoice_date, 'J')), 5373484) AS fbil_id_time_start_billing_dat,
+    1 AS fbil_id_batch_id,
+    None AS fbil_fl_itc_flg,
+    coalesce(inoh_df.inoh_id_cust_customer, -1) AS fbil_id_cust_payee,
+    coalesce(inoh_df.inoh_id_cust_customer, -1) AS fbil_id_cust_billtoparner,
+    coalesce(inoh_df.inoh_id_cust_customer, -1) AS fbil_id_cust_saleschannel,
+    coalesce(inoh_df.inoh_id_cust_customer, -1) AS fbil_id_cust_soldtoparner,
+    coalesce(inoh_df.inoh_id_cust_customer, -1) AS fbil_id_cust_ownership_group,
+    -2 AS fbil_id_addr_ownership_group,
+    inol_df.inol_cd_business_area_code AS fbil_cd_business_area_code,
+    slor_df.slor_cd_codice_resa AS fbil_cd_codice_resa,
+    inol_df.inol_cd_dealer_code AS fbil_cd_dlr_code,
+    inoh_df.inoh_cd_dealer_order_reference AS fbil_cd_dlr_ord_ref,
+    inol_df.inol_cd_dealer_order_type AS fbil_cd_dlr_ord_tp,
+    inol_df.inol_cd_document_number AS fbil_cd_doc_nbr,
+    inol_df.inol_cd_document_type AS fbil_cd_doc_tp,
+    inol_df.inol_cd_draft_number AS fbil_cd_draft_inv_code,
+    inol_df.inol_cd_engine_number AS fbil_cd_eng_nbr,
+    inol_df.inol_cd_machine_type AS fbil_cd_machine_tp,
+    inol_df.inol_cd_legacy_mkt AS fbil_cd_market_legacy,
+    inol_df.inol_cd_tyres_price_1 AS fbil_cd_price_tyres_1,
+    inol_df.inol_cd_tyres_price_2 AS fbil_cd_price_tyres_2,
+    inol_df.inol_cd_price_list AS fbil_cd_price_list,
+    inol_df.inol_cd_tech_type_price AS fbil_cd_price_tech_tp,
+    inol_df.inol_cd_product_class AS fbil_cd_product_cl,
+    inol_df.inol_cd_product_line AS fbil_cd_product_line,
+    inol_df.inol_cd_product_type AS fbil_cd_product_tp,
+    inol_df.inol_cd_progressive_order AS fbil_cd_progressive_ord,
+    inol_df.inol_cd_reference_document_num AS fbil_cd_ref_doc_nbr,
+    inol_df.inol_cd_serial_number AS fbil_cd_serial_nbr,
+    inol_df.inol_cd_shipment_progressive AS fbil_cd_shipment_progressive,
+    inol_df.inol_cd_sales_order AS fbil_cd_sls_ord,
+    inol_df.inol_cd_source_order AS fbil_cd_source_ord,
+    inol_df.inol_cd_source_order_sequence AS fbil_cd_source_ord_sequence,
+    inol_df.inol_cd_standard_card_model AS fbil_cd_std_card_mdl,
+    inol_df.inol_cd_standard_card_tyres AS fbil_cd_std_card_tyres,
+    inol_df.inol_cd_standard_card_version AS fbil_cd_std_card_vrs,
+    inol_df.inol_cd_tech_tp AS fbil_cd_tech_tp,
+    5373484 AS fbil_id_time_itc_inv_date,
+    inol_df.inol_fl_invoice_reject_reason AS fbil_fl_inv_reject_reason,
+    coalesce(to_number(to_char(inol_df.inol_dt_draft_date, 'J')), 5373484) AS fbil_id_time_draft_inv_date,
+    coalesce(inol_df.inol_id_mark_std_legacy_mkt, -1) AS fbil_id_coun_country,
+    inol_df.inol_cd_source_system AS fbil_cd_source_system,
+    (CASE WHEN inol_df.inol_cd_document_type IN ('1') THEN 1 ELSE 0 END) AS fbil_in_wholesale_qty,
+    ((CASE WHEN inol_df.inol_cd_document_type IN ('1') THEN 1 ELSE 0 END) - (CASE WHEN inol_df.inol_cd_document_type IN ('6') THEN 1 ELSE 0 END)) AS fbil_in_wholesale_net_qty,
+    (CASE WHEN inol_df.inol_cd_document_type IN ('6') THEN 1 ELSE 0 END) AS fbil_in_wholesale_rev_qty
+)
+
+# Write the translated DataFrame to a new table
+fbil_df.write.mode("append").insertInto("ddwh02_sm.twrk_fbil_billing_l_flash")
+```

@@ -1,0 +1,37 @@
+The SAS macro provided is a complex procedure that calculates the sum of squares for each group in a dataset. Here's how you can translate it into Python. Note that this code assumes pandas library is installed and imported.
+
+```python
+import pandas as pd
+
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    """
+    This function calculates the sum of squares for each group in a dataset.
+    
+    Parameters:
+        daquadrare (DataFrame): The original dataframe to be processed.
+        daquad (str): Name of the column whose square values will be calculated.
+        totpergru (str): Name of the column that contains total value per group.
+        perquad (str): Name of the column that contains per-group value.
+        giaquad (str): Name of the new column to store the result.
+        vargruppo (str): Name of the column used for grouping.
+        quadrato (DataFrame): The output dataframe.
+    """
+    
+    # Sort the data by group variable
+    daquadrare = daquadrare.sort_values(by=[vargruppo])
+    
+    # Calculate the sum of squares for each group
+    somma = daquadrare.groupby([vargruppo]).sum().reset_index()[[vargruppo, totpergru]]
+    
+    # Merge with original dataframe to get per-group value
+    quadrare = pd.merge(daquadrare, somma, on=[vargruppo])
+    
+    # Calculate the square values and store in new column
+    quadrare[giaquad] = quadrare[daquad] * quadrare[perquad] / quadrare[totpergru]
+    
+    # Drop unnecessary columns and save to output dataframe
+    quadrato = quadrare.drop(columns=[daquad, totpergru, perquad])
+    
+    return quadrato
+```
+Please note that the Python version of this code doesn't delete datasets like the SAS macro does with `proc datasets library = work; delete somma quadrare; quit;`. You might need to manually delete these datasets if necessary. Also, please ensure you have read and understood all the comments in the code before running it.

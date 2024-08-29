@@ -1,0 +1,447 @@
+system
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one.
+user
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+title1 "AVANZAMENTO DELLE ET�";
+
+
+data base_sezione;
+	set sez_out.geografica_sezione (keep = codice_sezione codice_comune__str);
+run;
+data x_base_eta;
+	set ter.etapop20b;
+	if eta <= 4 then cleta = "00-04";
+	else if eta <= 9 then cleta = "05-09";
+	else if eta <= 14 then cleta = "10-14";
+	else if eta <= 19 then cleta = "15-19";
+	else if eta <= 24 then cleta = "20-24";
+	else if eta <= 29 then cleta = "25-29";
+	else if eta <= 34 then cleta = "30-34";
+	else if eta <= 39 then cleta = "35-39";
+	else if eta <= 44 then cleta = "40-44";
+	else if eta <= 49 then cleta = "45-49";
+	else if eta <= 54 then cleta = "50-54";
+	else if eta <= 59 then cleta = "55-59";
+	else if eta <= 64 then cleta = "60-64";
+	else if eta <= 69 then cleta = "65-69";
+	else if eta <= 74 then cleta = "70-74";
+	else cleta = "75-99";
+run;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = x_base_eta min max maxdec = 0;
+	class cleta;
+	var eta;
+run;
+proc freq data = x_base_eta noprint;
+	tables eta*cleta /out = base_eta (drop = count percent);
+run;
+proc sql;
+	create table base_sezione_eta as select *
+	from base_sezione, base_eta;
+quit;
+
+proc sort data = base_sezione_eta;
+	by codice_sezione cleta;
+run;
+data attuale;
+	set sez.pop_eta_sez20b (keep = cods11 cleta stmmas19 stmfem19
+							rename=(cods11=codice_sezione
+									stmmas19=stmmas
+									stmfem19=stmfem));
+run;
+proc sort data = attuale;
+	by codice_sezione cleta;
+run;
+data base_sezione_eta;
+	merge base_sezione_eta attuale;
+	by codice_sezione cleta;
+run;
+
+proc sort data = x_base_eta;
+	by codc620b cleta;
+run;
+proc means data = x_base_eta noprint;
+	by codc620b cleta;
+	output out = tot_classe_com (drop = _type_ _freq_)
+		   sum(tot_mas tot_fem) = totcla_mas totcla_fem;
+run;
+data x_base_eta;
+	merge x_base_eta tot_classe_com;
+	by codc620b cleta;
+run;
+data x_base_eta;
+	set x_base_eta;
+	if totcla_mas > 0
+		then percentuale_maschi = 100*tot_mas/totcla_mas;
+		else percentuale_maschi = 0;
+	if totcla_fem > 0
+		then percentuale_femmine = 100*tot_fem/totcla_fem;
+		else percentuale_femmine = 0;
+run;
+
+proc sort data = base_sezione_eta;
+	by codice_comune__str eta;
+run;
+data base_sezione_eta;
+	merge base_sezione_eta x_base_eta (keep = codc620b eta percentuale_maschi percentuale_femmine
+									   rename=(codc620b=codice_comune__str));
+	by codice_comune__str eta;
+run;
+
+data base_sezione_eta;
+	set base_sezione_eta;
+	maschi_distribuiti = stmmas*percentuale_maschi/100;
+	femmine_distribuite = stmfem*percentuale_femmine/100;
+run;
+title2 "TOTALI DI CONTROLLO DA TABELLA DEI DATI RIDITRIBUITI";
+proc tabulate data = base_sezione_eta;
+	var maschi_distribuiti femmine_distribuite;
+	table maschi_distribuiti femmine_distribuite,sum*f=comma12.;
+run;
+title2 "TOTALI DI CONTROLLO DA TABELLA COMUNALE";
+proc tabulate data = x_base_eta;
+	var tot_mas tot_fem;
+	table tot_mas tot_fem,sum*f=comma12.;
+run;
+
+
+data base_sezione_eta_piu;
+	set base_sezione_eta;
+	eta = min(eta + 1, 100);
+run;
+proc means data = base_sezione_eta_piu noprint;
+	class codice_sezione eta;
+	types codice_sezione*eta;
+	id codice_comune__str;
+	output out = base_sezione_eta_piu_1 (drop = _type_ _freq_)
+		sum(maschi_distribuiti femmine_distribuite) = ;
+run;
+
+data base_sezione_eta_madre;
+	set base_sezione_eta_piu_1;
+	length eta1_a $ 6;
+	if 15 <= eta <= 17 then eta1_a = "Y_UN17";
+	else if 18 <= eta <= 49 then eta1_a = "Y"||trim(left(eta));
+	else if 50 <= eta <= 54 then eta1_a = "Y_GE50";
+	else delete;
+run; *16.107.120;
+proc sort data = base_sezione_eta_madre;
+	by codice_comune__str;
+run;
+data rapporto_nascita;
+	set ter_out.Popolazione_eta_sesso_comune;
+	if eta = 0;
+	if popolazione > 0 then maschi_perc = maschi/popolazione;
+	keep codice_comune__str maschi_perc;
+run; 
+proc sort data = rapporto_nascita;
+	by codice_comune__str;
+run;
+data base_sezione_eta_madre;
+	merge base_sezione_eta_madre (in = a) rapporto_nascita (in = b);
+	by codice_comune__str;
+run; *16.107.120;
+data codici;
+	set ter_out.geografica_comune;
+	keep codice_comune__str codice_provincia;
+run;
+proc sort data = codici;
+	by codice_comune__str;
+run;
+data base_sezione_eta_madre;
+	merge codici base_sezione_eta_madre;
+	by codice_comune__str;
+run;
+
+proc sort data = base_sezione_eta_madre;
+	by codice_provincia eta1_a;
+run;
+data nati_eta_madre_rapporto;
+	set appo.nati_eta_madre_rapporto;
+run;
+proc sort data = nati_eta_madre_rapporto;
+	by codice_provincia eta1_a;
+run; *3.638;
+data base_sezione_eta_madre;
+	merge base_sezione_eta_madre (in = a)
+		  nati_eta_madre_rapporto (in = b keep = codice_provincia eta1_a nati_1000_donne_classe_eta);
+	by codice_provincia eta1_a;
+run; *16.107.120;
+
+data nati_stima;
+	set base_sezione_eta_madre;
+	if maschi_perc ~= . then
+		do;
+			mas_0_sez = maschi_perc*femmine_distribuite*nati_1000_donne_classe_eta/1000;
+			fem_0_sez = (1 - maschi_perc)*femmine_distribuite*nati_1000_donne_classe_eta/1000;
+		end;
+	else
+		do;
+			mas_0_sez = 0;
+			fem_0_sez = 0;
+		end;
+run;
+proc means data = nati_stima noprint;
+	class codice_sezione;
+	types codice_sezione;
+	id codice_comune__str;
+	output out = nati_stima_s (drop = _type_ _freq_)
+		   sum(mas_0_sez fem_0_sez) = maschi_distribuiti femmine_distribuite;
+run;
+title2 "TOTALI DI CONTROLLO - NATI: STIMA PER SEZIONE";
+proc tabulate data = nati_stima_s;
+	var maschi_distribuiti femmine_distribuite;
+	table maschi_distribuiti femmine_distribuite,sum*f=comma12. / nocellmerge;
+run;
+title2 "TOTALI DI CONTROLLO - NATI: DATI COMUNALI";
+proc tabulate data = ter_out.Popolazione_eta_sesso_comune;
+	where eta = 0;
+	var maschi femmine;
+	table maschi femmine,sum*f=comma12. /nocellmerge;
+run;
+title2 "TOTALI DI CONTROLLO - NATI: DATI PER ET� DELLA MADRE";
+proc tabulate data = appo.nati_eta_madre_rapporto;
+	var nati;
+	table nati,sum*f=comma12. /nocellmerge;
+run;
+data nati_stima_s;
+	set nati_stima_s;
+	eta = 0;
+run;
+
+data Base_sezione_eta_completata;
+	set nati_stima_s Base_sezione_eta_piu_1;
+run; 
+
+
+data Base_sezione_eta_completata;
+	set Base_sezione_eta_completata;
+	if eta <= 4 then cleta = "00-04";
+	else if eta <= 9 then cleta = "05-09";
+	else if eta <= 14 then cleta = "10-14";
+	else if eta <= 19 then cleta = "15-19";
+	else if eta <= 24 then cleta = "20-24";
+	else if eta <= 29 then cleta = "25-29";
+	else if eta <= 34 then cleta = "30-34";
+	else if eta <= 39 then cleta = "35-39";
+	else if eta <= 44 then cleta = "40-44";
+	else if eta <= 49 then cleta = "45-49";
+	else if eta <= 54 then cleta = "50-54";
+	else if eta <= 59 then cleta = "55-59";
+	else if eta <= 64 then cleta = "60-64";
+	else if eta <= 69 then cleta = "65-69";
+	else if eta <= 74 then cleta = "70-74";
+	else cleta = "75-99";
+run;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = Base_sezione_eta_completata min max maxdec = 0;
+	class cleta;
+	var eta;
+run;
+proc sort data = Base_sezione_eta_completata;
+	by codice_comune__str cleta;
+run;
+proc means data = Base_sezione_eta_completata noprint;
+	by codice_comune__str cleta;
+	output out = tot_st_cleta (drop = _type_ _freq_)
+		sum(maschi_distribuiti femmine_distribuite) = /autoname;
+run; *126.448;
+data etaxqua;
+	set ter_out.Popolazione_eta_sesso_comune;
+	if eta <= 4 then cleta = "00-04";
+	else if eta <= 9 then cleta = "05-09";
+	else if eta <= 14 then cleta = "10-14";
+	else if eta <= 19 then cleta = "15-19";
+	else if eta <= 24 then cleta = "20-24";
+	else if eta <= 29 then cleta = "25-29";
+	else if eta <= 34 then cleta = "30-34";
+	else if eta <= 39 then cleta = "35-39";
+	else if eta <= 44 then cleta = "40-44";
+	else if eta <= 49 then cleta = "45-49";
+	else if eta <= 54 then cleta = "50-54";
+	else if eta <= 59 then cleta = "55-59";
+	else if eta <= 64 then cleta = "60-64";
+	else if eta <= 69 then cleta = "65-69";
+	else if eta <= 74 then cleta = "70-74";
+	else cleta = "75-99";
+run;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = etaxqua min max maxdec = 0;
+	class cleta;
+	var eta;
+run;
+proc sort data = etaxqua;
+	by codice_comune__str cleta;
+run;
+proc means data = etaxqua noprint;
+	by codice_comune__str cleta;
+	output out = tot_qua_cleta (drop = _type_ _freq_)
+		sum(maschi femmine) = / autoname autolabel;
+run;
+data tot_coef_cleta;
+	merge tot_st_cleta tot_qua_cleta;
+	by codice_comune__str cleta;
+	if maschi_distribuiti_sum > 0 then mas_coef = maschi_sum / maschi_distribuiti_sum;
+	if femmine_distribuite_sum > 0 then fem_coef = femmine_sum / femmine_distribuite_sum;
+run;
+data mancante;
+	set tot_coef_cleta;
+	if mas_coef = . or fem_coef = . ;
+run; *762 casi;
+data Base_sezione_eta_completata;
+	merge Base_sezione_eta_completata
+		  tot_coef_cleta (keep = codice_comune__str cleta mas_coef fem_coef);
+	by codice_comune__str cleta;
+run;
+data Base_sezione_eta_riquadrata;
+	set Base_sezione_eta_completata;
+	if mas_coef ~= . 
+		then maschi_distribuiti = maschi_distribuiti*mas_coef;
+		else maschi_distribuiti = 0;
+	if fem_coef ~= . 
+		then femmine_distribuite = femmine_distribuite*fem_coef;
+		else femmine_distribuite = 0;
+	drop  mas_coef fem_coef;
+run;
+title3 "TOTALI DELLE STIME RIQUADRATE";
+proc tabulate data = Base_sezione_eta_riquadrata;
+	var maschi_distribuiti femmine_distribuite;
+	table maschi_distribuiti femmine_distribuite, sum * f = comma12. / nocellmerge;
+run;
+title3 "TOTALI DEI DATI COMUNALI";
+proc tabulate data = ter_out.Popolazione_eta_sesso_comune;
+	var maschi femmine;
+	table maschi femmine, sum * f = comma12. / nocellmerge;
+run;
+title3 "DISTRIBUZIONE DELLE STIME FINALI: MASCHI";
+proc univariate data = Base_sezione_eta_riquadrata;
+	where maschi_distribuiti > 0;
+	var maschi_distribuiti;
+run;
+title3 "DISTRIBUZIONE DELLE STIME FINALI: FEMMINE";
+proc univariate data = Base_sezione_eta_riquadrata;
+	where femmine_distribuite > 0;
+	var femmine_distribuite;
+run;
+
+%let tracc = codice_sezione codice_comune__str eta cleta maschi_distribuiti femmine_distribuite;
+data ordinato;
+	retain &tracc;
+	set Base_sezione_eta_riquadrata;
+	keep &tracc;
+run;
+proc sort data = ordinato;
+	by codice_sezione eta;
+run;
+options nolabel;
+
+
+
+assistant
+Below is the translation of your SAS code to Python:
+
+```python
+# Importing necessary libraries
+import pandas as pd
+import numpy as np
+
+# Setting the file paths
+input_dir = 'C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\'
+
+# Reading the SAS data sets and saving them as Pandas DataFrames
+sez_out_df = pd.read_sas(input_dir + 'geografica_sezione.sas7bdat', format='sas7bdat')[['codice_sezione', 'codice_comune__str']]
+ter_df = pd.read_sas(input_dir + 'etapop20b.sas7bdat', format='sas7bdat')
+
+# Translating SAS code operations to equivalent Python code
+# Creating class intervals for the age groups
+ter_df['cleta'] = pd.cut(ter_df['eta'], [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, np.inf], labels=['00-04', '05-09', '10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-99'])
+
+# Computing the minimum and maximum age per class
+age_stats = ter_df.groupby('cleta').agg(eta_min=('eta', 'min'), eta_max=('eta', 'max'))
+print(age_stats)
+
+# Creating a frequency table for the age distribution
+age_freq_table = ter_df.groupby(['codc620b', 'cleta']).size().unstack(fill_value=0)
+print(age_freq_table)
+
+# Merging the sez_out and age distribution data
+sez_df = pd.merge(sez_out_df, age_freq_table, left_on='codice_sezione', right_index=True)
+
+# Calculating age class proportions
+sez_df['percentuale_maschi'] = sez_df['tot_mas'] / sez_df['tot_classe_com']
+sez_df['percentuale_femmine'] = sez_df['tot_fem'] / sez_df['tot_classe_com']
+
+# Merging with the comuni and province information
+comuni_df = pd.read_sas(input_dir + 'geografica_comune.sas7bdat', format='sas7bdat')[['codice_comune__str', 'codice_provincia']]
+sez_df = pd.merge(sez_df, comuni_df, on='codice_comune__str')
+
+# Calculating proportion of births based on total population
+birth_rates_df = pd.read_sas(input_dir + 'Popolazione_eta_sesso_comune.sas7bdat', format='sas7bdat')[['codice_comune__str', 'maschi_perc', 'femmine_perc']]
+birth_rates_df['maschi_perc'] = birth_rates_df['maschi_perc'].fillna(0)
+birth_rates_df['femmine_perc'] = birth_rates_df['femmine_perc'].fillna(0)
+sez_df = pd.merge(sez_df, birth_rates_df, on='codice_comune__str')
+
+# Adjusting age and gender proportions based on statistical data
+stats_df = pd.read_sas(input_dir + 'statistiche_sezione.sas7bdat', format='sas7bdat')
+sez_df = pd.merge(sez_df, stats_df, left_on=['codice_sezione', 'cleta'], right_on=['codice_sezione', 'cleta'])
+sez_df['maschi_distribuiti'] = sez_df['stmmas'] * sez_df['percentuale_maschi']
+sez_df['femmine_distribuite'] = sez_df['stmfem'] * sez_df['percentuale_femmine']
+
+# Checking the distribution of the estimated population
+print(sez_df[['maschi_distribuiti', 'femmine_distribuite']].describe())
+
+# Adjusting age for statistical purposes
+sez_df['eta_piu'] = np.where(sez_df['eta'] <= 4, sez_df['eta'] + 1, np.where(sez_df['eta'] <= 17, 'Y_UN17', np.where(sez_df['eta'] <= 49, 'Y' + str(sez_df['eta']), np.where(sez_df['eta'] <= 54, 'Y_GE50', 'Y_ABI'))))
+sez_df_agg = sez_df.groupby(['codice_sezione', 'eta_piu']).agg(maschi_distribuiti=('maschi_distribuiti', 'sum'), femmine_distribuiti=('femmine_distribuiti', 'sum'))
+
+# Getting population growth rates
+province_birth_rates_df = pd.read_sas(input_dir + 'Popolazione_eta_provincia.sas7bdat', format='sas7bdat')[['codice_provincia', 'eta_piu', 'nati']]
+province_birth_rates_df['nati_1000_donne_classe_eta'] = province_birth_rates_df['nati'] * 1000
+sez_df_agg = pd.merge(sez_df_agg, province_birth_rates_df, on=['codice_provincia', 'eta_piu'])
+
+# Adjusting population using statistical estimations
+sez_df_agg['maschi_0_sez'] = np.where(sez_df_agg['maschi_perc'] != np.nan, sez_df_agg['maschi_perc'] * sez_df_agg['femmine_distribuite'] * sez_df_agg['nati_1000_donne_classe_eta'] / 1000, 0)
+sez_df_agg['fem_0_sez'] = np.where(sez_df_agg['femmine_perc'] != np.nan, (1 - sez_df_agg['maschi_perc']) * sez_df_agg['femmine_distribuite'] * sez_df_agg['nati_1000_donne_classe_eta'] / 1000, 0)
+
+# Getting the final estimates
+final_estimates_df = sez_df_agg.groupby('codice_sezione').agg(maschi_distribuiti=('maschi_0_sez', 'sum'), femmine_distribuite=('fem_0_sez', 'sum'))
+
+# Getting age distribution from age statistics
+age_stats = pd.read_sas(input_dir + 'statistiche_sezione.sas7bdat', format='sas7bdat')[['codice_sezione', 'cleta', 'tot_mas', 'tot_fem']]
+final_estimates_df = pd.merge(final_estimates_df, age_stats, on=['codice_sezione', 'cleta'])
+final_estimates_df['mas_coef'] = final_estimates_df['tot_mas'] / final_estimates_df['maschi_distribuiti']
+final_estimates_df['fem_coef'] = final_estimates_df['tot_fem'] / final_estimates_df['femmine_distribuite']
+
+# Checking the coefficients of variation
+mancanti_df = final_estimates_df[(final_estimates_df['mas_coef'].isna()) | (final_estimates_df['fem_coef'].isna())]
+print(mancanti_df)
+
+# Getting the corrected population estimates
+final_estimates_df = final_estimates_df.drop(columns=['mas_coef', 'fem_coef'])
+final_estimates_df['maschi_distribuiti'] = final_estimates_df['maschi_distribuiti'].fillna(0)
+final_estimates_df['femmine_distribuiti'] = final_estimates_df['femmine_distribuiti'].fillna(0)
+
+# Printing the final distribution of the estimated population
+print(final_estimates_df[['maschi_distribuiti', 'femmine_distribuiti']].describe())
+
+# Getting the final population statistics
+print(pd.read_sas(input_dir + 'Popolazione_eta_sesso_comune.sas7bdat', format='sas7bdat').describe(include='all')[['maschi', 'femmine']])
+
+# Getting gender distribution statistics
+print(pd.read_sas(input_dir + 'statistiche_sezione.sas7bdat', format='sas7bdat').describe(include='all')[['maschi_distribuiti', 'femmine_distribuiti']])
+
+# Getting the distribution of births by age and gender
+print(pd.read_sas(input_dir + 'appo_nati_eta_madre_rapporto.sas7bdat', format='sas7bdat').describe(include='all')[['nati']])
+
+# Getting the final population statistics for each province
+print(pd.read_sas(input_dir + 'Popolazione_eta_provincia.sas7bdat', format='sas7bdat').describe(include='all')[['maschi', 'femmine']])
+```
+
+Please note that you might need to modify this code according to your specific requirements, as some details might not be exactly the same in Python as in SAS, such as handling missing values or data types.

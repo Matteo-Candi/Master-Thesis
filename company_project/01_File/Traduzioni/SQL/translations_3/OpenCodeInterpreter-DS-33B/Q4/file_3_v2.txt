@@ -1,0 +1,97 @@
+
+In PySpark, you can achieve the same result by using DataFrame transformations and functions provided by PySpark. Here is the equivalent code in PySpark to translate your SQL query:
+
+```python
+from pyspark.sql import SparkSession
+
+# Initialize Spark Session
+spark = SparkSession.builder.appName('Translation').getOrCreate()
+
+# Read the table 'TT_EKKO_PURCH_DOC_HEADER_GPP' from DWH01 DataWarehouse
+df1 = spark.table('DWH01_DW.TT_EKKO_PURCH_DOC_HEADER_GPP')
+
+# Define a function to join the EKPO and PLBR tables
+def filterPlantBranch(dataframe):
+    df2 = dataframe.join(spark.table('DDWH01_DW.TD_PLBR_PLANT_BRANCHES'), 
+                             ['EKPO_CD_PLANT'], 'inner') \
+                         .filter("PLBR_DS_PLANT_SEGMENT IN ('AG', 'CE', '-1', 'AM', 'AS')") \
+                         .filter("(EKPO_CD_PLANT NOT IN ('FA01', 'FB01', 'IA01')) OR (EKPO_CD_PLANT NOT LIKE '00%')") \
+                         .select(['EKPO_CD_PO_NBR'])
+    return df2
+
+# Apply the function to the DataFrame 
+df3 = filterPlantBranch(spark.table('DDWH01_DW.TT_EKPO_PURCH_DOC_ITEM_GPP'))
+
+# Read the SUPM table from DWH01
+supplier_type = spark.read \
+                             .format("jdbc") \
+                             .option("url", "<JDBC URL>") \
+                             .option("dbtable", "DDWH01_DW.TM_SUPM_SUPPLIER_GPP") \
+                             .load() \
+                             .selectExpr(['SUPM_CD_ACCOUNT_NBR', 
+                                            "CASE WHEN LENGTH(SUPM_CD_COMP_TRADING_PARTNER) > 1 THEN 'Intercompany' ELSE 'Third Party' END AS Supplier_Type"]) \
+
+# Join the EKKO and SUPM tables based on VENDOR ACCOUNT NBR
+df4 = df1.join(supplier_type, ['EKKO_CD_VENDOR_ACCOUNT_NBR'], 'left')
+
+# Define a function to format date fields
+def formatDateFields(dataframe):
+    dataframe = dataframe.withColumn('EKKO_NR_PURCH_DOC_YEAR', 
+                                            year(dataframe['EKKO_DT_PURCH_DOC_DATE'])) \
+                                .withColumn('ODAG_PODOCUMENTYEAR', 
+                                            year(dataframe['EKKO_DT_PURCH_DOC_DATE'])) \
+                                .withColumn('EKKO_CD_PURCH_DOC_NBR10', 
+                                            concat(lit('000000000'), dataframe['EKKO_CD_PURCH_DOC_NBR']).substr(-10)) \
+                                .withColumn('EKKO_DT_RETENTION_YEAR', 
+                                            coalesce(year(dataframe['EKKO_DT_CONTRACT_END_DATE']), 
+                                                        year(dataframe['EKKO_DT_RECORD_CREATED_ON']))) \
+                                .withColumn('PLBR_DS_PLANT_SEGMENT', lit(' '))
+    return dataframe
+
+# Apply the function to format date fields
+df5 = formatDateFields(df4)
+
+# Define a function to select columns and rename them
+def selectColumnsRename(dataframe):
+    dataframe = dataframe.select(['EKKO_DT_LAST_MODIFY',
+                                       'EKKO_ID_PURCH_DOC_HEADER_GPP',
+                                       'EKKO_CD_PURCH_DOC_NBR',
+                                       'EKKO_NR_TOT_VAL_OF_RELEASE',
+                                       'EKKO_DT_PURCH_DOC_DATE',
+                                       'EKKO_DT_RECORD_CREATED_ON',
+                                       'EKKO_CD_PURCH_GRP',
+                                       'EKKO_FL_TAKE_PURCH_GRP',
+                                       'EKKO_CD_VENDOR_ACCOUNT_NBR',
+                                       'EKKO_CD_DOC_PROCESS_STATE',
+                                       'EKKO_CD_PURCH_DOC_CATEGORY',
+                                       'EKKO_CD_PURCH_DOCTYPE',
+                                       'EKKO_DT_CONTRACT_START_DATE',
+                                       'EKKO_NR_CHG_TIMESTAMP',
+                                       'EKKO_DT_CONTRACT_END_DATE',
+                                       'EKKO_CD_PURCH_DOC_STATUS',
+                                       'EKKO_NR_CURRENCY_KEY',
+                                       'EKKO_CD_PURCH_AGREEMENT_NBR',
+                                       'EKKO_CD_OBJ_CREATED_BY',
+                                       'EKKO_CD_INCOTERMS_PART_1',
+                                       'EKKO_CD_INCOTERMS_PART_2',
+                                       'EKKO_CD_TERMS_OF_PAYMENT_1',
+                                       'EKKO_CD_PURCH_ORG_1',
+                                       'EKKO_CD_COMPANY_CODE',
+                                       'EKKO_CD_REMARK_1',
+                                       'EKKO_NR_PURCH_DOC_YEAR',
+                                       'PLBR_DS_PLANT_SEGMENT',
+                                       'ODAG_PODOCUMENTTYPE',
+                                       'ODAG_SUPPLIERCODE',
+                                       'EKKO_DT_RETENTION_YEAR',
+                                       'ODAG_PODOCUMENTYEAR',
+                                       'EKKO_CD_PURCH_DOC_NBR10',
+                                       'EKKO_CD_SUPPLIER_TYPE'])
+    return dataframe
+
+# Apply the function to select columns and rename them
+df6 = selectColumnsRename(df5)
+
+# Display DataFrame
+df6.show()
+```
+Replace `<JDBC URL>` with your actual JDBC URL that has access to DWH01 DataWarehouse. This code should reproduce the same operations as in SQL, but executed in PySpark. Please note that you need to have a Spark session running for this code snippet.

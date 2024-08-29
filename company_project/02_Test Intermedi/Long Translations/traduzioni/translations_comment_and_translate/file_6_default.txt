@@ -1,0 +1,700 @@
+system
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one.
+user
+Translate the following code from SAS to Python: 
+* Library assignments;
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+* Setting title for the report;
+title1 "AVANZAMENTO DELLE ET�";
+
+
+* Creating the first dataset to reference sezioni;
+data base_sezione;
+    set sez_out.geografica_sezione (keep = codice_sezione codice_comune__str);
+run;
+
+* Creating the second dataset with age categories;
+data x_base_eta;
+    set ter.etapop20b;
+    if eta <= 4 then cleta = "00-04";
+    else if eta <= 9 then cleta = "05-09";
+    * ... continues, mapping ages to categories;
+run;
+
+* Printing min and max ages per age category;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = x_base_eta min max maxdec = 0;
+    class cleta;
+    var eta;
+run;
+
+* Frequency table on age and class;
+proc freq data = x_base_eta noprint;
+    tables eta*cleta /out = base_eta (drop = count percent);
+run;
+
+* Creating a table connecting age and class categories for easier merging;
+proc sql;
+    create table base_sezione_eta as select *
+    from base_sezione, base_eta;
+quit;
+
+* Sorting and merging datasets to include population by sezione and class;
+proc sort data = base_sezione_eta;
+    by codice_sezione cleta;
+run;
+
+data attuale;
+    set sez.pop_eta_sez20b (keep = cods11 cleta stmmas19 stmfem19
+                            rename=(cods11=codice_sezione
+                                    stmmas19=stmmas
+                                    stmfem19=stmfem));
+run;
+
+* Sorting datasets for merging;
+proc sort data = attuale;
+    by codice_sezione cleta;
+run;
+
+* Merging datasets with the population data by sezione and class;
+data base_sezione_eta;
+    merge base_sezione_eta attuale;
+    by codice_sezione cleta;
+run;
+
+* Creating summary statistics for population counts by age and class;
+proc sort data = x_base_eta;
+    by codc620b cleta;
+run;
+
+proc means data = x_base_eta noprint;
+    by codc620b cleta;
+    output out = tot_classe_com (drop = _type_ _freq_)
+           sum(tot_mas tot_fem) = totcla_mas totcla_fem;
+run;
+
+* Merging the summary statistics with the original age data;
+data x_base_eta;
+    merge x_base_eta tot_classe_com;
+    by codc620b cleta;
+run;
+
+* Calculating percentages of male and female populants by age and class;
+data x_base_eta;
+    set x_base_eta;
+    if totcla_mas > 0
+        then percentuale_maschi = 100*tot_mas/totcla_mas;
+        else percentuale_maschi = 0;
+    if totcla_fem > 0
+        then percentuale_femmine = 100*tot_fem/totcla_fem;
+        else percentuale_femmine = 0;
+run;
+
+* Sorting by comune and age;
+proc sort data = base_sezione_eta;
+    by codice_comune__str eta;
+run;
+
+* Merging the original datasets, along with the percentage data;
+data base_sezione_eta;
+    merge base_sezione_eta x_base_eta (keep = codc620b eta percentuale_maschi percentuale_femmine
+                                       rename=(codc620b=codice_comune__str));
+    by codice_comune__str eta;
+run;
+
+* Calculating actual distribution of sex by comune and age;
+data base_sezione_eta;
+    set base_sezione_eta;
+    maschi_distribuiti = stmmas*percentuale_maschi/100;
+    femmine_distribuite = stmfem*percentuale_femmine/100;
+run;
+
+* Printing total distribution of sex by comune and age;
+title2 "TOTALI DI CONTROLLO DA TABELLA DEI DATI RIDITRIBUITI";
+proc tabulate data = base_sezione_eta;
+    var maschi_distribuiti femmine_distribuite;
+    table maschi_distribuiti femmine_distribuite,sum*f=comma12.;
+run;
+
+* Printing total distribution of sex by comune;
+title2 "TOTALI DI CONTROLLO DA TABELLA COMUNALE";
+proc tabulate data = x_base_eta;
+    var tot_mas tot_fem;
+    table tot_mas tot_fem,sum*f=comma12.;
+run;
+
+* Creating a dataset with age range (plus one) for additional calculation;
+data base_sezione_eta_piu;
+    set base_sezione_eta;
+    eta = min(eta + 1, 100);
+run;
+
+* Calculating totals for age range plus one;
+proc means data = base_sezione_eta_piu noprint;
+    class codice_sezione eta;
+    types codice_sezione*eta;
+    id codice_comune__str;
+    output out = base_sezione_eta_piu_1 (drop = _type_ _freq_)
+           sum(maschi_distribuiti femmine_distribuite) = ;
+run;
+
+* Sorting for merging with age-specific distribution data;
+proc sort data = base_sezione_eta_piu_1;
+    by codice_comune__str;
+run;
+
+* Creating a table with distribution of sex by age class (plus one) for additional calculation;
+data base_sezione_eta_madre;
+    set base_sezione_eta_piu_1;
+    length eta1_a $ 6;
+    * ... continues, mapping age ranges for the second level of analysis;
+run;
+
+* Sorting by comune;
+proc sort data = base_sezione_eta_madre;
+    by codice_comune__str;
+run;
+
+* Creating a table with sex ratio for each province and age class (plus one);
+data rapporto_nascita;
+    set ter_out.Popolazione_eta_sesso_comune;
+    if eta = 0;
+    if popolazione > 0 then maschi_perc = maschi/popolazione;
+    keep codice_comune__str maschi_perc;
+run; 
+
+* Sorting by comune;
+proc sort data = rapporto_nascita;
+    by codice_comune__str;
+run;
+
+* Merging with province-age-sex ratio;
+data base_sezione_eta_madre;
+    merge base_sezione_eta_madre (in = a) rapporto_nascita (in = b);
+    by codice_comune__str;
+run;
+
+* Sorting by province;
+proc sort data = base_sezione_eta_madre;
+    by codice_provincia eta1_a;
+run;
+
+* Creating a table with birth rate per age class and province;
+data nati_eta_madre_rapporto;
+    set appo.nati_eta_madre_rapporto;
+run; 
+
+* Sorting by province;
+proc sort data = nati_eta_madre_rapporto;
+    by codice_provincia eta1_a;
+run; 
+
+* Merging with birth rate per age class and province;
+data base_sezione_eta_madre;
+    merge base_sezione_eta_madre (in = a)
+          nati_eta_madre_rapporto (in = b keep = codice_provincia eta1_a nati_1000_donne_classe_eta);
+    by codice_provincia eta1_a;
+run;
+
+* Calculating population based on birth rate per age class and province;
+data nati_stima;
+    set base_sezione_eta_madre;
+    if maschi_perc ~= . then
+        do;
+            mas_0_sez = maschi_perc*femmine_distribuite*nati_1000_donne_classe_eta/1000;
+            fem_0_sez = (1 - maschi_perc)*femmine_distribuite*nati_1000_donne_classe_eta/1000;
+        end;
+    else
+        do;
+            mas_0_sez = 0;
+            fem_0_sez = 0;
+        end;
+run;
+
+* Calculating totals for sex estimation by age class and province;
+proc means data = nati_stima noprint;
+    class codice_sezione;
+    types codice_sezione;
+    id codice_comune__str;
+    output out = nati_stima_s (drop = _type_ _freq_)
+           sum(mas_0_sez fem_0_sez) = maschi_distribuiti femmine_distribuite;
+run;
+
+* Printing total distribution of sex estimation by age class and province;
+title2 "TOTALI DI CONTROLLO - NATI: STIMA PER SEZIONE";
+proc tabulate data = nati_stima_s;
+    var maschi_distribuiti femmine_distribuite;
+    table maschi_distribuiti femmine_distribuite,sum*f=comma12. / nocellmerge;
+run;
+
+* Printing total distribution of birth rate by age class and province;
+title2 "TOTALI DI CONTROLLO - NATI: DATI COMUNALI";
+proc tabulate data = ter_out.Popolazione_eta_sesso_comune;
+    where eta = 0;
+    var maschi femmine;
+    table maschi femmine,sum*f=comma12. /nocellmerge;
+run;
+
+* Printing total birth rate by age class and province;
+title2 "TOTALI DI CONTROLLO - NATI: DATI PER ET� DELLA MADRE";
+proc tabulate data = appo.nati_eta_madre_rapporto;
+    var nati;
+    table nati,sum*f=comma12. /nocellmerge;
+run;
+
+* Creating dataset for sex estimation by age;
+data nati_stima_s;
+    set nati_stima_s;
+    eta = 0;
+run;
+
+* Creating a comprehensive dataset for further analysis;
+data Base_sezione_eta_completata;
+    set nati_stima_s Base_sezione_eta_piu_1;
+run; 
+
+* Creating a dataset categorizing by age (similar to the initial data transformation)
+data Base_sezione_eta_completata;
+    set Base_sezione_eta_completata;
+    if eta <= 4 then cleta = "00-04";
+    * ... continues, similar age-category mapping as in the initial code snippet;
+run;
+
+* Printing min and max age per age class (similar to the initial code snippet)
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = Base_sezione_eta_completata min max maxdec = 0;
+    class cleta;
+    var eta;
+run;
+
+* Sorting by comune and age (similar to the initial code snippet)
+proc sort data = Base_sezione_eta_completata;
+    by codice_comune__str eta;
+run;
+
+* Creating a summary statistics table with age-specific distribution data 
+  (similar to the initial code snippet)
+proc sql;
+    create table tot_st_cleta as select *
+    from base_sezione_eta, base_eta;
+quit;
+
+* Creating a table categorizing age classes (similar to the initial code snippet)
+data etaxqua;
+    set ter_out.Popolazione_eta_sesso_comune;
+    * ... continues, similar age-category mapping as in the initial code snippet;
+run;
+
+* Printing min and max age per age class (similar to the initial code snippet)
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = etaxqua min max maxdec = 0;
+    class cleta;
+    var eta;
+run;
+
+* Sorting by comune and age (similar to the initial code snippet)
+proc sort data = etaxqua;
+    by codice_comune__str eta;
+run;
+
+* Creating a summary statistics table with age-specific population data 
+  (similar to the initial code snippet)
+proc sql;
+    create table tot_qua_cleta as select *
+    from base_sezione_eta, base_eta;
+quit;
+
+* Creating a table with sex ratio coefficient by age class (similar to the initial code snippet)
+data tot_coef_cleta;
+    merge tot_st_cleta tot_qua_cleta;
+    * ... continues, similar merge and computation of the sex ratio coefficient;
+run;
+
+* Creating a dataset with missing sex ratio coefficient values 
+  (similar to the initial code snippet)
+data Base_sezione_eta_completata;
+    merge Base_sezione_eta_completata
+          tot_coef_cleta (keep = codice_comune__str cleta mas_coef fem_coef);
+    by codice_comune__str cleta;
+run;
+
+* Creating a dataset with recalculated sex distribution based on sex ratio coefficient
+  (similar to the initial code snippet)
+data Base_sezione_eta_riquadrata;
+    set Base_sezione_eta_completata;
+    * ... continues, similar calculation of sex distribution based on sex ratio coefficient;
+run;
+
+* Printing total sex distribution based on sex ratio coefficient (similar to the initial code snippet)
+title3 "TOTALI DELLE STIME RIQUADRATE";
+proc tabulate data = Base_sezione_eta_riquadrata;
+    * ... continues, similar print statement;
+run;
+
+* Printing total population data (similar to the initial code snippet)
+title3 "TOTALI DEI DATI COMUNALI";
+proc tabulate data = ter_out.Popolazione_eta_sesso_comune;
+    * ... continues, similar print statement;
+run;
+
+* Printing sex distribution data for men (similar to the initial code snippet)
+title3 "DISTRIBUZIONE DELLE STIME FINALI: MASCHI";
+proc univariate data = Base_sezione_eta_riquadrata;
+    * ... continues, similar print statement;
+run;
+
+* Printing sex distribution data for women (similar to the initial code snippet)
+title3 "DISTRIBUZIONE DELLE STIME FINALI: FEMMINE";
+proc univariate data = Base_sezione_eta_riquadrata;
+    * ... continues, similar print statement;
+run;
+
+* Defining variables for ordering dataset (similar to the initial code snippet)
+%let tracc = codice_sezione codice_comune__str eta cleta maschi_distribuiti femmine_distribuite;
+data ordinato;
+    retain &tracc;
+    set Base_sezione_eta_riquadrata;
+    keep &tracc;
+run;
+
+* Sorting dataset by sezione and age (similar to the initial code snippet)
+proc sort data = ordinato;
+    by codice_sezione eta;
+run;
+
+* Removing labels from tabulate output (similar to the initial code snippet)
+options nolabel;
+assistant
+The provided code is written in SAS and it contains several data manipulations and summaries. Let's translate the code into Python using pandas and matplotlib libraries.
+
+First, we will define the file paths and libraries:
+
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
+
+ter_lib = r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets"
+sez_lib = r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets"
+ter_out_lib = r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets"
+sez_out_lib = r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets"
+appo_lib = r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets"
+```
+
+Now, let's translate and create functions for each SAS code section.
+
+1. Creating the first dataset to reference sezioni:
+
+```python
+base_sezione = pd.read_csv(f"{sez_out_lib}/geografica_sezione.csv", usecols=['codice_sezione', 'codice_comune__str'])
+```
+
+2. Creating the second dataset with age categories:
+
+```python
+x_base_eta = pd.read_csv(f"{ter_lib}/etapop20b.csv")
+
+x_base_eta['cleta'] = pd.cut(x_base_eta['eta'],
+                              bins=[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95],
+                              labels=['00-04', '05-09', '10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80-84', '85-89', '90-94', '95+'])
+```
+
+3. Printing min and max ages per age category:
+
+```python
+print(x_base_eta[['cleta', 'eta']].groupby('cleta').agg(['min', 'max']))
+```
+
+4. Frequency table on age and class:
+
+```python
+print(x_base_eta[['eta', 'cleta']].value_counts().unstack())
+```
+
+5. Creating a table connecting age and class categories for easier merging:
+
+```python
+base_sezione_eta = pd.merge(base_sezione, x_base_eta, on='codice_sezione', how='left')
+```
+
+6. Sorting and merging datasets to include population by sezione and class:
+
+```python
+attuale = pd.read_csv(f"{sez_lib}/pop_eta_sez20b.csv")
+
+attuale.rename(columns={'cods11': 'codice_sezione',
+                        'stmmas19': 'stmmas',
+                        'stmfem19': 'stmfem'}, inplace=True)
+
+base_sezione_eta = pd.merge(base_sezione_eta, attuale, on=['codice_sezione', 'cleta'], how='left')
+```
+
+7. Creating summary statistics for population counts by age and class:
+
+```python
+base_sezione_eta.groupby('cleta')['stmmas'].sum()
+base_sezione_eta.groupby('cleta')['stmfem'].sum()
+```
+
+8. Calculating percentages of male and female populants by age and class:
+
+```python
+base_sezione_eta['percentuale_maschi'] = base_sezione_eta.groupby('cleta')['stmmas'].transform(lambda x: x / x.sum())
+base_sezione_eta['percentuale_femmine'] = base_sezione_eta.groupby('cleta')['stmfem'].transform(lambda x: x / x.sum())
+```
+
+9. Sorting by comune and age:
+
+```python
+base_sezione_eta.sort_values(by=['codice_comune__str', 'eta'], inplace=True)
+```
+
+10. Merging the original datasets, along with the percentage data:
+
+```python
+base_sezione_eta = pd.merge(base_sezione_eta, x_base_eta, on=['codice_comune__str', 'eta'], how='left')
+```
+
+11. Calculating actual distribution of sex by comune and age:
+
+```python
+base_sezione_eta['maschi_distribuiti'] = base_sezione_eta['stmmas'] * base_sezione_eta['percentuale_maschi']
+base_sezione_eta['femmine_distribuite'] = base_sezione_eta['stmfem'] * base_sezione_eta['percentuale_femmine']
+```
+
+12. Printing total distribution of sex by comune and age:
+
+```python
+print(base_sezione_eta[['maschi_distribuiti', 'femmine_distribuite']].sum(axis=0).astype(int))
+```
+
+13. Printing total distribution of sex by comune:
+
+```python
+print(base_sezione_eta.groupby('codice_comune__str')[['stmmas', 'stmfem']].sum().astype(int))
+```
+
+14. Creating a dataset with age range (plus one) for additional calculation:
+
+```python
+base_sezione_eta_piu = base_sezione_eta.copy()
+base_sezione_eta_piu['eta'] += 1
+```
+
+15. Calculating totals for age range plus one:
+
+```python
+base_sezione_eta_piu_1 = base_sezione_eta_piu.groupby(['codice_sezione', 'eta'])[['maschi_distribuiti', 'femmine_distribuiti']].sum().reset_index()
+```
+
+16. Sorting for merging with age-specific distribution data:
+
+```python
+base_sezione_eta_piu_1.sort_values(by=['codice_comune__str'], inplace=True)
+```
+
+17. Creating a table with distribution of sex by age class (plus one) for additional calculation:
+
+```python
+base_sezione_eta_madre = pd.merge(base_sezione_eta_piu_1, pd.read_csv(f"{ter_out_lib}/Popolazione_eta_sesso_comune.csv"), on='codice_comune__str')
+base_sezione_eta_madre['eta1_a'] = pd.cut(base_sezione_eta_madre['eta'], 
+                                          bins=[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95],
+                                          labels=['00-04', '05-09', '10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80-84', '85-89', '90-94', '95+'])
+```
+
+18. Sorting by comune:
+
+```python
+base_sezione_eta_madre.sort_values(by=['codice_comune__str'], inplace=True)
+```
+
+19. Creating a table with sex ratio for each province and age class (plus one):
+
+```python
+rapporto_nascita = pd.read_csv(f"{ter_out_lib}/Popolazione_eta_sesso_comune.csv")
+rapporto_nascita = rapporto_nascita[rapporto_nascita['eta'] == 0]
+rapporto_nascita['maschi_perc'] = ratio_nascita['maschi'] / ratio_nascita['popolazione']
+```
+
+20. Sorting by comune:
+
+```python
+rapporto_nascita.sort_values(by=['codice_comune__str'], inplace=True)
+```
+
+21. Merging with province-age-sex ratio:
+
+```python
+base_sezione_eta_madre = pd.merge(base_sezione_eta_madre, rapporto_nascita, on='codice_comune__str')
+```
+
+22. Sorting by province:
+
+```python
+base_sezione_eta_madre.sort_values(by=['codice_provincia', 'eta1_a'], inplace=True)
+```
+
+23. Creating a table with birth rate per age class and province:
+
+```python
+nati_eta_madre_rapporto = pd.read_csv(f"{appo_lib}/nati_eta_madre_rapporto.csv")
+nati_eta_madre_rapporto.sort_values(by=['codice_provincia', 'eta1_a'], inplace=True)
+```
+
+24. Merging with birth rate per age class and province:
+
+```python
+base_sezione_eta_madre = pd.merge(base_sezione_eta_madre, nati_eta_madre_rapporto, on=['codice_provincia', 'eta1_a'])
+```
+
+25. Calculating population based on birth rate per age class and province:
+
+```python
+nati_stima = base_sezione_eta_madre.copy()
+
+nati_stima['mas_0_sez'] = nati_stima['maschi_perc'] * nati_stima['femmine_distribuite'] * nati_stima['nati_1000_donne_classe_eta'] / 1000
+nati_stima['fem_0_sez'] = (1 - nati_stima['maschi_perc']) * nati_stima['femmine_distribuite'] * nati_stima['nati_1000_donne_classe_eta'] / 1000
+```
+
+26. Calculating totals for sex estimation by age class and province:
+
+```python
+nati_stima_s = nati_stima.groupby('codice_sezione').agg({'mas_0_sez': 'sum', 'fem_0_sez': 'sum'})
+```
+
+27. Printing total distribution of sex estimation by age class and province:
+
+```python
+print(nati_stima_s[['mas_0_sez', 'fem_0_sez']].sum().astype(int))
+```
+
+28. Printing total distribution of birth rate by age class and province:
+
+```python
+print(pd.read_csv(f"{ter_out_lib}/Popolazione_eta_sesso_comune.csv")[['maschi', 'femmine']].sum().astype(int))
+```
+
+29. Printing total birth rate by age class and province:
+
+```python
+print(pd.read_csv(f"{appo_lib}/nati_eta_madre_rapporto.csv")['nati'].sum().astype(int))
+```
+
+30. Creating dataset for sex estimation by age:
+
+```python
+nati_stima_s = nati_stima_s.reset_index()
+nati_stima_s['eta'] = 0
+```
+
+31. Creating a comprehensive dataset for further analysis:
+
+```python
+base_sezione_eta_completata = pd.concat([nati_stima_s, base_sezione_eta_piu_1])
+```
+
+32. Creating a dataset categorizing by age (similar to the initial data transformation):
+
+```python
+base_sezione_eta_completata['cleta'] = pd.cut(base_sezione_eta_completata['eta'], 
+                                               bins=[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95],
+                                               labels=['00-04', '05-09', '10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45-49', '50-54', '55-59', '60-64', '65-69', '70-74', '75-79', '80-84', '85-89', '90-94', '95+'])
+```
+
+33. Printing min and max age per age class (similar to the initial code snippet):
+
+```python
+print(base_sezione_eta_completata[['cleta', 'eta']].groupby('cleta').agg(['min', 'max']))
+```
+
+34. Sorting by comune and age (similar to the initial code snippet):
+
+```python
+base_sezione_eta_completata.sort_values(by=['codice_comune__str', 'eta'], inplace=True)
+```
+
+35. Creating a summary statistics table with age-specific distribution data (similar to the initial code snippet):
+
+```python
+tot_st_cleta = base_sezione_eta_completata.groupby('cleta')['stmmas'].sum()
+tot_qua_cleta = base_sezione_eta_completata.groupby('cleta')['stmfem'].sum()
+```
+
+36. Creating a table with sex ratio coefficient by age class (similar to the initial code snippet):
+
+```python
+tot_coef_cleta = pd.merge(tot_st_cleta, tot_qua_cleta, left_index=True, right_index=True)
+tot_coef_cleta['mas_coef'] = tot_coef_cleta['stmmas'] / tot_coef_cleta['stmfem']
+tot_coef_cleta['fem_coef'] = tot_coef_cleta['stmfem'] / tot_coef_cleta['stmmas']
+```
+
+37. Creating a dataset with missing sex ratio coefficient values (similar to the initial code snippet):
+
+```python
+base_sezione_eta_completata = pd.merge(base_sezione_eta_completata,
+                                      tot_coef_cleta[['mas_coef', 'fem_coef']],
+                                      left_on='cleta', right_index=True, how='left')
+```
+
+38. Creating a dataset with recalculated sex distribution based on sex ratio coefficient (similar to the initial code snippet):
+
+```python
+base_sezione_eta_riquadrata = base_sezione_eta_completata.copy()
+base_sezione_eta_riquadrata['maschi_distribuiti'] = base_sezione_eta_riquadrata['stmmas'] * base_sezione_eta_riquadrata['mas_coef']
+base_sezione_eta_riquadrata['femmine_distribuite'] = base_sezione_eta_riquadrata['stmfem'] * base_sezione_eta_riquadrata['fem_coef']
+```
+
+39. Printing total sex distribution based on sex ratio coefficient (similar to the initial code snippet):
+
+```python
+print(base_sezione_eta_riquadrata[['maschi_distribuiti', 'femmine_distribuite']].sum().astype(int))
+```
+
+40. Printing total population data (similar to the initial code snippet):
+
+```python
+print(pd.read_csv(f"{ter_out_lib}/Popolazione_eta_sesso_comune.csv")[['maschi', 'femmine']].sum().astype(int))
+```
+
+41. Printing sex distribution data for men (similar to the initial code snippet):
+
+```python
+print(base_sezione_eta_riquadrata[['maschi_distribuiti']].sum().astype(int))
+```
+
+42. Printing sex distribution data for women (similar to the initial code snippet):
+
+```python
+print(base_sezione_eta_riquadrata[['femmine_distribuiti']].sum().astype(int))
+```
+
+43. Defining variables for ordering dataset (similar to the initial code snippet):
+
+```python
+tracc = ['codice_sezione', 'codice_comune__str', 'eta', 'cleta', 'maschi_distribuiti', 'femmine_distribuiti']
+```
+
+44. Creating dataset with missing sex ratio coefficient values (similar to the initial code snippet):
+
+```python
+ordinato = base_sezione_eta_riquadrata[tracc]
+ordinato.sort_values(by=['codice_sezione', 'eta'], inplace=True)
+```
+
+45. Sorting dataset by sezione and age (similar to the initial code snippet):
+
+```python
+ordinato.sort_values(by=['codice_sezione', 'eta'], inplace=True)
+```
+
+46. Removing labels from tabulate output (similar to the initial code snippet):
+
+```python
+pd.set_option('display.float_format', lambda x: '%.0f' % x)
+```
+
+These translations represent a very simplified version of the initial SAS code. It's important to note that the Python code might not perform exactly like the original SAS code because of differences in data manipulation and summaries.

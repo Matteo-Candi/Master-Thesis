@@ -1,0 +1,81 @@
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE); 
+@@Response
+In PySpark, you would perform the same operation as follows:
+```python
+from pyspark.sql import functions as F
+
+# Load dataframe from table ddwh00_sa.TS_VENL0001_WW_GPP
+sa_df = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+
+# Rename columns to match with the TM_VENL_MASTER_LINK table
+sa_df = sa_df.withColumnRenamed("CLIENT", "VENL_CD_CLIENT")\
+                .withColumnRenamed("PARTNER_GUID", "VENL_CD_PARTNER_GUID")\
+                .withColumnRenamed("VENDOR", "VENL_CD_VENDOR")\
+                .withColumnRenamed("CRUSER", "VENL_CD_USER")\
+                .withColumnRenamed("CRDAT", "VENL_DT_DATE")\
+                .withColumnRenamed("CRTIM", "VENL_DT_TIME")
+
+# Load dataframe from table ddwh01_dw.TM_VENL_MASTER_LINK
+target_df = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Perform EXCEPT operation to filter out data from both dataframes
+join_condition = (sa_df["VENL_CD_CLIENT"] == target_df["VENL_CD_CLIENT"]) & (sa_df["VENL_CD_PARTNER_GUID"] == target_df["VENL_CD_PARTNER_GUID"])
+
+update_df = sa_df.join(target_df, join_condition, "left_anti")
+
+# Define the columns to be updated
+update_items = [update_df["VENL_CD_VENDOR"], update_df["VENL_CD_USER"], update_df["VENL_DT_DATE"], update_df["VENL_DT_TIME"], F.current_timestamp()]
+update_df = update_df.withColumn("VENL_DT_LAST_MODIFY", update_df["VENL_DT_LAST_MODIFY"].cast("timestamp"))
+update_df = update_df.withColumn("VENL_ID_BATCH_LAST_MODIFY", update_df["VENL_ID_BATCH_LAST_MODIFY"].cast("int"))
+
+# Update the dataframe using update() function
+updateQuery = update_df.update(update_items)
+
+# Define the columns to be inserted
+insert_items = [F.expr("DDWH01_DW.SEQ_TM_VENL.next() AS VENL_ID_LINK"), update_df["VENL_CD_CLIENT"], update_df["VENL_CD_PARTNER_GUID"], update_df["VENL_CD_VENDOR"], update_df["VENL_CD_USER"], update_df["VENL_DT_DATE"], update_df["VENL_DT_TIME"], F.lit(1), F.to_date("01/01/1900", "dd/MM/yyyy"), F.to_date("31/12/9999", "dd/MM/yyyy"), F.current_timestamp(), F.lit(1), F.current_timestamp()]
+
+# Insert into the dataframe using insertInto() function
+insertQuery = update_df.select(*insert_items).write.mode('append').insertInto("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+Please note that in PySpark, a merge operation can also be performed using DataFrames operations to handle null values but it would require more code as the SQL does not exactly supports these operations.
+
+Also, it's important to note that to run this PySpark code, you need to have appropriate permissions and have the necessary tables and sequences available.

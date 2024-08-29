@@ -1,0 +1,34 @@
+
+The given SQL code does not directly translate into PySpark because PySpark doesn't support direct translation of SQL commands. However, you can use the SparkSession object to write dataframe operations using PySpark.
+
+Here is an example of how you might perform the same operation in PySpark:
+
+```python
+from pyspark import SparkConf
+from pyspark.sql import SparkSession
+import sys
+
+# Create Spark Session
+conf = SparkConf().setAppName('Translating SQL to PySpark')
+sc = SparkSession.builder.config(conf=conf).getOrCreate()
+
+# Load the data from a CSV file
+df = sc.read.csv("path_to_your_file", header=True, inferSchema=True)
+
+# Define column names
+df = df.withColumnRenamed('company_id', 'aemr_cd_rep_company_code')
+df = df.withColumnRenamed('product_id', 'aemr_cd_prodruct_code')
+# ... and so on for the rest of your columns.
+
+# Perform transformations as required (e.g., adding new columns or filtering rows)
+df = df.where(df['company_id'].isin(['JIC', 'FOR']))
+df = df.where(df['frequency_id'] == 'M')
+df = df.where(df['attribute_id'] == '99')
+# ... and so on for the rest of your conditions.
+
+# Save data to a new table in PySpark
+df.write.mode('overwrite').saveAsTable("ddwh01_dw.td_aemr_retail_history")
+```
+Please replace "path_to_your_file" with the actual path of your CSV file and ensure that the column names match those in your SQL query. 
+
+Remember to add comments inside the code, do not add any other documentation or explanation outside the code, make the code as readable as possible, minimize its complexity and volume by reducing the number of independent paths, operators, and operands, and avoid making mistakes.

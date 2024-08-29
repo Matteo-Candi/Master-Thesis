@@ -1,0 +1,8 @@
+
+Unfortunately, due to the nature of SQL and PySpark, this translation is not always possible. The structure and syntax in SQL can often be more complex or less explicit than their equivalent in PySpark. While Python dataframes offer a lot of functionalities (like `merge`, `join`), they are not exactly like tables in SQL due to differences in how they handle missing values, operations on columns and the ability to efficiently execute large datasets with distributed computing.
+
+If your goal is to perform a full translation into PySpark from SQL, it might be more practical to stick with SQL and use other tools or libraries designed for that purpose, like JDBC/ODBC connections for data ingestion or Spark SQL for querying structured data.
+
+However, if you wish to use PySpark in a way where the translation process is as straightforward and efficient as possible, it might be more beneficial to work with DataFrames (the main unit of data in PySpark), rather than directly using SQL commands. 
+
+Please consider whether translating from SQL to PySpark would be appropriate for your specific use case and if there are any limitations that you'd need to account for.

@@ -1,0 +1,91 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+You are an expert in translating code from SQL to PySpark; translate the given SQL code to PySpark as best as you can, even if there are problems; insert comments inside the code; do not add any other documentation or explanation outside the code; make the code as readable as possible; minimize its complexity and volume by reducing the number of independent paths, operators, and operands; do not make any mistakes; all the variables have to be defined; ensure the user can copy and run the code without modifications; translate from SQL to PySpark every file provided.### Instruction:
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE);
+### Response:
+To translate the SQL code into PySpark, you need to use the PySpark DataFrame API. Here's the translated code:
+
+```python
+# Import necessary libraries
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+
+# Create a SparkSession
+spark = SparkSession.builder.getOrCreate()
+
+# Read data from the source table in ddwh00_sa
+source_data = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+
+# Read data from the target table in ddwh01_dw
+target_data = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Perform the merge operation
+merged_data = target_data.alias("TARGET").join(source_data.alias("SA"), 
+                                               (col("TARGET.VENL_CD_CLIENT") == col("SA.VENL_CD_CLIENT")) & 
+                                               (col("TARGET.VENL_CD_PARTNER_GUID") == col("SA.VENL_CD_PARTNER_GUID")), 
+                                               "leftsemi")
+
+# Perform the update operation
+updated_data = merged_data.withColumn("VENL_CD_VENDOR", col("SA.VENL_CD_VENDOR")) \
+                          .withColumn("VENL_CD_USER", col("SA.VENL_CD_USER")) \
+                          .withColumn("VENL_DT_DATE", col("SA.VENL_DT_DATE")) \
+                          .withColumn("VENL_DT_TIME", col("SA.VENL_DT_TIME")) \
+                          .withColumn("VENL_DT_LAST_MODIFY", current_timestamp()) \
+                          .withColumn("VENL_ID_BATCH_LAST_MODIFY", when(col("p_ELT_ID_BATCH").isNull(), col("n_ELT_ID_JOB_LOG")).otherwise(col("p_ELT_ID_BATCH")))
+
+# Perform the insert operation
+insert_data = source_data.alias("SA").join(target_data.alias("TARGET"), 
+                                           (col("SA.VENL_CD_CLIENT") == col("TARGET.VENL_CD_CLIENT")) & 
+                                           (col("SA.VENL_CD_PARTNER_GUID") == col("TARGET.VENL_CD_PARTNER_GUID")), 
+                                           "leftanti")
+
+insert_data = insert_data.withColumn("VENL_ID_LINK", next_val("DDWH01_DW.SEQ_TM_VENL")) \
+                        .withColumn("VENL_DT_START_VALIDITY", lit("1900-01-01")) \
+                        .withColumn("VENL_DT_END_VALIDITY", lit("9999-12-31")) \
+                        .withColumn("VENL_DT_INSERT", current_timestamp()) \
+                        .withColumn("VENL_ID_BATCH_LAST_MODIFY", when(col("p_ELT_ID_BATCH").isNull(), col("n_ELT_ID_JOB_LOG")).otherwise(col("p_ELT_ID_BATCH"))) \
+                        .withColumn("VENL_DT_LAST_MODIFY", current_timestamp())
+
+# Combine the updated and insert data
+final_data = updated_data.union(insert_data)
+
+# Write the final data to the target table
+final_data.write.mode("overwrite").saveAsTable("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+
+Please note that the code assumes that the PySpark environment is set up and that the necessary dependencies are installed. You may need to modify the code to suit your specific PySpark environment and data sources.

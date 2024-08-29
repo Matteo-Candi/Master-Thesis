@@ -1,0 +1,127 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+You are an expert in translating code from SAS to Python. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code.### Instruction:
+Translate the following code from SAS to Python:
+%macro arrotondainterogruppo(ingresso,		
+							 variab,		
+							 datototeff,	
+							 effettiva,		
+							 vargru,		
+							 uscita);		
+
+
+
+
+%put;
+%put %str(WARNING- =================================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- intermedio somma segnali);
+%put %str(WARNING- identificano data set ausiliari della macro arrotondainterogruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni             );
+%put %str(WARNING- =================================================================);
+%put;
+
+
+data intermedio;
+	set &ingresso;
+run;
+proc sort data = intermedio;
+	by &vargru;
+run;
+proc means data = intermedio noprint;
+	by &vargru;
+	output out = somma (keep = &vargru vartot)
+		   sum(&variab) = vartot;
+run;
+proc sort data = &datototeff;
+	by &vargru;
+run;
+data somma;
+	merge somma (in = inso) &datototeff (in = inda);
+	by &vargru;
+	if inso and inda;
+	keep &vargru vartot &effettiva;
+run;
+
+
+data somma;
+	set somma;
+	diff = vartot - &effettiva;
+	keep &vargru diff;
+run;
+
+
+data intermedio;
+	merge intermedio somma (in = presente);
+	by &vargru;
+	if presente;
+run; 
+
+
+proc sort data = intermedio;
+	by &vargru descending &variab;
+run;
+
+
+data intermedio;
+	set intermedio;
+	by &vargru;
+	if first.&vargru then segnale = _N_;
+run;
+data segnali;
+	set intermedio;
+	by &vargru;
+	if first.&vargru;
+	keep &vargru segnale;
+run;
+
+
+data &uscita;
+	merge intermedio (drop = segnale) segnali;
+	by &vargru;
+	if _N_ < segnale + abs(diff) then
+		if diff < 0 then &variab = &variab + 1;
+		else &variab = max(&variab - 1,0);
+	drop diff segnale;
+run;
+
+
+proc datasets library = work;
+	delete intermedio somma segnali;
+run;
+quit;
+
+%mend arrotondainterogruppo;
+
+### Response:
+Here is the translated code from SAS to Python:
+
+```python
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+    print("WARNING- =================================================================")
+    print("WARNING: I nomi")
+    print("WARNING- intermedio somma segnali")
+    print("WARNING- identificano data set ausiliari della macro arrotondainterogruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni")
+    print("WARNING- =================================================================")
+
+    import pandas as pd
+
+    intermedio = pd.read_csv(ingresso)
+    intermedio = intermedio.sort_values(by=[vargru])
+    somma = intermedio.groupby(vargru).agg({variab: 'sum'}).reset_index()
+    datototeff = pd.read_csv(datototeff)
+    datototeff = datototeff.sort_values(by=[vargru])
+    somma = pd.merge(soma, datototeff, how='inner', on=[vargru])
+    somma['diff'] = somma['vartot'] - effettiva
+    intermedio = pd.merge(intermedio, somma, how='inner', on=[vargru])
+    intermedio = intermedio.sort_values(by=[vargru, variab], ascending=[True, False])
+    intermedio['segnale'] = intermedio.groupby(vargru)['segnale'].cumcount()
+    segnali = intermedio.drop_duplicates(subset=[vargru], keep='first').reset_index()
+    segnali = segnali[[vargru, 'segnale']]
+    uscita = pd.merge(intermedio.drop('segnale', axis=1), segnali, how='inner', on=[vargru])
+    uscita[variab] = uscita.apply(lambda row: row[variab] + 1 if row['diff'] < 0 else max(row[variab] - 1, 0), axis=1)
+    uscita = uscita.drop(['diff', 'segnale'], axis=1)
+    return uscita
+```
+
+Please note that this code assumes that the input data files (ingresso and datototeff) are in CSV format and that the variables used in the code exist in the respective dataframes. The code also assumes that the pandas library is already installed.

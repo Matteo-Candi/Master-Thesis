@@ -1,0 +1,39 @@
+
+```python
+# The libraries used in this Python code are pandas, numpy, and sklearn. 
+import pandas as pd
+import numpy as np
+from sklearn import linear_model
+
+# Load the data from csv files
+territorio = pd.read_csv("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_comune.csv")
+economia = pd.read_csv("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/economica_comune.csv")
+popolazione = pd.read_csv("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/Popolazione_eta_sesso_comune.csv")
+
+# Merge the dataframes on 'codice_comune__str' column
+merged = pd.merge(territorio, economia, on="codice_comune__str", how="left")
+merged = pd.merge(merged, popolazione, on="codice_comune__str", how="left")
+
+# Perform data preprocessing to remove any null or missing values before processing the data
+merged = merged.dropna()
+
+# Add a new column named 'reddito_pop' to the dataframe which is calculated by dividing 'reddito' with 'popolazione'
+merged["reddito_pop"] = merged["reddito"] / merged["popolazione"]
+
+# Group the dataframe based on the column "territorio" and perform operations such as sum, mean, count etc.
+grouped = merged.groupby("territorio")
+
+# Calculate the correlation between variables in the dataset 
+correlation_matrix = grouped[["propensione", "reddito_pop", "inverso"]].corr()
+
+# Print the correlation matrix
+print(correlation_matrix)
+
+# Use a simple linear regression model to predict values. In this case, we are trying to predict 'model1' based on 'inverso'. The result will be saved in another column named 'prediction' 
+regression_model = linear_model.LinearRegression()
+grouped["model1"] = grouped.apply(lambda x: regression_model.fit(x[['inverso']], x['propensione']))
+grouped["prediction"] = grouped.apply(lambda x: x["model1"].predict(x[['inverso']]))
+
+# Print the predicted values
+print(grouped["prediction"])
+```

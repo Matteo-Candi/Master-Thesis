@@ -1,0 +1,214 @@
+You are an expert in translating code from SQL to PySpark. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_DESC_DESCRIPTION TARGET USING
+  (SELECT 'MAKT' DESC_CD_TABLE ,
+                 'Material' DESC_CD_TABLE_DESC ,
+                            MATNR DESC_CD_CODE ,
+                            SPRAS DESC_CD_LANGUAGE ,
+                            1 DESC_CD_POSITION ,
+                            MAKTX DESC_CD_DESCRIPTION1 ,
+                            MAKTG DESC_CD_DESCRIPTION2 ,
+                            NULL DESC_CD_DETAIL1 ,
+                                 NULL DESC_CD_DETAIL2 ,
+                                      NULL DESC_CD_DETAIL3 ,
+                                           'WW GPP' DESC_CD_SOURCE_SYSTEM
+   FROM ddwh00_sa.TS_MAKT0001_WW_GPP SA
+   UNION ALL SELECT 'EQKT' DESC_CD_TABLE ,
+                           'Equipment' DESC_CD_TABLE_DESC ,
+                                       EQUNR DESC_CD_CODE ,
+                                       SPRAS DESC_CD_LANGUAGE ,
+                                       1 DESC_CD_POSITION ,
+                                       EQKTX DESC_CD_DESCRIPTION1 ,
+                                       EQKTU DESC_CD_DESCRIPTION2 ,
+                                       KZLTX DESC_CD_DETAIL1 ,
+                                       TXASP DESC_CD_DETAIL2 ,
+                                       TO_CHAR(TEXTCHANGEDDATETIME) DESC_CD_DETAIL3 ,
+                                       'WW GPP' DESC_CD_SOURCE_SYSTEM
+   FROM ddwh00_sa.TS_EQKT0001_WW_GPP SA2
+   UNION ALL SELECT 'T005T' DESC_CD_TABLE ,
+                            'Country' DESC_CD_TABLE_DESC ,
+                                      LAND1 DESC_CD_CODE ,
+                                      SPRAS DESC_CD_LANGUAGE ,
+                                      1 DESC_CD_POSITION ,
+                                      LANDX DESC_CD_DESCRIPTION1 ,
+                                      LANDX50 DESC_CD_DESCRIPTION2 ,
+                                      PRQ_SPREGT DESC_CD_DETAIL1 ,
+                                      NATIO DESC_CD_DETAIL2 ,
+                                      NATIO50 DESC_CD_DETAIL3 ,
+                                      'WW GPP' DESC_CD_SOURCE_SYSTEM
+   FROM ddwh00_sa.TS_T0050002_WW_GPP SA3
+   UNION ALL SELECT 'T023T' DESC_CD_TABLE ,
+                            'Commodity' DESC_CD_TABLE_DESC ,
+                                        MATKL DESC_CD_CODE ,
+                                        SPRAS DESC_CD_LANGUAGE ,
+                                        1 DESC_CD_POSITION ,
+                                        WGBEZ DESC_CD_DESCRIPTION1 ,
+                                        WGBEZ60 DESC_CD_DESCRIPTION2 ,
+                                        NULL DESC_CD_DETAIL1 ,
+                                             NULL DESC_CD_DETAIL2 ,
+                                                  NULL DESC_CD_DETAIL3 ,
+                                                       'WW GPP' DESC_CD_SOURCE_SYSTEM
+   FROM ddwh00_sa.TS_T0230002_WW_GPP SA4
+   UNION ALL SELECT 'T052U' DESC_CD_TABLE ,
+                            'Payment Condition' DESC_CD_TABLE_DESC ,
+                                                CONCAT(ZTERM, NVL(ZTAGG, -1)) DESC_CD_CODE ,
+                                                SPRAS DESC_CD_LANGUAGE ,
+                                                1 DESC_CD_POSITION ,
+                                                TEXT1 DESC_CD_DESCRIPTION1 ,
+                                                NULL DESC_CD_DESCRIPTION2 ,
+                                                     NULL DESC_CD_DETAIL1 ,
+                                                          NULL DESC_CD_DETAIL2 ,
+                                                               NULL DESC_CD_DETAIL3 ,
+                                                                    'WW GPP' DESC_CD_SOURCE_SYSTEM
+   FROM ddwh00_sa.TS_T0520002_WW_GPP SA5
+   UNION ALL SELECT 'TINCT' DESC_CD_TABLE ,
+                            'Incoterms' DESC_CD_TABLE_DESC ,
+                                        INCO1 DESC_CD_CODE ,
+                                        SPRAS DESC_CD_LANGUAGE ,
+                                        1 DESC_CD_POSITION ,
+                                        BEZEI DESC_CD_DESCRIPTION1 ,
+                                        NULL DESC_CD_DESCRIPTION2 ,
+                                             NULL DESC_CD_DETAIL1 ,
+                                                  NULL DESC_CD_DETAIL2 ,
+                                                       NULL DESC_CD_DETAIL3 ,
+                                                            'WW GPP' DESC_CD_SOURCE_SYSTEM
+   FROM ddwh00_sa.TS_TINC0002_WW_GPP SA6
+   UNION ALL SELECT 'SWOR' DESC_CD_TABLE ,
+                           'Hierarchy Material Group' DESC_CD_TABLE_DESC ,
+                                                      TO_CHAR(CLINT) DESC_CD_CODE ,
+                                                      SPRAS DESC_CD_LANGUAGE ,
+                                                      KLPOS DESC_CD_POSITION ,
+                                                      KSCHL DESC_CD_DESCRIPTION1 ,
+                                                      KSCHG DESC_CD_DESCRIPTION2 ,
+                                                      NULL DESC_CD_DETAIL1 ,
+                                                           NULL DESC_CD_DETAIL2 ,
+                                                                NULL DESC_CD_DETAIL3 ,
+                                                                     'WW GPP' DESC_CD_SOURCE_SYSTEM
+   FROM ddwh00_sa.TS_SWOR00001_WW_GPP SA7 MINUS SELECT DESC_CD_TABLE ,
+                                                       DESC_CD_TABLE_DESC ,
+                                                       DESC_CD_CODE ,
+                                                       DESC_CD_LANGUAGE ,
+                                                       DESC_CD_POSITION ,
+                                                       DESC_CD_DESCRIPTION1 ,
+                                                       DESC_CD_DESCRIPTION2 ,
+                                                       DESC_CD_DETAIL1 ,
+                                                       DESC_CD_DETAIL2 ,
+                                                       DESC_CD_DETAIL3 ,
+                                                       DESC_CD_SOURCE_SYSTEM
+   FROM ddwh01_dw.TM_DESC_DESCRIPTION DW) SA ON (TARGET.DESC_CD_TABLE = SA.DESC_CD_TABLE
+                                                 AND TARGET.DESC_CD_CODE = SA.DESC_CD_CODE
+                                                 AND TARGET.DESC_CD_LANGUAGE = SA.DESC_CD_LANGUAGE
+                                                 AND NVL(TARGET.DESC_CD_POSITION, -1) = NVL(SA.DESC_CD_POSITION, -1)) WHEN MATCHED THEN
+UPDATE
+SET TARGET.DESC_CD_DESCRIPTION1 = SA.DESC_CD_DESCRIPTION1 ,
+    TARGET.DESC_CD_DESCRIPTION2 = SA.DESC_CD_DESCRIPTION2 ,
+    TARGET.DESC_CD_DETAIL1 = SA.DESC_CD_DETAIL1 ,
+    TARGET.DESC_CD_DETAIL2 = SA.DESC_CD_DETAIL2 ,
+    TARGET.DESC_CD_DETAIL3 = SA.DESC_CD_DETAIL3 ,
+    TARGET.DESC_DT_LAST_MODIFY = SYSDATE ,
+    TARGET.DESC_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (DESC_ID_TABLE ,
+        DESC_CD_TABLE ,
+        DESC_CD_TABLE_DESC ,
+        DESC_CD_CODE ,
+        DESC_CD_LANGUAGE ,
+        DESC_CD_POSITION ,
+        DESC_CD_DESCRIPTION1 ,
+        DESC_CD_DESCRIPTION2 ,
+        DESC_CD_DETAIL1 ,
+        DESC_CD_DETAIL2 ,
+        DESC_CD_DETAIL3 ,
+        DESC_CD_SOURCE_SYSTEM ,
+        DESC_DT_INSERT ,
+        DESC_DT_LAST_MODIFY ,
+        DESC_ID_BATCH_ID ,
+        DESC_ID_BATCH_LAST_MODIFY ,
+        DESC_DT_START_VALIDITY ,
+        DESC_DT_END_VALIDITY)
+VALUES (DDWH01_DW.SEQ_TM_DESC.NEXTVAL , SA.DESC_CD_TABLE , SA.DESC_CD_TABLE_DESC , SA.DESC_CD_CODE , SA.DESC_CD_LANGUAGE , SA.DESC_CD_POSITION , SA.DESC_CD_DESCRIPTION1 , SA.DESC_CD_DESCRIPTION2 , SA.DESC_CD_DETAIL1 , SA.DESC_CD_DETAIL2 , SA.DESC_CD_DETAIL3 , SA.DESC_CD_SOURCE_SYSTEM , SYSDATE , SYSDATE , NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) , NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) , TO_DATE('01/01/1900', 'DD/MM/YYYY') , TO_DATE('31/12/9999', 'DD/MM/YYYY') ); 
+@@Response 
+The PySpark SQL equivalent of the SQL code would be:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+# Create a Spark Session
+spark = SparkSession.builder.appName("MergeInto").getOrCreate()
+
+# Load data from ddwh00_sa.TS_MAKT0001_WW_GPP into a DataFrame
+df1 = spark.sql("SELECT 'MAKT' AS DESC_CD_TABLE , 'Material' AS DESC_CD_TABLE_DESC , MATNR AS DESC_CD_CODE , SPRAS AS DESC_CD_LANGUAGE , 1 AS DESC_CD_POSITION , MAKTX AS DESC_CD_DESCRIPTION1 , MAKTG AS DESC_CD_DESCRIPTION2 , NULL AS DESC_CD_DETAIL1 , NULL AS DESC_CD_DETAIL2 , NULL AS DESC_CD_DETAIL3 , 'WW GPP' AS DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_MAKT0001_WW_GPP SA")
+
+# Load data from ddwh00_sa.TS_EQKT0001_WW_GPP into a DataFrame
+df2 = spark.sql("SELECT 'EQKT' AS DESC_CD_TABLE , 'Equipment' AS DESC_CD_TABLE_DESC , EQUNR AS DESC_CD_CODE , SPRAS AS DESC_CD_LANGUAGE , 1 AS DESC_CD_POSITION , EQKTX AS DESC_CD_DESCRIPTION1 , EQKTU AS DESC_CD_DESCRIPTION2 , KZLTX AS DESC_CD_DETAIL1 , TXASP AS DESC_CD_DETAIL2 , TO_CHAR(TEXTCHANGEDDATETIME) AS DESC_CD_DETAIL3 , 'WW GPP' AS DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_EQKT0001_WW_GPP SA2")
+
+# Load data from ddwh00_sa.TS_T0050002_WW_GPP into a DataFrame
+df3 = spark.sql("SELECT 'T005T' AS DESC_CD_TABLE , 'Country' AS DESC_CD_TABLE_DESC , LAND1 AS DESC_CD_CODE , SPRAS AS DESC_CD_LANGUAGE , 1 AS DESC_CD_POSITION , LANDX AS DESC_CD_DESCRIPTION1 , LANDX50 AS DESC_CD_DESCRIPTION2 , PRQ_SPREGT AS DESC_CD_DETAIL1 , NATIO AS DESC_CD_DETAIL2 , NATIO50 AS DESC_CD_DETAIL3 , 'WW GPP' AS DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_T0050002_WW_GPP SA3")
+
+# Load data from ddwh00_sa.TS_T0230002_WW_GPP into a DataFrame
+df4 = spark.sql("SELECT 'T023T' AS DESC_CD_TABLE , 'Commodity' AS DESC_CD_TABLE_DESC , MATKL AS DESC_CD_CODE , SPRAS AS DESC_CD_LANGUAGE , 1 AS DESC_CD_POSITION , WGBEZ AS DESC_CD_DESCRIPTION1 , WGBEZ60 AS DESC_CD_DESCRIPTION2 , NULL AS DESC_CD_DETAIL1 , NULL AS DESC_CD_DETAIL2 , NULL AS DESC_CD_DETAIL3 , 'WW GPP' AS DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_T0230002_WW_GPP SA4")
+
+# Load data from ddwh00_sa.TS_T0520002_WW_GPP into a DataFrame
+df5 = spark.sql("SELECT 'T052U' AS DESC_CD_TABLE , 'Payment Condition' AS DESC_CD_TABLE_DESC , CONCAT(ZTERM, NVL(ZTAGG, -1)) AS DESC_CD_CODE , SPRAS AS DESC_CD_LANGUAGE , 1 AS DESC_CD_POSITION , TEXT1 AS DESC_CD_DESCRIPTION1 , NULL AS DESC_CD_DESCRIPTION2 , NULL AS DESC_CD_DETAIL1 , NULL AS DESC_CD_DETAIL2 , NULL AS DESC_CD_DETAIL3 , 'WW GPP' AS DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_T0520002_WW_GPP SA5")
+
+# Load data from ddwh00_sa.TS_TINC0002_WW_GPP into a DataFrame
+df6 = spark.sql("SELECT 'INCOT' AS DESC_CD_TABLE , 'Incoterms' AS DESC_CD_TABLE_DESC , INCO1 AS DESC_CD_CODE , SPRAS AS DESC_CD_LANGUAGE , 1 AS DESC_CD_POSITION , BEZEI AS DESC_CD_DESCRIPTION1 , NULL AS DESC_CD_DESCRIPTION2 , NULL AS DESC_CD_DETAIL1 , NULL AS DESC_CD_DETAIL2 , NULL AS DESC_CD_DETAIL3 , 'WW GPP' AS DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_TINC0002_WW_GPP SA6")
+
+# Load data from ddwh00_sa.TS_SWOR00001_WW_GPP into a DataFrame
+df7 = spark.sql("SELECT 'SWOR' AS DESC_CD_TABLE , 'Hierarchy Material Group' AS DESC_CD_TABLE_DESC , TO_CHAR(CLINT) AS DESC_CD_CODE , SPRAS AS DESC_CD_LANGUAGE , KLPOS AS DESC_CD_POSITION , KSCHL AS DESC_CD_DESCRIPTION1 , KSCHG AS DESC_CD_DESCRIPTION2 , NULL AS DESC_CD_DETAIL1 , NULL AS DESC_CD_DETAIL2 , NULL AS DESC_CD_DETAIL3 , 'WW GPP' AS DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_SWOR00001_WW_GPP SA7")
+
+# Concatenate all DataFrames
+df = df1.union(df2).union(df3).union(df4).union(df5).union(df6).union(df7)
+
+# Minus operation is not available in PySpark SQL, so we need to do it in Python
+df_dw = spark.table("ddwh01_dw.TM_DESC_DESCRIPTION")
+df_result = df.subtract(df_dw)
+
+# Merge operation is not available in PySpark SQL, so we need to do it in Python
+df_target = spark.table("ddwh01_dw.TM_DESC_DESCRIPTION")
+
+# Update operation
+df_update = df_result.join(df_target, ["DESC_CD_TABLE", "DESC_CD_CODE", "DESC_CD_LANGUAGE", "DESC_CD_POSITION"], "left_semi")
+df_update = df_update.withColumn("DESC_DT_LAST_MODIFY", F.current_timestamp())
+df_update = df_update.withColumn("DESC_ID_BATCH_LAST_MODIFY", F.lit(F.lit(p_ELT_ID_BATCH).alias("p_ELT_ID_BATCH").when(F.isnull("p_ELT_ID_BATCH"), F.lit(n_ELT_ID_JOB_LOG)).otherwise(F.col("p_ELT_ID_BATCH"))))
+df_update.createOrReplaceTempView("update_table")
+
+spark.sql("""
+    UPDATE ddwh01_dw.TM_DESC_DESCRIPTION TARGET
+    SET TARGET.DESC_CD_DESCRIPTION1 = update_table.DESC_CD_DESCRIPTION1,
+        TARGET.DESC_CD_DESCRIPTION2 = update_table.DESC_CD_DESCRIPTION2,
+        TARGET.DESC_CD_DETAIL1 = update_table.DESC_CD_DETAIL1,
+        TARGET.DESC_CD_DETAIL2 = update_table.DESC_CD_DETAIL2,
+        TARGET.DESC_CD_DETAIL3 = update_table.DESC_CD_DETAIL3,
+        TARGET.DESC_DT_LAST_MODIFY = update_table.DESC_DT_LAST_MODIFY,
+        TARGET.DESC_ID_BATCH_LAST_MODIFY = update_table.DESC_ID_BATCH_LAST_MODIFY
+    FROM update_table
+    WHERE TARGET.DESC_CD_TABLE = update_table.DESC_CD_TABLE AND
+          TARGET.DESC_CD_CODE = update_table.DESC_CD_CODE AND
+          TARGET.DESC_CD_LANGUAGE = update_table.DESC_CD_LANGUAGE AND
+          NVL(TARGET.DESC_CD_POSITION, -1) = NVL(update_table.DESC_CD_POSITION, -1)
+""")
+
+# Insert operation
+df_insert = df_result.subtract(df_update)
+df_insert = df_insert.withColumn("DESC_ID_TABLE", F.expr("DDWH01_DW.SEQ_TM_DESC.NEXTVAL"))
+df_insert = df_insert.withColumn("DESC_DT_INSERT", F.current_timestamp())
+df_insert = df_insert.withColumn("DESC_DT_LAST_MODIFY", F.current_timestamp())
+df_insert = df_insert.withColumn("DESC_ID_BATCH_ID", F.lit(F.lit(p_ELT_ID_BATCH).alias("p_ELT_ID_BATCH").when(F.isnull("p_ELT_ID_BATCH"), F.lit(n_ELT_ID_JOB_LOG)).otherwise(F.col("p_ELT_ID_BATCH"))))
+df_insert = df_insert.withColumn("DESC_ID_BATCH_LAST_MODIFY", F.lit(F.lit(p_ELT_ID_BATCH).alias("p_ELT_ID_BATCH").when(F.isnull("p_ELT_ID_BATCH"), F.lit(n_ELT_ID_JOB_LOG)).otherwise(F.col("p_ELT_ID_BATCH"))))
+df_insert = df_insert.withColumn("DESC_DT_START_VALIDITY", F.lit("1900-01-01"))
+df_insert = df_insert.withColumn("DESC_DT_END_VALIDITY", F.lit("9999-12-31"))
+df_insert.createOrReplaceTempView("insert_table")
+
+spark.sql("""
+    INSERT INTO ddwh01_dw.TM_DESC_DESCRIPTION (DESC_ID_TABLE, DESC_CD_TABLE, DESC_CD_TABLE_DESC, DESC_CD_CODE, DESC_CD_LANGUAGE, DESC_CD_POSITION, DESC_CD_DESCRIPTION1, DESC_CD_DESCRIPTION2, DESC_CD_DETAIL1, DESC_CD_DETAIL2, DESC_CD_DETAIL3, DESC_CD_SOURCE_SYSTEM, DESC_DT_INSERT, DESC_DT_LAST_MODIFY, DESC_ID_BATCH_ID, DESC_ID_BATCH_LAST_MODIFY, DESC_DT_START_VALIDITY, DESC_DT_END_VALIDITY)
+    SELECT DESC_ID_TABLE, DESC_CD_TABLE, DESC_CD_TABLE_DESC, DESC_CD_CODE, DESC_CD_LANGUAGE, DESC_CD_POSITION, DESC_CD_DESCRIPTION1, DESC_CD_DESCRIPTION2, DESC_CD_DETAIL1, DESC_CD_DETAIL2, DESC_CD_DETAIL3, DESC_CD_SOURCE_SYSTEM, DESC_DT_INSERT, DESC_DT_LAST_MODIFY, DESC_ID_BATCH_ID, DESC_ID_BATCH_LAST_MODIFY, DESC_DT_START_VALIDITY, DESC_DT_END_VALIDITY
+    FROM insert_table
+""")
+
+spark.stop()
+```
+
+Please note that the above script is a Python equivalent of the SQL query. It may not work as expected without actual data and table schemas.

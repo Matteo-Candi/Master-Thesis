@@ -1,0 +1,81 @@
+Here is the PySpark code for your SQL query. The main difference between SQL and PySpark queries is that PySpark does not support MERGE statement directly, so we need to write equivalent logic using join operations. Also, please note that I'm assuming that you have already loaded your data into DataFrames `df1`, `df2`, etc., from the respective tables and also `seq_tm_desc` is a Spark sequence for generating unique IDs:
+
+```python
+# Load your dataframes here. For example:
+# df1 = spark.table("ddwh00_sa.TS_MAKT0001_WW_GPP")
+# df2 = spark.table("ddwh00_sa.TS_EQKT0001_WW_GPP")
+# ... and so on for all your tables
+
+from pyspark.sql import functions as F
+
+# Define the columns for each dataframe
+df1 = df1.select(F.lit('MAKT').alias("DESC_CD_TABLE"), 
+                 F.lit('Material').alias("DESC_CD_TABLE_DESC"), 
+                 "MATNR", 
+                 "SPRAS", 
+                 F.lit(1).alias("DESC_CD_POSITION"), 
+                 "MAKTX", 
+                 "MAKTG", 
+                 F.expr("NULL AS DESC_CD_DETAIL1"), 
+                 F.expr("NULL AS DESC_CD_DETAIL2"), 
+                 F.expr("NULL AS DESC_CD_DETAIL3"), 
+                 F.lit('WW GPP').alias("DESC_CD_SOURCE_SYSTEM"))
+# Repeat the above step for df2, df3, ...
+
+# Union all dataframes
+unionDF = df1
+for df in [df2, df3, df4, df5, df6, df7]:  # Add more DataFrames if needed
+    unionDF = unionDF.union(df)
+
+# Load the target table into a DataFrame
+targetDF = spark.table("ddwh01_dw.TM_DESC_DESCRIPTION")
+
+# Perform left anti join to get rows in unionDF that do not exist in targetDF
+antiJoinDF = unionDF.join(targetDF, 
+                           (unionDF["DESC_CD_TABLE"] == targetDF["DESC_CD_TABLE"]) & 
+                           (unionDF["DESC_CD_CODE"] == targetDF["DESC_CD_CODE"]) & 
+                           (unionDF["DESC_CD_LANGUAGE"] == targetDF["DESC_CD_LANGUAGE"]) & 
+                           ((targetDF["DESC_CD_POSITION"].isNull() & unionDF["DESC_CD_POSITION"].isNull()) | 
+                            (unionDF["DESC_CD_POSITION"] == targetDF["DESC_CD_POSITION"])), 
+                           "leftanti")
+
+# Perform left semi join to get rows in unionDF that exist in targetDF
+semiJoinDF = unionDF.join(targetDF, 
+                           (unionDF["DESC_CD_TABLE"] == targetDF["DESC_CD_TABLE"]) & 
+                           (unionDF["DESC_CD_CODE"] == targetDF["DESC_CD_CODE"]) & 
+                           (unionDF["DESC_CD_LANGUAGE"] == targetDF["DESC_CD_LANGUAGE"]) & 
+                           ((targetDF["DESC_CD_POSITION"].isNull() & unionDF["DESC_CD_POSITION"].isNull()) | 
+                            (unionDF["DESC_CD_POSITION"] == targetDF["DESC_CD_POSITION"])), 
+                           "leftsemi")
+
+# Update matched rows in the target DataFrame
+targetDF = targetDF.join(semiJoinDF, 
+                         (targetDF["DESC_CD_TABLE"] == semiJoinDF["DESC_CD_TABLE"]) & 
+                         (targetDF["DESC_CD_CODE"] == semiJoinDF["DESC_CD_CODE"]) & 
+                         (targetDF["DESC_CD_LANGUAGE"] == semiJoinDF["DESC_CD_LANGUAGE"]) & 
+                         ((semiJoinDF["DESC_CD_POSITION"].isNull() & targetDF["DESC_CD_POSITION"].isNull()) | 
+                          (targetDF["DESC_CD_POSITION"] == semiJoinDF["DESC_CD_POSITION"])), 
+                         "left") \
+                   .withColumn("DESC_ID_TABLE", F.when(F.col("DESC_ID_TABLE").isNull(), seq_tm_desc.nextval())) \
+                   .fillna({"DESC_CD_DESCRIPTION1": semiJoinDF["DESC_CD_DESCRIPTION1"], 
+                            "DESC_CD_DESCRIPTION2": semiJoinDF["DESC_CD_DESCRIPTION2"], 
+                            "DESC_CD_DETAIL1": semiJoinDF["DESC_CD_DETAIL1"], 
+                            "DESC_CD_DETAIL2": semiJoinDF["DESC_CD_DETAIL2"], 
+                            "DESC_CD_DETAIL3": semiJoinDF["DESC_CD_DETAIL3"]}) \
+                   .withColumn("DESC_DT_LAST_MODIFY", F.current_date())
+
+# Insert non-matched rows into the target DataFrame
+insertDF = antiJoinDF.select(seq_tm_desc.nextval().alias("DESC_ID_TABLE"), 
+                             *[antiJoinDF[col] for col in antiJoinDF.columns]) \
+                       .withColumn("DESC_DT_INSERT", F.current_date()) \
+                       .withColumn("DESC_DT_LAST_MODIFY", F.current_date()) \
+                       .withColumn("DESC_ID_BATCH_ID", F.lit(p_ELT_ID_BATCH)) \
+                       .withColumn("DESC_ID_BATCH_LAST_MODIFY", F.lit(n_ELT_ID_JOB_LOG)) \
+                       .withColumn("DESC_DT_START_VALIDITY", F.to_date(F.lit('01/01/1900'), 'dd/MM/yyyy')) \
+                       .withColumn("DESC_DT_END_VALIDITY", F.to_date(F.lit('31/12/9999'), 'dd/MM/yyyy'))
+
+# Union the updated target DataFrame and inserted rows, then write to DWH table
+finalDF = targetDF.unionByName(insertDF)
+finalDF.write.mode("overwrite").insertInto("ddwh01_dw.TM_DESC_DESCRIPTION")
+```
+Please replace `seq_tm_desc`, `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` with actual values or variables as per your requirement. Also note that the column order in insertDF may need to be adjusted based on the order of columns in your target table.

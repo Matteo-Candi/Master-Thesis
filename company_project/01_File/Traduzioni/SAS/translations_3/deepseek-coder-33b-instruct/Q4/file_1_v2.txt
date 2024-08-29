@@ -1,0 +1,24 @@
+Here is the Python code to perform similar tasks as your SAS macro. Please note that this script does not cover all functionalities of your original macro because some tasks in a SAS environment are inherently more complex, such as running system commands (%put) or manipulating datasets from library other than work (proc datasets library = work), which Python libraries do not support:
+
+```python
+import pandas as pd  # To perform the data manipulations and operations
+
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    
+    print("\nWARNING- ============================================================")
+    print("WARNING: I nomi\nsomma quadrare\nidentificano data set ausiliari della macro quadraturagruppo\nche vengono cancellati al termine delle elaborazioni\nWARNING- =============================================================\n")  # Prints warning messages
+    
+    daquadrare_sorted = daquadrare.sort_values(by=[vargruppo])
+    somma = daquadrare_sorted.groupby([vargruppo]).sum()[[daquad]].reset_index()  # Performs group-wise sum of 'daquad' column and keeps 'vargruppo' as index
+    
+    somma = pd.merge(somma, totpergru, on=[vargruppo])  # Merges with dataset 'totpergru'
+    somma.dropna(inplace=True)  # Drops rows having NaN values
+    somma = somma[[vargruppo, daquad+"_y", perquad]]  
+    
+    quadrare = pd.merge(daquadrare_sorted, somma, on=[vargruppo])  # Merges with 'daquadrare' dataset
+    quadrare[[giaquad]] = quadrare[daquad+"_x"]*quadrare[perquad]/quadrare[daquad+"_y"]  
+    
+    quadrato = quadrare.drop(columns=[daquad+"_x", daquad+"_y", perquad])  # Removes unnecessary columns from 'quadrato' dataset
+    
+    return quadrato  # Returns the resultant dataframe
+```

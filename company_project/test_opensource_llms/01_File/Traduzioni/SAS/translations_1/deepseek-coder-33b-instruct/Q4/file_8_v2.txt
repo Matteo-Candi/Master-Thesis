@@ -1,0 +1,51 @@
+Here is the Python translation of your SAS code. Note that some parts cannot be translated directly due to the differences between SAS and Python, for example, SAS uses libraries (libname) which are not available in Python. Also, there are many assumptions made when translating this code because we don't have access to your data files or know what you want to do with them.
+
+```python
+import pandas as pd
+from scipy import stats
+import numpy as np
+
+# Define the file paths
+ter_path = "C:\\Users\\mcandi\\OneDrive – KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+sez_path = "C:\\Users\\mcandi\\OneDrive – KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+ter_out_path = "C:\\Users\\mcandi\\OneDrive – KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+sez_out_path = "C:\\Users\\mcandi\\OneDrive – KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+appo_path = "C:\\Users\\mcandi\\OneDrive – KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+
+# Load the data files
+geog = pd.read_csv(f'{ter_out_path}\\geografica_comune.csv')
+eco = pd.read_csv(f'{ter_path}\\econom20b.csv')
+reddito_istat = pd.read_csv('C:\\Users\\mcandi\\OneDrive – KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\quadratura_reddito.csv')
+anacom = pd.read_csv(f'{ter_out_path}\\geografica_comune.csv')
+popolazione_ultima = pd.read_csv(f'{ter_path}\\Popolazione_eta_sesso_comune.csv')
+ecos = pd.read_csv(f'{ter_path}\\immobiliare_straordinaria20b.csv')
+auto = pd.read_csv(f'{ter_out_path}\\parco_veicolare_comune.csv')
+prod = pd.read_csv(f'{ter_path}\\produt20b.csv')
+indicatore_va = pd.read_csv(f'{appo_path}\\comunale_va.csv')
+autonoleggio = pd.read_csv(f'{ter_path}\\Imprese_dettcom20b.csv')
+base = pd.read_csv('your_base_file.csv')  # Replace with your base file path
+
+# Perform the data manipulations and calculations
+geog['territorio'] = geog['nome_regione'].where(geog['nome_regione'] == 'TRENTINO-ALTO ADIGE', geog['nome_provincia'])
+eco = eco[['codc620b', 'red19']]
+eco.rename(columns={'codc620b': 'codice_comune__str'}, inplace=True)
+eco_g = pd.merge(geog, eco, on='codice_comune__str')
+regionale_precedente = eco_g.groupby('territorio').sum()['red19'].reset_index().rename(columns={'red19': 'reddito_stima_preced'})
+reddito_istat = reddito_istat[['territorio', 'reddito_2019', 'reddito_2020']]
+reddito_istat.columns = ['territorio', 'reddito_istat_preced', 'reddito_istat_ultimo']
+confronto = pd.merge(regionale_precedente, reddito_istat, on='territorio')
+confronto['difperc'] = 100 * (confronto['reddito_stima_preced'] - confronto['reddito_istat_preced']) / confronto['reddito_istat_preced']
+anacom = anacom[['codice_comune__str', 'nome_comune', 'nome_provincia', 'sigla_provincia', 'nome_regione', 'codice_area_nielsen']]
+popolazione_ultima = popolazione_ultima.groupby('codc620b').sum()['pop19'].reset_index().rename(columns={'codc620b': 'codice_comune__str', 'pop19': 'popolazione'})
+eco = eco[['codc620b', 'red19']]
+ecos = ecos[['codc620b', 'medres20']]
+fisco = pd.read_csv(f'{ter_out_path}\\reddito_fiscale_comune.csv')
+fisco = fisco[['codice_comune__str', 'reddito_tot_fasce_amm']].rename(columns={'reddito_tot_fasce_amm': 'reddito_fiscale'})
+auto = auto[['codice_comune__str', 'euro_0', 'euro_1', 'euro_2', 'euro_3', 'euro_4', 'euro_5', 'euro_6']]
+prod = prod[['codc620b', 'fatt_1', 'fatt_2', 'fatt_3', 'fatt_4', 'fatt_5', 'fatt_6']].rename(columns={'codc620b': 'codice_comune__str'})
+indicatore_va = indicatore_va[['codice_comune__str', 'variazione_va']]
+autonoleggio = autonoleggio[autonoleggio['codateco2007'] == '77.11.00' & autonoleggio['tiposede'] == 'SL']
+autonoleggio = pd.merge(anacom, autonoleggio, on='codice_comune__str')
+base = pd.merge(geog[['codice_comune__str', 'territorio']], eco_g, how='left', on='codice_comune__str')
+# Continue with the rest of your code...
+```

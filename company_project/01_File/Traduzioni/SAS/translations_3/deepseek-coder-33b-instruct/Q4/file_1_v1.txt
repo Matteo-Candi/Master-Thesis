@@ -1,0 +1,30 @@
+Here is the Python version of your SAS macro. Note that because this conversion doesn't actually run SAS code, it doesn't actually execute any data processing or calculations - just reorganizes them in Python-style.
+
+```python
+def quadraturagruppo(daquadrare,		
+					 daquad,			
+					 totpergru,		
+					 perquad,		
+					 giaquad,		
+					 vargruppo,		
+					 quadrato):	
+    print("\nWARNING- ---------------------------------------------------------")
+    print("WARNING: The names\nsoma quadrare\nidentify auxiliary datasets of the macro quadraturagruppo\nwhich are deleted at the end of the processes")
+    print("WARNING- ---------------------------------------------------------\n")
+
+    daquadrare = daquadrare.sort_values(by=[vargruppo])
+    
+    somma = daquadrare.groupby([vargruppo]).sum().reset_index()[[vargruppo, 'datot']]
+
+    totpergru = totpergru.sort_values(by=[vargruppo])
+    somma = pd.merge(somma, totpergru, on=[vargruppo])
+    
+    quadrare = pd.merge(daquadrare, somma, how='inner', on=[vargruppo])
+    quadrare[giaquad] = daquad * perquad / quadrare['datot']
+	
+    quadrato = quadrare.drop(columns=[daquad, 'datot', perquad])
+    
+    # Not exactly like SAS, as we don't have a direct way to delete datasets in Python
+    print("Deleting somma and quadrare datasets...") 
+
+```

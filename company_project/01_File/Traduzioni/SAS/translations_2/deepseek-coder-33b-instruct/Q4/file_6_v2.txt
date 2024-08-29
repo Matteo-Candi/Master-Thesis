@@ -1,0 +1,175 @@
+Here is the translation of your SAS code to Python. Please note that there's no direct equivalent in Python for the SAS library and dataset references, so I have used pandas DataFrame objects instead. Also, please install required libraries (pandas, numpy) before running this script. 
+
+```python
+import pandas as pd
+import numpy as np
+from pathlib import Path
+
+# Define file paths
+ter_path = Path("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets")
+sez_path = Path("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets")
+ter_out_path = Path("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets")
+sez_out_path = Path("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets")
+appo_path = Path("C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets")
+
+# Load the datasets
+geografica_sezione = pd.read_csv(sez_out_path / "geografica_sezione.csv", usecols=['codice_sezione', 'codice_comune__str'])
+etapop20b = pd.read_csv(ter_path / "etapop20b.csv")
+pop_eta_sez20b = pd.read_csv(sez_path / "pop_eta_sez20b.csv", usecols=['cods11', 'cleta', 'stmmas19', 'stmfem19'])
+Popolazione_eta_sesso_comune = pd.read_csv(ter_out_path / "Popolazione_eta_sesso_comune.csv")
+nati_eta_madre_rapporto = pd.read_csv(appo_path / "nati_eta_madre_rapporto.csv")
+geografica_comune = pd.read_csv(ter_out_path / "geografica_comune.csv", usecols=['codice_comune__str', 'codice_provincia'])
+
+# Rename columns
+pop_eta_sez20b = pop_eta_sez20b.rename(columns={'cods11':'codice_sezione','stmmas19':'stmmas', 'stmfem19':'stmfem'})
+geografica_comune = geografica_comune[['codice_comune__str', 'codice_provincia']]
+
+# Create base_sezione DataFrame
+base_sezione = geografica_sezione.copy()
+
+# Create x_base_eta DataFrame and apply age classification
+x_base_eta = etapop20b.copy()
+age_bins = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, np.inf]
+age_labels = ['{}-{}'.format(i, i+4) for i in range(0, 96, 5)]
+x_base_eta['cleta'] = pd.cut(x_base_eta['eta'], bins=age_bins, labels=age_labels)
+
+# Calculate min and max age per class
+print("MIN E MAX ETÀ PER CLASSE")
+print(x_base_eta.groupby('cleta')['eta'].agg(['min', 'max']))
+
+# Count frequency of each age in each class
+base_eta = x_base_eta.groupby(['eta', 'cleta'])['eta'].count().reset_index(name='count')
+
+# Merge base_sezione and base_eta DataFrames
+base_sezione_eta = pd.merge(base_sezione, base_eta, how='left')
+
+# Sort the data by codice_sezione and cleta
+base_sezione_eta = base_sezione_eta.sort_values(['codice_sezione', 'cleta'])
+
+# Create attuale DataFrame
+attuale = pop_eta_sez20b.copy()
+
+# Sort the data by codice_sezione and cleta
+attuale = attuale.sort_values(['codice_sezione', 'cleta'])
+
+# Merge base_sezione_eta and attuale DataFrames
+base_sezione_eta = pd.merge(base_sezione_eta, attuale, on=['codice_sezione', 'cleta'], how='left')
+
+# Calculate total males and females per class
+tot_classe_com = x_base_eta.groupby(['codc620b', 'cleta'])[['tot_mas', 'tot_fem']].sum().reset_index()
+x_base_eta = pd.merge(x_base_eta, tot_classe_com, on=['codc620b', 'cleta'], how='left')
+
+# Calculate male and female percentages
+x_base_eta['percentuale_maschi'] = np.where(x_base_eta['totcla_mas']>0, 100*x_base_eta['tot_mas']/x_base_eta['totcla_mas'], 0)
+x_base_eta['percentuale_femmine'] = np.where(x_base_eta['totcla_fem']>0, 100*x_base_eta['tot_fem']/x_base_eta['totcla_fem'], 0)
+
+# Sort the data by codice_comune__str and eta
+base_sezione_eta = base_sezione_eta.sort_values(['codice_comune__str', 'eta'])
+x_base_eta = x_base_eta[['codc620b', 'eta', 'percentuale_maschi', 'percentuale_femmine']]
+
+# Merge base_sezione_eta and x_base_eta DataFrames
+base_sezione_eta = pd.merge(base_sezione_eta, x_base_eta, left_on='codice_comune__str', right_on='codc620b', how='left')
+
+# Calculate male and female distributed populations
+base_sezione_eta['maschi_distribuiti'] = base_sezione_eta['stmmas']*base_sezione_eta['percentuale_maschi']/100
+base_sezione_eta['femmine_distribuite'] = base_sezione_eta['stmfem']*base_sezione_eta['percentuale_femmine']/100
+
+# Calculate total male and female populations by section
+total_by_section = base_sezione_eta.groupby('codice_sezione')[['maschi_distribuiti', 'femmine_distribuite']].sum()
+print("TOTALI DI CONTROLLO DA TABELLA DEI DATI RIDITRIBUITI")
+print(total_by_section)
+
+# Calculate total male and female populations by commune
+total_comune = x_base_eta.groupby('codc620b')[['tot_mas', 'tot_fem']].sum()
+print("TOTALI DI CONTROLLO DA TABELLA COMUNALE")
+print(total_comune)
+
+# Increase age by 1 and classify it
+base_sezione_eta['eta'] = np.where(base_sezione_eta['eta']<85, base_sezione_eta['eta']+1, 100)
+age_bins = [15, 17, 49, 50, 54, 100]
+age_labels = ['Y_UN17', 'Y'+str(i) for i in range(18, 50)] + ['Y_GE50']
+base_sezione_eta['eta1_a'] = pd.cut(base_sezione_eta['eta'], bins=age_bins, labels=age_labels, include_lowest=True)
+
+# Calculate male percentage and merge it with base_sezione_eta DataFrame
+rapporto_nascita = Popolazione_eta_sesso_comune[Popolazione_eta_sesso_comune['eta']==0].copy()
+rapporto_nascita['maschi_perc'] = np.where(rapporto_nascita['popolazione']>0, rapporto_nascita['maschi']/rapporto_nascita['popolazione'], 0)
+base_sezione_eta = pd.merge(base_sezione_eta, rapporto_nascita[['codice_comune__str', 'maschi_perc']], on='codice_comune__str', how='left')
+
+# Merge base_sezione_eta and nati_eta_madre_rapporto DataFrames
+base_sezione_eta = pd.merge(base_sezione_eta, geografica_comune[['codice_comune__str', 'codice_provincia']], on='codice_comune__str', how='left')
+base_sezione_eta = pd.merge(base_sezione_eta, nati_eta_madre_rapporto[['codice_provincia', 'eta1_a', 'nati_1000_donne_classe_eta']], on=['codice_provincia', 'eta1_a'], how='left')
+
+# Calculate male and female born populations per section
+base_sezione_eta['mas_0_sez'] = np.where(~np.isnan(base_sezione_eta['maschi_perc']) & ~np.isnan(base_sezione_eta['femmine_distribuite']) & ~np.isnan(base_sezione_eta['nati_1000_donne_classe_eta']),
+                                          base_sezione_eta['maschi_perc']*base_sezione_eta['femmine_distribuite']*base_sezione_eta['nati_1000_donne_classe_eta']/1000, 0)
+base_sezione_eta['fem_0_sez'] = np.where(~np.isnan(base_sezione_eta['maschi_perc']) & ~np.isnan(base_sezione_eta['femmine_distribuite']) & ~np.isnan(base_sezione_eta['nati_1000_donne_classe_eta']),
+                                          (1-base_sezione_eta['maschi_perc'])*base_sezione_eta['femmine_distribuite']*base_sezione_eta['nati_1000_donne_classe_eta']/1000, 0)
+total_born = base_sezione_eta.groupby('codice_sezione')[['mas_0_sez', 'fem_0_sez']].sum().reset_index()
+print("TOTALI DI CONTROLLO - NATI: STIMA PER SEZIONE")
+print(total_born)
+
+# Calculate total male and female populations by commune
+total_comune = Popolazione_eta_sesso_comune[Popolazione_eta_sesso_comune['eta']==0][['maschi', 'femmine']].sum()
+print("TOTALI DI CONTROLLO - NATI: DATI COMUNALI")
+print(total_comune)
+
+# Print total born populations by mother's age
+nati_eta_madre_rapporto = nati_eta_madre_rapporto.groupby(['codice_provincia', 'eta1_a'])['nati'].sum().reset_index()
+print("TOTALI DI CONTROLLO - NATI: DATI PER ETÀ DELLA MADRE")
+print(nati_eta_madre_rapporto)
+
+# Rename eta to 0 for total born populations DataFrame
+total_born['eta'] = 0
+
+# Concatenate total born populations and base_sezione_eta DataFrames
+base_sezione_eta = pd.concat([base_sezione_eta, total_born], ignore_index=True)
+
+# Classify age
+age_bins = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, np.inf]
+age_labels = ['{}-{}'.format(i, i+4) for i in range(0, 96, 5)]
+base_sezione_eta['cleta'] = pd.cut(base_sezione_eta['eta'], bins=age_bins, labels=age_labels)
+
+# Calculate min and max age per class
+print("MIN E MAX ETÀ PER CLASSE")
+print(base_sezione_eta.groupby('cleta')['eta'].agg(['min', 'max']))
+
+# Calculate total male and female populations by commune
+tot_st_cleta = base_sezione_eta.groupby(['codice_comune__str', 'cleta'])['maschi_distribuiti', 'femmine_distribuite'].sum().reset_index()
+etaxqua = Popolazione_eta_sesso_comune.copy()
+age_bins = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, np.inf]
+age_labels = ['{}-{}'.format(i, i+4) for i in range(0, 96, 5)]
+etaxqua['cleta'] = pd.cut(etaxqua['eta'], bins=age_bins, labels=age_labels)
+tot_qua_cleta = etaxqua.groupby(['codice_comune__str', 'cleta'])['maschi', 'femmine'].sum().reset_index()
+tot_coef_cleta = pd.merge(tot_st_cleta, tot_qua_cleta, on=['codice_comune__str', 'cleta'], how='left')
+tot_coef_cleta['mas_coef'] = np.where(tot_coef_cleta['maschi_sum']>0, tot_coef_cleta['maschi_distribuiti_sum']/tot_coef_cleta['maschi_sum'], 0)
+tot_coef_cleta['fem_coef'] = np.where(tot_coef_cleta['femmine_sum']>0, tot_coef_cleta['femmine_distribuite_sum']/tot_coef_cleta['femmine_sum'], 0)
+mancante = tot_coef_cleta[(tot_coef_cleta['mas_coef'].isna()) | (tot_coef_cleta['fem_coef'].isna())]
+print("Caso mancante:", len(mancante))
+base_sezione_eta = pd.merge(base_sezione_eta, tot_coef_cleta[['codice_comune__str', 'cleta', 'mas_coef', 'fem_coef']], on=['codice_comune__str', 'cleta'], how='left')
+
+# Calculate re-distributed populations and drop unused columns
+base_sezione_eta['maschi_distribuiti'] = np.where(~np.isnan(base_sezione_eta['mas_coef']) & ~np.isnan(base_sezione_eta['maschi_distribuiti']),
+                                                   base_sezione_eta['maschi_distribuiti']*base_sezione_eta['mas_coef'], 0)
+base_sezione_eta['femmine_distribuite'] = np.where(~np.isnan(base_sezione_eta['fem_coef']) & ~np.isnan(base_sezione_eta['femmine_distribuite']),
+                                                   base_sezione_eta['femmine_distribuite']*base_sezione_eta['fem_coef'], 0)
+base_sezione_eta = base_sezione_eta.drop(columns=['mas_coef', 'fem_coef'])
+
+# Print total re-distributed populations and total populations by commune
+print("TOTALI DELLE STIME RIQUADRATE")
+print(base_sezione_eta[['maschi_distribuiti', 'femmine_distribuite']].sum())
+total_comune = Popolazione_eta_sesso_comune[['maschi', 'femmine']].sum()
+print("TOTALI DEI DATI COMUNALI")
+print(total_comune)
+
+# Print distributions of re-distributed populations
+male_distribution = base_sezione_eta[base_sezione_eta['maschi_distribuiti']>0]['maschi_distribuiti'].describe()
+female_distribution = base_sezione_eta[base_sezione_eta['femmine_distribuite']>0]['femmine_distribuite'].describe()
+print("DISTRIBUZIONE DELLE STIME FINALI: MASCHI")
+print(male_distribution)
+print("DISTRIBUZIONE DELLE STIME FINALI: FEMMINE")
+print(female_distribution)
+
+# Sort the data by codice_sezione and eta
+base_sezione_eta = base_sezione_eta.sort_values(['codice_sezione', 'eta'])
+```
+This code is a direct translation of your SAS script to Python, but it's important to note that the structure or logic of the SAS program might not be fully preserved in this translation. There may be some differences due to language syntax and data manipulation methods between SAS and Python. For example, merging datasets in SAS is done differently than in Python. The code above should give you a good starting point for your analysis.

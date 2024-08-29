@@ -1,0 +1,78 @@
+system
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise.
+user
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE);
+assistant
+In PySpark, the code would look like this:
+
+```python
+from pyspark.sql.functions import lit, col, nvl
+
+# Assuming data is already read from source tables
+df_sa = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+df_dw = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Subquery to get records to update
+df_sa_to_update = df_sa.subtract(df_dw)
+
+# Subquery to get records to insert
+df_dw_to_insert = df_dw.subtract(df_sa)
+
+# Update existing records
+df_dw.alias("t").join(df_sa_to_update, ["VENL_CD_CLIENT", "VENL_CD_PARTNER_GUID"], "INNER") \
+    .withColumn("VENL_CD_VENDOR", df_sa_to_update.VENL_CD_VENDOR) \
+    .withColumn("VENL_CD_USER", df_sa_to_update.VENL_CD_USER) \
+    .withColumn("VENL_DT_DATE", df_sa_to_update.VENL_DT_DATE) \
+    .withColumn("VENL_DT_TIME", df_sa_to_update.VENL_DT_TIME) \
+    .withColumn("VENL_DT_LAST_MODIFY", lit(SYSDATE)) \
+    .withColumn("VENL_ID_BATCH_LAST_MODIFY", nvl(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG)) \
+    .write.mode("overwrite").saveAsTable("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Insert new records
+df_sa_to_insert \
+    .withColumn("VENL_ID_LINK", DDWH01_DW.SEQ_TM_VENL.NEXTVAL) \
+    .withColumn("VENL_DT_START_VALIDITY", lit(to_date('01/01/1900', 'dd/MM/yyyy'))) \
+    .withColumn("VENL_DT_END_VALIDITY", lit(to_date('31/12/9999', 'dd/MM/yyyy'))) \
+    .withColumn("VENL_DT_INSERT", lit(SYSDATE)) \
+    .withColumn("VENL_ID_BATCH_ID", nvl(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG)) \
+    .withColumn("VENL_DT_LAST_MODIFY", lit(SYSDATE)) \
+    .write.mode("append").saveAsTable("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+
+Please note that the variables `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` need to be defined before you execute this code. Also, ensure that `SYSDATE` and `DDWH01_DW.SEQ_TM_VENL.NEXTVAL` are correctly replaced with their equivalent expressions in PySpark. Additionally, be sure to have the proper read and write permissions to execute this code.

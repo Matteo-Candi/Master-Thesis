@@ -1,0 +1,34 @@
+In PySpark, you can translate the SQL code using `spark.sql()` function but this will not respect all constraints as some of them are SQL specific. Also note that Spark doesn't support the same functions or syntax as in SQL.
+
+Here is how to write your query in PySpark:
+```python
+from pyspark.sql import functions as F
+from pyspark.sql.functions import lpad, substring, expr
+from pyspark.sql.types import *
+
+# define the sequence number function for aemr_id_retail_history
+seq = spark.read.format("com.databricks.spark.redshift").option("url", "jdbc:redshift://localhost/mydatabase?user=username&password=passwd").option("query", "SELECT nextval('ddwh01_dw.seq_aemr_td00001') as seq_num").load()
+
+# read data from the table
+df = spark.read.format("com.databricks.spark.redshift").option("url", "jdbc:redshift://localhost/mydatabase?user=username&password=passwd").option("dbtable", "ddwh00_sa.ts_aemi0004_us_aem").load()
+df = df.alias('main1')
+seq_num = seq.select(expr("seq_num").cast(IntegerType()).alias("aemr_id_retail_history"))
+
+# apply the transformations and select the columns you want to keep
+result = df.where((F.col('company_id').isin(['JIC', 'FOR'])) & (F.col('frequency_id') == 'M')) \
+    .withColumn("aemr_cd_scenario", F.when(F.date_format(F.col('postdate'), "yyyyMM") == F.date_format(F.col('rdate'), "yyyyMM"), F.lit('COMPANY DATA')).otherwise(F.lit('COMPANY REVISION'))) \
+    .withColumn("aemr_cd_rep_company_code", F.col('company_id')) \
+    .withColumn("aemr_cd_program_code", substring(F.col('product_id'), 1, 2)) \
+    .withColumn("aemr_cd_prodruct_code", substring(F.col('product_id'), 3, 2)) \
+    .withColumn("aemr_cd_model_chart", F.col('chart_id')) \
+    .withColumn("aemr_cd_rep_frequency", F.col('frequency_id')) \
+    .withColumn("aemr_cd_activity_code", lpad(F.col('activity_id'), 3, '0')) \
+    .withColumn("aemr_cd_size_code", F.col('size_id')) \
+    .withColumn("aemr_qt_retail_qty", F.col('count_id')) \
+    # add all the columns you want to keep in the select statement here
+    .select(seq_num, "*") 
+result.write.format("com.databricks.spark.redshift").option("url", "jdbc:redshift://localhost/mydatabase?user=username&password=passwd").option("tempdir", "s3n://mybucket/temporary_directory").option("dbtable", "ddwh01_dw.td_aemr_retail_history").save()
+``` 
+Please replace the host, database name and other necessary connection parameters. This code assumes that your Redshift is on localhost (replace it with actual hostname) and `mydatabase` should be replaced by your actual database. It also assumes that you are using S3 bucket for temporary storage when writing data into Redshift from Spark. Please replace `s3n://mybucket/temporary_directory` with your own S3 bucket URL. 
+
+Note: PySpark does not support all the functions and syntax which are available in SQL, therefore you might face some limitations while migrating SQL to PySpark. If your SQL code has any complex logic or nested queries, it might be better to write that part of code directly using PySpark's DataFrame API.

@@ -1,0 +1,4 @@
+
+Translation of SQL to PySpark code for the given query is not possible because PySpark does not support creating views in a similar way as SQL. However, you can still read and manipulate data from this view using PySpark DataFrames and transformations. 
+
+Please note that you should replace `'DDWH02_SM'` and `'"VW_EKKO_PURCH_DOC_HEADER_AGCE"'` with the actual database name and table name in your PySpark environment.

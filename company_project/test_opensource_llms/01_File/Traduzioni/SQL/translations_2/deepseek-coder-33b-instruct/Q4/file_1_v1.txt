@@ -1,0 +1,48 @@
+Here is the PySpark code for the SQL MERGE statement. Note that I have assumed that `DDWH01_DW.SEQ_TM_VENL` is a sequence and not a table, so it will be used to generate unique IDs. Also, please note that this code does not handle the part of your query where you are using NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) which I couldn't understand from your SQL code.
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit, current_date, to_date, when
+from datetime import datetime
+
+# Create a spark session
+spark = SparkSession.builder.getOrCreate()
+
+# Define your source and target dataframes
+source_df = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP").select(col("CLIENT").alias("VENL_CD_CLIENT"), 
+                                                               col("PARTNER_GUID").alias("VENL_CD_PARTNER_GUID"), 
+                                                               col("VENDOR").alias("VENL_CD_VENDOR"), 
+                                                               col("CRUSER").alias("VENL_CD_USER"), 
+                                                               col("CRDAT").alias("VENL_DT_DATE"), 
+                                                               col("CRTIM").alias("VENL_DT_TIME"))
+target_df = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Perform the merge operation
+merged_df = target_df.join(source_df, 
+                           (target_df["VENL_CD_CLIENT"] == source_df["VENL_CD_CLIENT"]) & 
+                            (target_df["VENL_CD_PARTNER_GUID"] == source_df["VENL_CD_PARTNER_GUID"]), 
+                           "leftanti") # Left anti join to get unmatched rows
+merged_df = merged_df.unionByName(target_df.alias("TARGET").join(source_df.alias("SA"), 
+                                                                 [target_df["VENL_CD_CLIENT"] == source_df["VENL_CD_CLIENT"], 
+                                                                  target_df["VENL_CD_PARTNER_GUID"] == source_df["VENL_CD_PARTNER_GUID"]])
+                              .whenMatchedUpdate(set = {"TARGET.VENL_CD_VENDOR": "SA.VENL_CD_VENDOR", 
+                                                        "TARGET.VENL_CD_USER": "SA.VENL_CD_USER", 
+                                                        "TARGET.VENL_DT_DATE": "SA.VENL_DT_DATE", 
+                                                        "TARGET.VENL_DT_TIME": "SA.VENL_DT_TIME", 
+                                                        "TARGET.VENL_DT_LAST_MODIFY": current_date()}) # Assuming p_ELT_ID_BATCH and n_ELT_ID_JOB_LOG are defined elsewhere
+                              .whenNotMatchedInsert(values = {"VENL_ID_LINK": spark.sql("SELECT DDWH01_DW.SEQ_TM_VENL.NEXTVAL"), 
+                                                            "VENL_CD_CLIENT": col("SA.VENL_CD_CLIENT"), 
+                                                            "VENL_CD_PARTNER_GUID": col("SA.VENL_CD_PARTNER_GUID"), 
+                                                            "VENL_CD_VENDOR": col("SA.VENL_CD_VENDOR"), 
+                                                            "VENL_CD_USER": col("SA.VENL_CD_USER"), 
+                                                            "VENL_DT_DATE": col("SA.VENL_DT_DATE"), 
+                                                            "VENL_DT_TIME": col("SA.VENL_DT_TIME"), 
+                                                            "VENL_ID_BATCH_ID": lit(p_ELT_ID_BATCH if p_ELT_ID_BATCH else n_ELT_ID_JOB_LOG), # Assuming p_ELT_ID_BATCH and n_ELT_ID_JOB_LOG are defined elsewhere
+                                                            "VENL_DT_START_VALIDITY": to_date(lit("01/01/1900"), "dd/MM/yyyy"), 
+                                                            "VENL_DT_END_VALIDITY": to_date(lit("31/12/9999"), "dd/MM/yyyy"), 
+                                                            "VENL_DT_INSERT": current_date(), 
+                                                            "VENL_ID_BATCH_LAST_MODIFY": lit(p_ELT_ID_BATCH if p_ELT_ID_BATCH else n_ELT_ID_JOB_LOG), # Assuming p_ELT_ID_BATCH and n_ELT_ID_JOB_LOG are defined elsewhere
+                                                            "VENL_DT_LAST_MODIFY": current_date()}))
+```
+
+Please replace `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` with their actual values or define them at the start of your script. Also, please make sure to handle any exceptions that may occur during the execution of this code.

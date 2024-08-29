@@ -1,0 +1,37 @@
+
+The given SAS code is for processing and analyzing data. The equivalent Python code would be as follows:
+
+```python
+import pandas as pd
+from pathlib import Path
+
+# Load datasets
+ter_path = Path("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets")
+sez_path = Path("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets")
+ter_out_path = Path("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets")
+sez_out_path = Path("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets")
+appo_path = Path("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets")
+
+ter = pd.read_csv(ter_path / "etapop20b.csv")
+sez = pd.read_csv(sez_path / "geografica_comune.csv")
+appo = pd.read_csv(appo_path / "nati_eta_madre_provincia_istat.csv")
+
+# Transform data
+ter["time"] = 2019
+ter["eta1_a"] = ter["eta"].apply(lambda x: "Y_UN17" if 15 <= x <= 17 else ("Y"+str(x) if 18 <= x <= 49 else ("Y_GE50" if 50 <= x <= 54 else None)))
+ter = ter.dropna()
+ter["codice_comune__str"] = ter["codc620b"].values
+ter["femmine"] = ter["tot_fem"].values
+ter = ter[["codice_comune__str", "eta1_a", "eta", "time", "femmine"]]
+ter = ter.sort_values(by="codice_comune__str")
+
+sez = sez[["codice_comune__str", "codice_provincia"]].sort_values(by="codice_comune__str")
+
+appo = appo.rename(columns={"valore": "nati"})
+
+# Merge datasets and calculate new values
+merged = pd.merge(ter, sez)
+provinciale_donne = merged.groupby(["codice_provincia", "eta1_a"]).sum()["femmine"].reset_index().rename(columns={"femmine": "donne_classe_eta"})
+nati = pd.merge(appo, provinciale_donne)
+nati["nati_1000_donne_classe_eta"] = 1000 * nati["nati"] / nati["donne_classe_eta"]
+```

@@ -1,0 +1,52 @@
+
+Sure, here is the translation of your SAS code to Python:
+```python
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+    # Import necessary libraries
+    import pandas as pd
+    
+    print('\nWARNING- =================================================================')
+    print('WARNING: I nomi intermedio somma segnali identificano data set ausiliari della macro arrotondainterogruppo che vengono cancellati al termine delle elaborazioni')
+    
+    # Read the input dataset into a pandas DataFrame
+    intermedio = pd.read_csv(ingresso)
+    
+    # Sort the DataFrame by the variable specified in the 'vargru' parameter
+    intermedio = intermedio.sort_values(by=[vargru])
+    
+    # Calculate the sum of the 'variab' column for each group defined by 'vargru' and store the result into a new DataFrame called 'somma'
+    somma = intermedio.groupby([vargru]).sum()[[variab]]
+    
+    # Rename the sum column to 'vartot'
+    somma = somma.rename(columns={variab: 'vartot'})
+    
+    # Merge the 'somma' DataFrame with the 'datototeff' DataFrame, both indexed by 'vargru', and keep only the rows where both datasets have a match for 'vargru'
+    somma = pd.merge(somma, datototeff,  how='inner', left_on=[vargru], right_on = [vargru])
+    
+    # Calculate the difference between 'effettiva' and 'vartot' for each group defined by 'vargru' and store the result into a new column called 'diff' in the 'somma' DataFrame
+    somma['diff'] = somma[effettiva] - somma['vartot']
+    
+    # Merge the 'intermedio' DataFrame with the 'somma' DataFrame, both indexed by 'vargru', and keep only the rows where both datasets have a match for 'vargru'
+    intermedio = pd.merge(intermedio, somma,  how='inner', left_on=[vargru], right_on = [vargru])
+    
+    # Sort the DataFrame by the variable specified in the 'vargru' parameter and in descending order of the 'variab' column
+    intermedio = intermedio.sort_values(by=[vargru, variab], ascending=[True, False])
+    
+    # Add a new column called 'segnale' to the DataFrame, which contains the row number for each group defined by 'vargru'
+    intermedio['segnale'] = range(1, len(intermedio) + 1)
+    
+    # Keep only the rows where the 'segnale' column is equal to 1, and store the result into a new DataFrame called 'segnali'
+    segnali = intermedio[intermedio['segnale'] == 1]
+    
+    # Merge the 'intermedio' DataFrame with the 'segnali' DataFrame, both indexed by 'vargru', and store the result into a new DataFrame called 'uscita'
+    uscita = pd.merge(intermedio, segnali[['vargru', 'segnale']],  how='inner', left_on=[vargru], right_on = [vargru])
+    
+    # Update the value of 'variab' for each row in the 'uscita' DataFrame based on the conditions specified in the SAS code
+    uscita['variab'] = np.where(intermedio['diff'] < 0, intermedio['variab'] + 1, np.maximum(intermedio['variab'] - 1, 0))
+    
+    # Drop the 'diff' and 'segnale' columns from the 'uscita' DataFrame
+    uscita = uscita.drop(['diff', 'segnale'], axis=1)
+    
+    # Write the 'uscita' DataFrame to a CSV file specified by the 'uscita' parameter
+    uscita.to_csv(uscita, index=False)
+```

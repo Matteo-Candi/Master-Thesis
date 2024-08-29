@@ -1,0 +1,39 @@
+Here is the translation of your SAS code to Python. Note that this will not run as it's a macro and macros are specific to SAS, you can only use this inside a SAS environment. 
+
+```python
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+    # print warning message
+    print("\nWARNING- =================================================================")
+    print("WARNING: I nomi")
+    print("WARNING- intermedio somma segnali")
+    print("WARNING- identificano data set ausiliari della macro arrotondainterogruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni              ")
+    print("WARNING- =================================================================\n")
+    
+    # create a copy of ingresso dataset and sort it by vargru
+    intermedio = ingresso.sort_values(by=vargru)
+
+    # calculate sum of variab grouped by vargru and merge with datototeff
+    somma = intermedio.groupby(vargru)[variab].sum().reset_index()
+    somma = somma.merge(datototeff, on=vargru)
+    
+    # calculate difference between variab sum and effettiva, merge with somma
+    somma['diff'] = somma[vargru] - effettiva
+    
+    # merge intermedio with somma based on vargru
+    intermedio = intermedio.merge(somma, on=vargru)
+    
+    # sort intermedio by vargru and variab in descending order
+    intermedio = intermedio.sort_values(by=[vargru, variab], ascending=[True, False])
+    
+    # create a new column segnale based on the cumulative count of vargru
+    intermedio['segnale'] = intermedio.groupby(vargru).cumcount() + 1
+    
+    # merge intermedio with segnali and adjust variab based on diff
+    uscita = intermedio.merge(intermedio.groupby(vargru).first().reset_index(), on=vargru)
+    uscita['variab'] = np.where((uscita['segnale'] + abs(uscita['diff']) <= uscita.index), 
+                                 np.where(uscita['diff'] < 0, uscita['variab'] + 1, np.maximum(uscita['variab'] - 1, 0)), 
+                                 uscita['variab'])
+    uscita = uscita.drop(['segnale', 'diff'], axis=1)
+```
+Please note that this is a direct translation from SAS to Python and it may not work as expected due to the differences between the two languages. It's recommended to test thoroughly in your specific environment. Also, please ensure you have necessary libraries installed like pandas for data manipulation and numpy for numerical operations.

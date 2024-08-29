@@ -1,0 +1,45 @@
+
+In PySpark, SQL code can be translated into DataFrames and transformations using the same syntax as SQL. However, there are a few differences due to the different programming paradigms of SQL and Spark. Below is the equivalent PySpark code for the given SQL query. 
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit
+
+# Create spark session
+spark = SparkSession.builder \
+    .appName('Translate SQL to PySpark') \
+    .getOrCreate()
+
+# Load the data from the DDWH01_DW table
+df = spark.table("DDWH01_DW.TT_EKPO_PURCH_DOC_ITEM_GPP")
+
+# Join with PLBR_PLANT_BRANCHES and TD_EKKO_PURCH_DOC_HEADER_GPP tables
+df = df \
+    .join(spark.table("DDWH01_DW.TD_PLBR_PLANT_BRANCHES"), "EKPO_CD_PLANT", "inner") \
+    .filter((col("PLBR_DS_PLANT_SEGMENT").isin(["AG", "CE", "-1", "AM", "AS"])) & ~col("EKPO_CD_PLANT").like("00%")) \
+    .join(spark.table("DDWH01_DW.TT_EKKO_PURCH_DOC_HEADER_GPP"), ["EKPO_CD_PO_NBR"], "inner")
+
+# Perform transformations and create new columns 
+df = df \
+    .withColumn("ODAG_PARTNUMBER", col("EKPO_CD_MATERIAL_NBR")) \
+    .withColumn("ODAG_PROGRAM", col("EKPO_CD_PROGRAM_ID")) \
+    .withColumn("EKPO_DT_RETENTION_YEAR", to_char(coalesce(col("EKKO_DT_CONTRACT_END_DATE"), col("EKKO_DT_RECORD_CREATED_ON")), "YYYY")) \
+    .withColumn("ODAG_PODOCUMENT", concat_ws("-", col("EKPO_CD_PO_NBR"), col("EKPO_NR_ITEM_NBR_PO"))) \
+    .withColumn("EKPO_NR_NET_WEIGHT", col("EKPO_NR_NET_WEIGHT") / 1000) \
+    .withColumn("EKPO_NR_GROSS_WEIGHT", col("EKPO_NR_GROSS_WEIGHT") / 1000) \
+    .withColumn("EKPO_CD_MATERIAL_MFG", when(col("EKPO_CD_PLANT").isin(["CR01", "TY01", "CX01"]), concat(col("EKPO_CD_WPS_PREFIX"), col("EKPO_CD_MATERIAL_MFG"))) \
+    .otherwise(when(col("EKPO_CD_PLANT").isin(["AU01", "LP01", "LP02", "AU05"]), lit("SO" + col("EKPO_CD_MATERIAL_MFG"))) \
+    .otherwise(col("EKPO_CD_MATERIAL_MFG")))) \
+    .withColumn("EKPO_KEY_STC", concat_ws("|", 
+                                                  when((col("EKPO_CD_PLANT") == "CX01"), regexp_replace(regexp_extract(col("ODAG_MATERIAL_MFG"), "(\\d+)", 0), " ", "")) \
+                                                  .otherwise(when((col("EKPO_CD_PLANT") == "AU01"), regexp_replace(regexp_extract(col("ODAG_MATERIAL_MFG"), "(\\d+)", 0), " ", "")) \
+                                                  .otherwise(when((col("EKPO_CD_PLANT").isin(["LP01", "LP02", "AU05"])), regexp_replace(regexp_extract(col("ODAG_MATERIAL_MFG"), "(\\d+)", 0), " ", "")) \
+                                                  .otherwise(when((col("EKPO_CD_PLANT").isin(["CR01", "TY01"])), regexp_replace(regexp_extract(col("ODAG_MATERIAL_MFG"), "(\\d+)", 0), " ", "")) \
+                                                  .otherwise(when((col("EKPO_CD_PLANT").isin(["AW01", "JE01", "MO01", "PL01"])), regexp_replace(regexp_extract(col("ODAG_MATERIAL_MFG"), "(\\d+)", 0), " ", "")) \
+                                                  .otherwise(when((col("EKPO_CD_PLANT").isin(["CU01", "SA01"])), regexp_replace(regexp_extract(col("ODAG_MATERIAL_MFG"), "(\\d+)", 0), " ", "", "P")) \
+                                                  .otherwise(regexp_replace(regexp_extract(col("ODAG_MATERIAL_MFG"), "(\\d+)", 0), " ", "")))) \
+                                                   , col("PLBR_DS_PLANT_SEGMENT")))
+
+# Show the result
+df.show()
+```

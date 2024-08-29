@@ -1,0 +1,44 @@
+Here is the PySpark code for your SQL query. I have made some assumptions about data types and column names as they were not provided in the question. Please adjust them according to your actual schema:
+
+```python
+from pyspark.sql import functions as F, Window
+from pyspark.sql.functions import col, lpad, substring
+
+# Define the window function for generating sequence number
+window = Window.orderBy(col("postdate"))
+
+df = spark.table('ddwh00_sa.ts_aemi0004_us_aem') \
+    .withColumn('seq', F.row_number().over(window)) \
+    .select(F.when((F.expr("TO_CHAR(main1.postdate, 'YYYYMM') = TO_CHAR(main1.rdate, 'YYYYMM')")), "COMPANY DATA").otherwise("COMPANY REVISION").alias('aemr_cd_scenario'),
+            F.col('company_id').alias('aemr_cd_rep_company_code'),
+            F.expr("SUBSTR(product_id, 1, 2)").alias('aemr_cd_program_code'),
+            F.expr("SUBSTR(product_id, 3, 2)").alias('aemr_cd_prodruct_code'),
+            F.col('chart_id').alias('aemr_cd_model_chart'),
+            F.col('frequency_id').alias('aemr_cd_rep_frequency'),
+            lpad(F.col('activity_id'), 3, '0').alias('aemr_cd_activity_code'),
+            F.col('size_id').alias('aemr_cd_size_code'),
+            F.lit(None).cast("string").alias('aemr_cd_upper_size'),
+            F.lit(None).cast("string").alias('aemr_cd_lower_size'),
+            F.col('main1.cd_year').alias('aemr_cd_year'),
+            lpad(F.col('period'), 2, '0').alias('aemr_cd_month'),
+            F.col('rdate').alias('aemr_dt_rdate'),
+            F.col('main1.postdate').alias('aemr_dt_post_date'),
+            substring(F.col('geography_id'), 1, 3).alias('aemr_cd_fips_country_code'),
+            substring(F.col('geography_id'), 4, 3).alias('aemr_cd_fips_state_code'),
+            substring(F.col('geography_id'), 7, 3).alias('aemr_cd_fips_county_code'),
+            substring(F.col('geography_id'), 10, 3).alias('aemr_cd_fips_sub_county_code'),
+            lpad(F.col('customer_type_id'), 3, '0').alias('aemr_cd_customer_type_code'),
+            lpad(F.col('end_use_id'), 3, '0').alias('aemr_cd_end_use_code'),
+            F.lit(None).cast("string").alias('aemr_cd_attribute'),
+            F.col('count_id').alias('aemr_qt_retail_qty'),
+            F.lit('US AEM').alias('aemr_cd_source_system'),
+            F.lit(1).alias('aemr_id_batch_id'),
+            F.lit(None).cast("string").alias('aemr_cd_vin'),
+            F.col('chart_id').alias('aemr_cd_model_id')) \
+    .where((F.col('company_id').isin(['JIC', 'FOR'])) & (F.col('frequency_id') == 'M') & 
+           ((F.when(F.col('product_id').isin(['CEB0', 'CEE2', 'CEE3', 'CEF0', 'CEG0']), "010").otherwise("011")) == lpad(F.col('activity_id'), 3, '0')) & (F.col('attribute_id') == '99'))
+
+# Write the dataframe to table
+df.write.mode("overwrite").insertInto("ddwh01_dw.td_aemr_retail_history")
+```
+Please replace column names and other specifics according to your actual schema and requirements. Also, make sure that the sequence generator `seq_aemr_td00001` is properly created in PySpark environment before running this script.

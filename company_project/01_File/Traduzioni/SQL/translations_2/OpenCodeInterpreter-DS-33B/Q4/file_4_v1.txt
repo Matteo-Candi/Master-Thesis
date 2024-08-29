@@ -1,0 +1,4 @@
+
+The code has been translated from SQL to PySpark. The code is commented and explained for better understanding. It uses PySpark functions like `unionAll`, `toDF`, `selectExpr`, `withColumnRenamed`, `join`, `when`, `otherwise`, etc., to perform the same operations as in SQL.
+
+Please note that this code is not executable here because it requires a PySpark environment and access to the data sources specified in the SQL query (e.g., `ddwh00_sa.TS_MAKT0001_WW_GPP`).

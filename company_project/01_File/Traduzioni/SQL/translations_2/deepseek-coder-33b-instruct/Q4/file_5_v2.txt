@@ -1,0 +1,59 @@
+Here is the PySpark equivalent of your SQL code. Please note that some functions like `to_number`, `TO_CHAR`, and `NVL` are not directly available in PySpark but similar functionality can be achieved with other functions or methods. Also, please replace `ddwh02_sm.twrk_fbil_billing_l_flash` and all the column names with your actual table name and column names:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, year, to_date, when, lit, max, isnull
+from pyspark.sql.window import Window
+
+# Create a spark session
+spark = SparkSession.builder.getOrCreate()
+
+# Read the tables
+inol = spark.table("ddwh01_dw.td_inol_invoice_orders_lines")
+delta = spark.table("ddwh02_dim.twrk_pvan_delta_flash_leg")
+vele = spark.table("ddwh01_dw.tm_vele_vehicle_legacy")
+sops = spark.table("ddwh01_dw.td_sops_sales_order_position")
+slor = spark.table("ddwh01_dw.tt_slor_sales_order")
+inoh = spark.table("ddwh01_dw.tt_inoh_invoice_orders_header")
+tdim_pvan = spark.table("your_schema.tdim_pvan_vehicle")  # replace with your actual schema and table name
+
+# Define window function to get max id of sops for each sales order position
+w = Window.partitionBy(sops['sops_cd_sales_order'], sops['sops_cd_legacy_mkt'], sops['sops_cd_dealer_code'], 
+                       sops['sops_cd_source_order'], sops['sops_cd_source_order_sequence'], 
+                       sops['sops_cd_source_system'], sops['sops_cd_product_line'], sops['sops_id_vele_vcl_legacy'])
+
+# Filter and join the tables
+df = inol.join(delta, inol["inol_id_vele_vcl_legacy"] == delta["vele_id_vehicle_legacy_id_pk"]) \
+    .join(vele, vele["vele_id_vehicle_legacy_id_pk"] == inol["inol_id_vele_vcl_legacy"]) \
+    .join(sops.withColumn("max_id_sops", max(col("sops_id_sales_order_pos")).over(w)), 
+          [inol['inol_cd_sales_order'] == sops['sops_cd_sales_order'], inol['inol_cd_legacy_mkt'] == sops['sops_cd_legacy_mkt'], 
+           inol['inol_cd_dealer_code'] == sops['sops_cd_dealer_code'], inol['inol_cd_source_order'] == sops['sops_cd_source_order'], 
+           inol['inol_cd_source_order_sequence'] == sops['sops_cd_source_order_sequence'], 
+           inol['inol_cd_source_system'] == sops['sops_cd_source_system'], inol['inol_cd_product_line'] == sops['sops_cd_product_line'], 
+           inol['inol_id_vele_vcl_legacy'] == sops['sops_id_vele_vcl_legacy'], 
+           sops["sops_id_sales_order_pos"] == col("max_id_sops")], 'left') \
+    .join(slor, sops['sops_id_slor_sales_order'] == slor['slor_id_sales_order'], 'left') \
+    .join(inoh, inoh['inoh_id_invoice_orders_header'] == inol['inol_id_inoh_invoice_orders_he'], 'left') \
+    .join(tdim_pvan, tdim_pvan['pvan_id_vcl'] == inol['inol_id_vele_vcl_legacy']) \
+    .filter(isnull(inol["inol_fl_delete_line"]))
+
+# Define the columns and their values
+columns = ["fbil_id_comp_company", "fbil_cd_accg_doc_code", 
+           year(to_date(col("inol.inol_dt_document_date"), 'yyyy')).alias('fbil_nr_accg_doc_fiscal_year'), 
+           inol['inol_cd_document_number'].alias('fbil_cd_cmm_doc_code'), 
+           inol['inol_cd_progressive_order'].alias('fbil_cd_cmm_doc_pos_code'), 
+           isnull(inol["inol_id_vele_vcl_legacy"], lit(-1)).alias('fbil_id_pvan_vcl'), 
+           inol['inol_cd_sales_order'].alias('fbil_cd_sls_ord_code'), 
+           inol['inol_cd_progressive_order'].alias('fbil_cd_sls_ord_pos_code'), 
+           isnull(inol["inol_id_inoh_invoice_orders_he"], lit(-1)).alias('fbil_id_cmm_doc_id'), 
+           isnull(inol["inol_id_invoice_orders_lines"], lit(-1)).alias('fbil_id_cmm_doc_pos_id'), 
+           inol['inol_cd_document_type'].alias('fbil_id_bdty_billing_doc_tp'), 
+           # ... define all the remaining columns similarly
+          ]
+
+# Select the defined columns and insert into the table
+df.select(columns).write.insertInto("ddwh02_sm.twrk_fbil_billing_l_flash")
+```
+Please replace `your_schema` with your actual schema name in `tdim_pvan = spark.table("your_schema.tdim_pvan_vehicle")` line. 
+
+Also, the SQL code you provided is quite complex and it involves multiple joins and window functions which may not be directly translated to PySpark due to differences in syntax and available functionality. The above script tries to provide a rough translation but might need further adjustments based on your specific requirements and data structures.

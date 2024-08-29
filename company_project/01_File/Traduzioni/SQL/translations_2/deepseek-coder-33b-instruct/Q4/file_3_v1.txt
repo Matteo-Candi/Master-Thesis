@@ -1,0 +1,47 @@
+In PySpark, you can use the `createOrReplaceTempView` function to create a temporary view from a DataFrame and then use SQL commands on that view. Here is how you could write your code in PySpark:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, year, lit, coalesce, length, substring, when
+
+# Create a spark session
+spark = SparkSession.builder.getOrCreate()
+
+# Read the data from tables
+ekko_df = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+ekpo_df = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+plbr_df = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+supm_df = spark.table("ddwh01_dw.TM_SUPM_SUPPLIER_GPP")
+
+# Create temporary views for the dataframes
+ekko_df.createOrReplaceTempView("TT_EKKO_PURCH_DOC_HEADER_GPP")
+ekpo_df.createOrReplaceTempView("TT_EKPO_PURCH_DOC_ITEM_GPP")
+plbr_df.createOrReplaceTempView("TD_PLBR_PLANT_BRANCHES")
+supm_df.createOrReplaceTempView("TM_SUPM_SUPPLIER_GPP")
+
+# Perform the join operations and select necessary columns
+joined_df = spark.sql("""
+    SELECT EKKO.*,
+           year(EKKO.EKKO_DT_PURCH_DOC_DATE) AS EKKO_NR_PURCH_DOC_YEAR,
+           lit('') AS PLBR_DS_PLANT_SEGMENT,
+           EKKO.EKKO_CD_PURCH_DOCTYPE AS ODAG_PODOCUMENTTYPE,
+           EKKO.EKKO_CD_VENDOR_ACCOUNT_NBR AS ODAG_SUPPLIERCODE,
+           year(coalesce(EKKO.EKKO_DT_CONTRACT_END_DATE, EKKO.EKKO_DT_RECORD_CREATED_ON)) AS EKKO_DT_RETENTION_YEAR,
+           year(EKKO.EKKO_DT_PURCH_DOC_DATE) AS ODAG_PODOCUMENTYEAR,
+           substring('0000000000' || EKKO.EKKO_CD_PURCH_DOC_NBR, -10) AS EKKO_CD_PURCH_DOC_NBR10,
+           SUPM.Supplier_Type AS EKKO_CD_SUPPLIER_TYPE
+    FROM TT_EKKO_PURCH_DOC_HEADER_GPP EKKO
+    INNER JOIN (SELECT DISTINCT EKPO_CD_PO_NBR 
+                FROM TT_EKPO_PURCH_DOC_ITEM_GPP 
+                WHERE EKPO_CD_PLANT NOT LIKE 'FA01' AND EKPO_CD_PLANT NOT LIKE 'FB01' AND EKPO_CD_PLANT NOT LIKE 'IA01' AND EKPO_CD_PLANT NOT LIKE '00%') AGCE
+    ON EKKO.EKKO_CD_PURCH_DOC_NBR = AGCE.EKPO_CD_PO_NBR
+    LEFT JOIN (SELECT DISTINCT SUPM_CD_ACCOUNT_NBR, 
+                  when(length(SUPM_CD_COMP_TRADING_PARTNER) > 1, 'Intercompany').otherwise('Third Party') AS Supplier_Type 
+                FROM TM_SUPM_SUPPLIER_GPP) SUPM
+    ON EKKO.EKKO_CD_VENDOR_ACCOUNT_NBR = SUPM.SUPM_CD_ACCOUNT_NBR
+""")
+
+# Create a view from the joined DataFrame
+joined_df.createOrReplaceTempView("DDWH02_SM.VW_EKKO_PURCH_DOC_HEADER_AGCE")
+```
+Please note that you need to replace `ddwh01_dw` and `ddwh02_sm` with your actual database name. Also, this code assumes that the tables exist in the specified databases. If not, please provide the correct table names or create DataFrames from your data source.

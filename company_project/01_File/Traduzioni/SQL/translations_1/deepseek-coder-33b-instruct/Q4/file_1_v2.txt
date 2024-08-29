@@ -1,0 +1,55 @@
+The provided SQL code is a MERGE statement that updates existing rows in the `TM_VENL_MASTER_LINK` table and inserts new rows. PySpark does not support MERGE natively, so we need to use DataFrame operations instead. Here's how you could translate this:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit, current_date, coalesce, to_date
+import datetime
+
+# Create a spark session
+spark = SparkSession.builder.getOrCreate()
+
+# Define your variables
+n_ELT_ID_JOB_LOG = 1234  # Example value, replace with actual value
+p_ELT_ID_BATCH = 5678    # Example value, replace with actual value
+
+# Read the source table
+source = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+target = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Define the columns to be used in the join operation
+join_cols = ["CLIENT", "PARTNER_GUID"]
+
+# Perform an anti-join to find rows that exist in source but not in target, based on the join columns
+new_rows = source.select(source["CLIENT"].alias("VENL_CD_CLIENT"), 
+                         source["PARTNER_GUID"].alias("VENL_CD_PARTNER_GUID"), 
+                         source["VENDOR"].alias("VENL_CD_VENDOR"), 
+                         source["CRUSER"].alias("VENL_CD_USER"), 
+                         source["CRDAT"].alias("VENL_DT_DATE"), 
+                         source["CRTIM"].alias("VENL_DT_TIME")).subtract(target.select(*join_cols))
+
+# Define the values for the new rows to be inserted
+new_rows = new_rows.withColumn("VENL_ID_LINK", lit(spark.sql("SELECT DDWH01_DW.SEQ_TM_VENL.NEXTVAL").first()[0]))  # Assuming SEQ_TM_VENL is a sequence
+new_rows = new_rows.withColumn("VENL_DT_START_VALIDITY", to_date(lit('01/01/1900'), 'dd/MM/yyyy'))
+new_rows = new_rows.withColumn("VENL_DT_END_VALIDITY", to_date(lit('31/12/9999'), 'dd/MM/yyyy'))
+new_rows = new_rows.withColumn("VENL_DT_INSERT", current_date())
+new_rows = new_rows.withColumn("VENL_ID_BATCH_LAST_MODIFY", coalesce(lit(p_ELT_ID_BATCH), lit(n_ELT_ID_JOB_LOG)))
+new_rows = new_rows.withColumn("VENL_DT_LAST_MODIFY", current_date())
+
+# Define the columns to be updated in case of a match
+update_cols = {x: "source." + x for x in ["VENDOR", "CRUSER", "CRDAT", "CRTIM"]}
+update_cond = [target[c] == source[c] for c in join_cols]
+
+# Perform the update operation
+updated_rows = target.alias("t").join(source.alias("s"), on=update_cond, how='inner')  # Inner join to find matching rows
+for col_name, col_val in update_cols.items():
+    updated_rows = updated_rows.withColumn("t." + col_name, col(col_val))  # Update matched columns
+updated_rows = updated_rows.select([col("t."+c).alias(c) for c in target.columns])  # Select all target columns to maintain schema
+
+# Combine the updated rows and new rows into a single DataFrame
+result = updated_rows.unionByName(new_rows)
+
+# Write the result back to the target table
+result.write.insertInto("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+
+Please note that PySpark does not support MERGE natively, so we need to use DataFrame operations instead. The above code is a translation of your SQL code into PySpark using the available functions and methods. It might not be perfect as PySpark has some limitations when compared with SQL.

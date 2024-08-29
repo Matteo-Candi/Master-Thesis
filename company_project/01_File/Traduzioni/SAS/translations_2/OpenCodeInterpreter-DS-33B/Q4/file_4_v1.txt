@@ -1,0 +1,86 @@
+
+The Python equivalent of the SAS code could be as follows:
+
+```python
+import pandas as pd
+from scipy import stats
+from sklearn.linear_model import LinearRegression
+
+# Load data from CSV files
+geografica = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_comune.csv')
+economica = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/economica_comune.csv')
+popolazione = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/Popolazione_eta_sesso_comune.csv')
+
+# Merge dataframes based on common column 'codice_comune__str'
+merged = pd.merge(geografica, economica, on='codice_comune__str', how='inner')
+merged = pd.merge(merged, popolazione, on='codice_comune__str', how='inner')
+
+# Define territorio based on 'nome_regione'
+merged['territorio'] = np.where(merged['nome_regione']=='TRENTINO-ALTO ADIGE', merged['nome_provincia'], merged['nome_regione'])
+
+# Calculate propensione, red_pop and inverso
+merged['red_pop'] = merged['reddito'] / merged['popolazione']
+merged['con_pop'] = merged['consumi_totali'] / merged['popolazione']
+merged['propensione'] = merged['con_pop'] / merged['red_pop']
+merged['inverso'] = 1 / merged['red_pop']
+
+# Group by 'territorio' and calculate correlation between variables
+grouped = merged.groupby('territorio')
+correlation = grouped[['propensione', 'red_pop', 'inverso']].corr()
+print(correlation)
+
+# Plot histogram of propensione for each territory
+for name, group in merged.groupby('territorio'):
+    group['propensione'].hist(bins=30)
+    plt.title(name)
+    plt.show()
+    
+# Perform regression analysis
+X = merged[['inverso']]
+y = merged['propensione']
+regression = LinearRegression().fit(X, y)
+merged['predicted_propensione'] = regression.predict(X)
+
+# Filter out observations with residuals greater than 2
+merged = merged[np.abs(stats.zscore(merged['propensione'] - merged['predicted_propensione'])) < 2]
+
+# Perform correlation analysis within each territory after removing outliers
+grouped_filtered = merged.groupby('territorio')
+correlation_filtered = grouped_filtered[['propensione', 'red_pop', 'inverso']].corr()
+print(correlation_filtered)
+
+# Plot scatter plot of predicted propensione against inverso for each territory
+for name, group in merged.groupby('territorio'):
+    plt.scatter(group['inverso'], group['predicted_propensione'])
+    plt.title(name)
+    plt.show()
+    
+# Load data for sezioni
+geografica_sezione = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_sezione.csv')
+economica_sezione = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/economica_sezione.csv')
+popolazione_sezione = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/Popolazione_eta_sesso_sezione.csv')
+
+# Merge dataframes based on common column 'codice_comune__str' and calculate variables as in the previous code
+merged_sezione = pd.merge(geografica_sezione, economica_sezione, on='codice_comune__str', how='inner')
+merged_sezione = pd.merge(merged_sezione, popolazione_sezione, on='codice_comune__str', how='inner')
+merged_sezione['territorio'] = np.where(merged_sezione['nome_regione']=='TRENTINO-ALTO ADIGE', merged_sezione['nome_provincia'], merged_sezione['nome_regione'])
+merged_sezione['red_pop'] = np.where(merged_sezione['popolazione']>0, merged_sezione['reddito'] / merged_sezione['popolazione'], 0)
+merged_sezione['inverso'] = np.where(merged_sezione['popolazione']>0, 1 / merged_sezione['red_pop'], 0)
+
+# Group by 'territorio' and calculate correlation between variables as in the previous code
+grouped_sezione = merged_sezione.groupby('territorio')
+correlation_sezione = grouped_sezione[['propensione', 'red_pop', 'inverso']].corr()
+print(correlation_sezione)
+
+# Plot histogram of propensione for each territory as in the previous code
+for name, group in merged_sezione.groupby('territorio'):
+    group['propensione'].hist(bins=30)
+    plt.title(name)
+    plt.show()
+    
+# Perform regression analysis as in the previous code
+X_sezione = merged_sezione[['inverso']]
+y_sezione = merged_sezione['propensione']
+regression_sezione = LinearRegression().fit(X_sezione, y_sezione)
+merged_sezione['predicted_propensione'] = regression_sezione.predict(X_sezione)
+```

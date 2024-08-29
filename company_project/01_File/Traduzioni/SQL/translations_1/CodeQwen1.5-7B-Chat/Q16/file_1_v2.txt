@@ -1,0 +1,97 @@
+system
+You are an expert in translating code from SQL to PySpark; translate the given SQL code to PySpark as best as you can, even if there are problems; insert comments inside the code; do not add any other documentation or explanation outside the code; make the code as readable as possible; minimize its complexity and volume by reducing the number of independent paths, operators, and operands; do not make any mistakes; all the variables have to be defined; ensure the user can copy and run the code without modifications; translate from SQL to PySpark every file provided.
+user
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE);
+assistant
+The given SQL code is an upsert operation that merges data from two sources (ddwh00_sa.TS_VENL0001_WW_GPP and ddwh01_dw.TM_VENL_MASTER_LINK) into a target table (ddwh01_dw.TM_VENL_MASTER_LINK). The merge operation is based on the VENL_CD_CLIENT and VENL_CD_PARTNER_GUID columns. If a matching record is found in the target table, it updates the corresponding columns (VENL_CD_VENDOR, VENL_CD_USER, VENL_DT_DATE, VENL_DT_TIME, VENL_DT_LAST_MODIFY, and VENL_ID_BATCH_LAST_MODIFY). If no matching record is found, it inserts a new record into the target table with the values from the source table and additional columns (VENL_ID_LINK, VENL_ID_BATCH_ID, VENL_DT_START_VALIDITY, VENL_DT_END_VALIDITY, VENL_DT_INSERT, and VENL_ID_BATCH_LAST_MODIFY).
+
+Here's the equivalent PySpark code:
+
+```python
+from pyspark.sql.functions import col, lit, nvl, to_date, current_date, next_day, sys_date
+
+# Load the source data from both tables
+sa_df = spark.read.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+dw_df = spark.read.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Perform the minus operation to find records in SA that are not in DW
+minus_df = sa_df.subtract(dw_df)
+
+# Perform the merge operation
+merged_df = dw_df.join(minus_df, 
+                      (dw_df.VENL_CD_CLIENT == minus_df.VENL_CD_CLIENT) & 
+                      (dw_df.VENL_CD_PARTNER_GUID == minus_df.VENL_CD_PARTNER_GUID), 
+                      "left_anti")
+
+# Update the matched records
+updated_df = merged_df.join(minus_df, 
+                            (merged_df.VENL_CD_CLIENT == minus_df.VENL_CD_CLIENT) & 
+                            (merged_df.VENL_CD_PARTNER_GUID == minus_df.VENL_CD_PARTNER_GUID), 
+                            "left") \
+                      .select(col("merged_df.*"), 
+                              minus_df.VENL_CD_VENDOR, 
+                              minus_df.VENL_CD_USER, 
+                              minus_df.VENL_DT_DATE, 
+                              minus_df.VENL_DT_TIME, 
+                              lit(sys_date()).alias("VENL_DT_LAST_MODIFY"), 
+                              nvl(col("p_ELT_ID_BATCH"), col("n_ELT_ID_JOB_LOG")).alias("VENL_ID_BATCH_LAST_MODIFY"))
+
+# Insert the new records
+new_records_df = minus_df.selectExpr("next_day(current_date(), 'MONTH') as VENL_DT_START_VALIDITY", 
+                                     "to_date('31/12/9999', 'dd/MM/yyyy') as VENL_DT_END_VALIDITY", 
+                                     "sys_date() as VENL_DT_INSERT", 
+                                     "p_ELT_ID_BATCH as VENL_ID_BATCH_ID", 
+                                     "sys_date() as VENL_DT_LAST_MODIFY", 
+                                     "nvl(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) as VENL_ID_BATCH_LAST_MODIFY", 
+                                     "DDWH01_DW.SEQ_TM_VENL.NEXTVAL as VENL_ID_LINK", 
+                                     "VENL_CD_CLIENT", 
+                                     "VENL_CD_PARTNER_GUID", 
+                                     "VENL_CD_VENDOR", 
+                                     "VENL_CD_USER", 
+                                     "VENL_DT_DATE", 
+                                     "VENL_DT_TIME")
+
+# Combine the updated and new records
+final_df = updated_df.unionByName(new_records_df)
+
+# Write the result back to the target table
+final_df.write.mode("overwrite").insertInto("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+
+Please note that the PySpark code assumes that the variables `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` are defined elsewhere in your code. Also, the PySpark code uses the `next_day` function to calculate the start validity date for new records.

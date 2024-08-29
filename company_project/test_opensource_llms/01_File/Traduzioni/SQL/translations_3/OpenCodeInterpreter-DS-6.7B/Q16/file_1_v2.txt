@@ -1,0 +1,89 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+### Instruction:
+You are an expert in translating code from SQL to PySpark; translate the given code at your best even if there are problems; do not return any message outside the code and make it as readable as possible breaking it in smaller parts; minimize the code complexity and volume; ensure to not make any syntax error and close all parenthesis; define all variables and import all libraries used; ensure the user can copy and run the code without modifications; translate from SQL to PySpark every part of the input code reproducing the same operations; do not use SQL syntax in the PySpark code and do not use spark.sql(); make PySpark code more efficient than the SQL one; proper column operations and the correct syntax for casting and aliasing.
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE);
+### Response:
+```python
+# importing necessary libraries
+from pyspark.sql import functions as F
+
+# reading the source data
+data = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+data = data.select(
+    "CLIENT VENL_CD_CLIENT",
+    "PARTNER_GUID VENL_CD_PARTNER_GUID",
+    "VENDOR VENL_CD_VENDOR",
+    "CRUSER VENL_CD_USER",
+    "CRDAT VENL_DT_DATE",
+    "CRTIM VENL_DT_TIME"
+)
+data = data.withColumnRenamed("VENL_CD_CLIENT", "CLIENT")
+data = data.withColumnRenamed("VENL_CD_PARTNER_GUID", "PARTNER_GUID")
+data = data.withColumnRenamed("VENL_CD_VENDOR", "VENDOR")
+data = data.withColumnRenamed("VENL_CD_USER", "CRUSER")
+data = data.withColumnRenamed("VENL_DT_DATE", "CRDAT")
+data = data.withColumnRenamed("VENL_DT_TIME", "CRTIM")
+
+# reading the target data
+dw_data = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# finding the difference
+diff = dw_data.subtract(data)
+
+# merging data
+result = dw_data.join(diff, ["VENL_CD_CLIENT", "VENL_CD_PARTNER_GUID"], "fullouter")
+
+# performing the merge operation
+result = result.withColumn("VENL_CD_VENDOR", F.when(F.col("VENL_CD_VENDOR_1").isNotNull(), F.col("VENL_CD_VENDOR_1")).otherwise(F.col("VENL_CD_VENDOR")))
+result = result.withColumn("VENL_CD_USER", F.when(F.col("VENL_CD_USER_1").isNotNull(), F.col("VENL_CD_USER_1")).otherwise(F.col("VENL_CD_USER")))
+result = result.withColumn("VENL_DT_DATE", F.when(F.col("VENL_DT_DATE_1").isNotNull(), F.col("VENL_DT_DATE_1")).otherwise(F.col("VENL_DT_DATE")))
+result = result.withColumn("VENL_DT_TIME", F.when(F.col("VENL_DT_TIME_1").isNotNull(), F.col("VENL_DT_TIME_1")).otherwise(F.col("VENL_DT_TIME")))
+result = result.withColumn("VENL_DT_LAST_MODIFY", F.current_date())
+result = result.withColumn("VENL_ID_BATCH_LAST_MODIFY", F.when(F.col("p_ELT_ID_BATCH").isNotNull(), F.col("p_ELT_ID_BATCH_1")).otherwise(F.col("n_ELT_ID_JOB_LOG_1")))
+
+# inserting missing data
+insert_data = diff.withColumn("VENL_ID_LINK", F.lit(DDWH01_DW.SEQ_TM_VENL.next()))
+insert_data = insert_data.withColumn("VENL_DT_START_VALIDITY", F.lit(datetime.strptime("01/01/1900", '%d/%m/%Y')))
+insert_data = insert_data.withColumn("VENL_DT_END_VALIDITY", F.lit(datetime.strptime("31/12/9999", '%d/%m/%Y')))
+insert_data = insert_data.withColumn("VENL_DT_INSERT", F.current_date())
+insert_data = insert_data.withColumn("VENL_ID_BATCH_LAST_MODIFY", F.when(F.col("p_ELT_ID_BATCH").isNotNull(), F.col("p_ELT_ID_BATCH")).otherwise(F.col("n_ELT_ID_JOB_LOG")))
+insert_data = insert_data.withColumn("VENL_DT_LAST_MODIFY", F.current_date())
+
+result = result.union(insert_data)
+```

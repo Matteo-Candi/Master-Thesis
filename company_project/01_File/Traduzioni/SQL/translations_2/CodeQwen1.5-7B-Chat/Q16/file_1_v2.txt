@@ -1,0 +1,95 @@
+system
+You are an expert in translating code from SQL to PySpark; translate the given code at your best even if there are problems; do not return any message outside the code and make it as readable as possible breaking it in smaller parts; minimize the code complexity and volume; ensure to not make any syntax error and close all parenthesis; define all variables and import all libraries used; ensure the user can copy and run the code without modifications; translate from SQL to PySpark every part of the input code reproducing the same operations; do not use SQL syntax in the PySpark code and do not use spark.sql(); make PySpark code more efficient than the SQL one; proper column operations and the correct syntax for casting and aliasing.
+user
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE);
+assistant
+Here is the PySpark equivalent of the SQL code you provided:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit, nvl, to_date
+
+# Assuming you have already created a SparkSession named spark
+spark = SparkSession.builder.appName("Merge operation").getOrCreate()
+
+# Read data from the source tables
+sa = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+dw = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Perform the MINUS operation
+minus_result = sa.subtract(dw)
+
+# Perform the MERGE operation
+dw_updates = dw.alias("dw").join(minus_result.alias("sa"), 
+                                  (col("dw.VENL_CD_CLIENT") == col("sa.VENL_CD_CLIENT")) & 
+                                  (col("dw.VENL_CD_PARTNER_GUID") == col("sa.VENL_CD_PARTNER_GUID")), 
+                                  "left_anti")
+
+dw_updates = dw_updates.select(col("sa.VENL_CD_CLIENT"), 
+                                col("sa.VENL_CD_PARTNER_GUID"), 
+                                col("sa.VENL_CD_VENDOR"), 
+                                col("sa.VENL_CD_USER"), 
+                                col("sa.VENL_DT_DATE"), 
+                                col("sa.VENL_DT_TIME"))
+
+# Perform the INSERT operation
+new_records = minus_result.selectExpr("VENL_CD_CLIENT as VENL_CD_CLIENT", 
+                                       "VENL_CD_PARTNER_GUID as VENL_CD_PARTNER_GUID", 
+                                       "VENL_CD_VENDOR as VENL_CD_VENDOR", 
+                                       "VENL_CD_USER as VENL_CD_USER", 
+                                       "VENL_DT_DATE as VENL_DT_DATE", 
+                                       "VENL_DT_TIME as VENL_DT_TIME", 
+                                       "NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) as VENL_ID_BATCH_ID", 
+                                       "TO_DATE('01/01/1900', 'DD/MM/YYYY') as VENL_DT_START_VALIDITY", 
+                                       "TO_DATE('31/12/9999', 'DD/MM/YYYY') as VENL_DT_END_VALIDITY", 
+                                       "SYSDATE as VENL_DT_INSERT", 
+                                       "NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) as VENL_ID_BATCH_LAST_MODIFY", 
+                                       "SYSDATE as VENL_DT_LAST_MODIFY")
+
+# Generate a sequence for the new records
+new_records = new_records.withColumn("VENL_ID_LINK", lit(DDWH01_DW.SEQ_TM_VENL.NEXTVAL))
+
+# Perform the final MERGE operation
+final_merge = dw_updates.union(new_records)
+
+# Write the results back to the target table
+final_merge.write.mode("overwrite").insertInto("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+
+Please replace `DDWH01_DW.SEQ_TM_VENL.NEXTVAL` with the actual sequence generator in your PySpark environment. Also, ensure that `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` are defined and available in your environment.

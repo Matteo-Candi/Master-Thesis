@@ -1,0 +1,259 @@
+INSERT INTO DDWH02_DM_MA.TW_MCIR_MC_IND_REQ TRG (MCIR_CD_PLANT_CD, MCIR_ID_MC_IND_REQ, MCIR_CD_IND_ID, MCIR_CD_SALE_ORD_NBR, MCIR_CD_SALE_ORD_LN, MCIR_CD_SCHED_LINE_ID, MCIR_ID_MTRL_PART_NBR_IR, MCIR_CD_PART_NBR_IR, MCIR_CD_IND_REQ_CAT, MCIR_DT_IND_REQ_DT, MCIR_ID_CUST_CUST_CD, MCIR_CD_CUST_CD, MCIR_CD_SERIE, MCIR_DT_KEY_FIXED_DATE, MCIR_DT_EXPL_DT, MCIR_ID_MTRL_COMP, MCIR_CD_COMP, MCIR_CD_PROCUR_TP, MCIR_CD_COMP_ASS_MARK, MCIR_NR_BOM_LEVEL, MCIR_FL_LEAF_COMP_MARK, MCIR_QT_COMP_QTY, MCIR_QT_MIN_LEAD_TIME, MCIR_QT_MAX_LEAD_TIME, MCIR_ID_BATCH_ID, MCIR_CD_SOURCE_SYSTEM, MCIR_DT_INSERT_ROW, MCIR_DT_UPDATE_ROW, MCIR_CD_OPERATOR_CODE)
+SELECT QRY.MCIR_CD_PLANT_CD,
+       QRY.MCIR_ID_MC_IND_REQ,
+       QRY.MCIR_CD_IND_ID,
+       QRY.MCIR_CD_SALE_ORD_NBR,
+       QRY.MCIR_CD_SALE_ORD_LN,
+       QRY.MCIR_CD_SCHED_LINE_ID,
+       QRY.MCIR_ID_MTRL_PART_NBR_IR,
+       QRY.MCIR_CD_PART_NBR_IR,
+       QRY.MCIR_CD_IND_REQ_CAT,
+       QRY.MCIR_DT_IND_REQ_DT,
+       QRY.MCIR_ID_CUST_CUST_CD,
+       QRY.MCIR_CD_CUST_CD,
+       QRY.MCIR_CD_SERIE,
+       QRY.MCIR_DT_KEY_FIXED_DATE,
+       QRY.MCIR_DT_EXPL_DT,
+       QRY.MCIR_ID_MTRL_COMP,
+       QRY.MCIR_CD_COMP,
+       QRY.MCIR_CD_PROCUR_TP,
+       QRY.MCIR_CD_COMP_ASS_MARK,
+       QRY.MCIR_NR_BOM_LEVEL,
+       QRY.MCIR_FL_LEAF_COMP_MARK,
+       QRY.MCIR_QT_COMP_QTY,
+       QRY.MCIR_QT_MIN_LEAD_TIME,
+       QRY.MCIR_QT_MAX_LEAD_TIME,
+       QRY.MCIR_ID_BATCH_ID,
+       QRY.MCIR_CD_SOURCE_SYSTEM,
+       SYSDATE,
+       SYSDATE,
+       'ETL'
+FROM
+  (SELECT MCIR_CD_PLANT_CD,
+          0 AS MCIR_ID_MC_IND_REQ,
+          MCIR_CD_IND_ID,
+          MCIR_CD_SALE_ORD_NBR,
+          MCIR_CD_SALE_ORD_LN,
+          MCIR_CD_SCHED_LINE_ID,
+          MCIR_ID_MTRL_PART_NBR_IR,
+          MCIR_CD_PART_NBR_IR,
+          MCIR_CD_IND_REQ_CAT,
+          MCIR_DT_IND_REQ_DT,
+          MCIR_ID_CUST_CUST_CD,
+          MCIR_CD_CUST_CD,
+          MCIR_CD_SERIE,
+          MCIR_DT_KEY_FIXED_DATE,
+          MCIR_DT_EXPL_DT,
+          MCIR_ID_MTRL_COMP,
+          MCIR_CD_COMP,
+          MCIR_CD_PROCUR_TP,
+          MCIR_CD_COMP_ASS_MARK,
+          MCIR_NR_BOM_LEVEL,
+          MCIR_FL_LEAF_COMP_MARK,
+          MCIR_QT_COMP_QTY,
+          MCIR_QT_MIN_LEAD_TIME,
+          MCIR_QT_MAX_LEAD_TIME,
+          NVL (P_ELT_ID_BATCH, N_ELT_ID_JOB_LOG) AS MCIR_ID_BATCH_ID,
+          MCIR_CD_SOURCE_SYSTEM
+   FROM
+     (SELECT OPIR_CD_PLANT_CD AS MCIR_CD_PLANT_CD,
+             OPIR_CD_IND_ID AS MCIR_CD_IND_ID,
+             OPIR_CD_SALE_ORD_NBR AS MCIR_CD_SALE_ORD_NBR,
+             OPIR_CD_SALE_ORD_LN AS MCIR_CD_SALE_ORD_LN,
+             OPIR_NR_SCHED_LN_ID AS MCIR_CD_SCHED_LINE_ID,
+             OPIR_ID_MAMD_PART_NBR AS MCIR_ID_MTRL_PART_NBR_IR,
+             OPIR_CD_PART_NBR AS MCIR_CD_PART_NBR_IR,
+             OPIR_CD_IND_REQ_CAT AS MCIR_CD_IND_REQ_CAT,
+             OPIR_DT_REQ_DT AS MCIR_DT_IND_REQ_DT,
+             SORD_ID_CUST_CUST_CD AS MCIR_ID_CUST_CUST_CD,
+             SORD_CD_CUST_CD AS MCIR_CD_CUST_CD,
+             TO_CHAR (NVL (SKFD_DT_FIXED_KEY_DT, OPIR_DT_REQ_DT), 'YYYYMMDD') AS MCIR_CD_SERIE,
+             SKFD_DT_FIXED_KEY_DT AS MCIR_DT_KEY_FIXED_DATE,
+             NVL (SKFD_DT_FIXED_KEY_DT, OPIR_DT_REQ_DT) AS MCIR_DT_EXPL_DT,
+             OPIR_ID_MAMD_PART_NBR AS MCIR_ID_MTRL_COMP,
+             OPIR_CD_PART_NBR AS MCIR_CD_COMP,
+             CASE
+                 WHEN MAMD_CD_MAKE_OR_BUY = 'E'
+                      AND NVL (MAMD_CD_SPEC_PROC_TP, '00') <> '50' THEN 'MAKE'
+                 WHEN MAMD_CD_MAKE_OR_BUY = 'E'
+                      AND NVL (MAMD_CD_SPEC_PROC_TP, '00') = '50' THEN 'PHANTOM'
+                 WHEN MAMD_CD_MAKE_OR_BUY = 'F'
+                      AND NVL (MAMD_CD_SPEC_PROC_TP, '00') <> '30' THEN 'BUY'
+                 WHEN MAMD_CD_MAKE_OR_BUY = 'F'
+                      AND NVL (MAMD_CD_SPEC_PROC_TP, '00') = '30' THEN 'SUBCONTRACTING'
+                 WHEN MAMD_CD_MAKE_OR_BUY = 'X' THEN 'MAKE OR BUY'
+                 ELSE 'N/A'
+             END AS MCIR_CD_PROCUR_TP,
+             MAMD_CD_ASS_MARK AS MCIR_CD_COMP_ASS_MARK,
+             1 AS MCIR_NR_BOM_LEVEL,
+             CASE
+                 WHEN MAMD_CD_MAKE_OR_BUY = 'F'
+                      AND NVL (MAMD_CD_SPEC_PROC_TP, '00') <> '30' THEN '1'
+                 ELSE '0'
+             END AS MCIR_FL_LEAF_COMP_MARK,
+             OPIR_QT_REM_QTY AS MCIR_QT_COMP_QTY,
+             0 AS MCIR_QT_MIN_LEAD_TIME,
+             0 AS MCIR_QT_MAX_LEAD_TIME,
+             OPIR_CD_SOURCE_SYSTEM AS MCIR_CD_SOURCE_SYSTEM
+      FROM
+        (SELECT OP.OPIR_CD_PLANT_CD,
+                OP.OPIR_CD_IND_ID,
+                OPIR_CD_SALE_ORD_NBR,
+                OPIR_CD_SALE_ORD_LN,
+                OPIR_NR_SCHED_LN_ID,
+                NVL (SORS_CD_SERIE, OP.OPIR_CD_SERIE) CD_SERIE,
+                OP.OPIR_ID_MAMD_PART_NBR,
+                OP.OPIR_CD_PART_NBR,
+                OP.OPIR_CD_IND_REQ_CAT,
+                OP.OPIR_DT_REQ_DT,
+                OP.OPIR_QT_REM_QTY,
+                MT.MAMD_CD_MAKE_OR_BUY,
+                MT.MAMD_CD_SPEC_PROC_TP,
+                MT.MAMD_CD_ASS_MARK,
+                SORD.SORD_ID_CUST_CUST_CD,
+                SORD.SORD_CD_CUST_CD,
+                OP.OPIR_CD_SOURCE_SYSTEM
+         FROM
+           (SELECT *
+            FROM DDWH01_DW_MA.TT_OPIR_OPEN_IND_REQ
+            WHERE OPIR_CD_PLANT_CD = P_ELT_CD_PLANT ) OP,
+
+           (SELECT *
+            FROM DDWH01_DW_MA.TM_MAMD_MAT_MASTER
+            WHERE MAMD_CD_PLANT_CD = P_ELT_CD_PLANT ) MT,
+
+           (SELECT *
+            FROM DDWH01_DW_MA.TD_SORS_SALE_ORD_SCHED
+            WHERE SORS_CD_PLANT_CD = P_ELT_CD_PLANT ) SORS,
+
+           (SELECT *
+            FROM DDWH01_DW_MA.TT_SORD_SALE_ORD
+            WHERE SORD_CD_PLANT_CD = P_ELT_CD_PLANT ) SORD
+         WHERE OPIR_CD_PART_NBR = MAMD_CD_PART_NBR
+           AND MAMD_CD_MAT_TP IN ('ZDIR',
+                                  'ZMFG')
+           AND OPIR_ID_SORS_SALE_ORD_SCHED = SORS_ID_SALE_ORD_SCHED (+)
+           AND SORS_ID_SORD_SALE_ORD = SORD_ID_SALE_ORD
+           AND OPIR_CD_IND_REQ_CAT IN
+             (SELECT DISTINCT MCRC_CD_IND_REQ_CAT
+              FROM DDWH02_DM_MA.TW_MCRC_MC_IND_REQ_CAT
+              WHERE MCRC_CD_PLANT_CD=P_ELT_CD_PLANT
+                AND MCRC_FL_ACTIVE_MARK = '1'
+                AND MCRC_CD_IND_REQ_CAT!='VH' )
+           AND SORS_ID_SORD_SALE_ORD = SORD_ID_SALE_ORD
+           AND OPIR_DT_REQ_DT <= (TO_DATE (P_ELT_DT_JOB_DATE_ELAB, 'YYYYMMDD') +TO_NUMBER (P_DAY_TIMELINE))
+           AND SORS_FL_LOGICAL_STATUS = '1'
+           AND SORD_FL_LOGICAL_STATUS = '1' ) OPIR_SORS ,
+        (SELECT SKFD_CD_SERIE,
+                MAX (SKFD_DT_FIXED_KEY_DT) SKFD_DT_FIXED_KEY_DT
+         FROM DDWH01_DW_MA.TD_SKFD_SERIE_KEY_FIXED_DT
+         GROUP BY SKFD_CD_SERIE)
+      WHERE SKFD_CD_SERIE (+) = OPIR_SORS.CD_SERIE
+      UNION ALL SELECT MCIR_CD_PLANT_CD,
+                       MCIR_CD_IND_ID,
+                       MCIR_CD_SALE_ORD_NBR,
+                       MCIR_CD_SALE_ORD_LN,
+                       MCIR_CD_SCHED_LINE_ID,
+                       MCIR_ID_MTRL_PART_NBR_IR,
+                       MCIR_CD_PART_NBR_IR,
+                       MCIR_CD_IND_REQ_CAT,
+                       MCIR_DT_IND_REQ_DT,
+                       MCIR_ID_CUST_CUST_CD,
+                       MCIR_CD_CUST_CD,
+                       MCIR_CD_SERIE,
+                       MCIR_DT_KEY_FIXED_DATE,
+                       MCIR_DT_EXPL_DT,
+                       MCIR_ID_MTRL_COMP,
+                       MCIR_CD_COMP,
+                       MCIR_CD_PROCUR_TP,
+                       MCIR_CD_COMP_ASS_MARK,
+                       MAX (CUIR_NR_ROUTING_LEVEL) AS MCIR_NR_BOM_LEVEL,
+                           MCIR_FL_LEAF_COMP_MARK,
+                           SUM (CUIR_QT_COMP_QTY) KEEP (DENSE_RANK FIRST
+                                                        ORDER BY NR_ROW_CUIR) AS MCIR_QT_COMP_QTY,
+                               MIN (FLBM_QT_TOT_MIN_LEAD_TIME) AS MCIR_QT_MIN_LEAD_TIME,
+                                   MAX (FLBM_QT_TOT_MAX_LEAD_TIME) AS MCIR_QT_MAX_LEAD_TIME,
+                                       MCIR_CD_SOURCE_SYSTEM
+      FROM
+        (SELECT CUIR_CD_PLANT_CD AS MCIR_CD_PLANT_CD,
+                CUIR_CD_IND_ID AS MCIR_CD_IND_ID,
+                CUIR_CD_SALE_ORD_NBR AS MCIR_CD_SALE_ORD_NBR,
+                CUIR_CD_SALE_ORD_LN AS MCIR_CD_SALE_ORD_LN,
+                CUIR_CD_SCHED_LINE_ID AS MCIR_CD_SCHED_LINE_ID,
+                CUIR_ID_MTRL_PART_NBR_IR AS MCIR_ID_MTRL_PART_NBR_IR,
+                CUIR_CD_PART_NBR_IR AS MCIR_CD_PART_NBR_IR,
+                CUIR_CD_IND_REQ_CAT AS MCIR_CD_IND_REQ_CAT,
+                TO_DATE (CUIR_ID_TIME_IND_REQ_DT, 'J') AS MCIR_DT_IND_REQ_DT,
+                CUIR_ID_CUST_CUST_CD AS MCIR_ID_CUST_CUST_CD,
+                CUIR_CD_CUST_CD AS MCIR_CD_CUST_CD,
+                TO_CHAR (TO_DATE (CUIR_ID_TIME_EXPL_DT, 'J'), 'YYYYMMDD') AS MCIR_CD_SERIE,
+                SKFD_DT_FIXED_KEY_DT AS MCIR_DT_KEY_FIXED_DATE,
+                TO_DATE (CUIR_ID_TIME_EXPL_DT, 'J') AS MCIR_DT_EXPL_DT,
+                CUIR_ID_MTRL_COMP AS MCIR_ID_MTRL_COMP,
+                CUIR_CD_COMP AS MCIR_CD_COMP,
+                CASE
+                    WHEN COMP.MAMD_CD_MAKE_OR_BUY = 'E'
+                         AND NVL (COMP.MAMD_CD_SPEC_PROC_TP, '00') <> '50' THEN 'MAKE'
+                    WHEN COMP.MAMD_CD_MAKE_OR_BUY = 'E'
+                         AND NVL (COMP.MAMD_CD_SPEC_PROC_TP, '00') = '50' THEN 'PHANTOM'
+                    WHEN COMP.MAMD_CD_MAKE_OR_BUY = 'F'
+                         AND NVL (COMP.MAMD_CD_SPEC_PROC_TP, '00') <> '30' THEN 'BUY'
+                    WHEN COMP.MAMD_CD_MAKE_OR_BUY = 'F'
+                         AND NVL (COMP.MAMD_CD_SPEC_PROC_TP, '00') = '30' THEN 'SUBCONTRACTING'
+                    WHEN COMP.MAMD_CD_MAKE_OR_BUY = 'X' THEN 'MAKE OR BUY'
+                    ELSE 'N/A'
+                END AS MCIR_CD_PROCUR_TP,
+                COMP.MAMD_CD_ASS_MARK AS MCIR_CD_COMP_ASS_MARK,
+                CUIR_NR_ROUTING_LEVEL,
+                CUIR_FL_LEAF_COMP_MARK AS MCIR_FL_LEAF_COMP_MARK,
+                CUIR_QT_COMP_QTY,
+                FLBM_QT_TOT_MIN_LEAD_TIME,
+                FLBM_QT_TOT_MAX_LEAD_TIME,
+                ROW_NUMBER () OVER (PARTITION BY CUIR_ID_CUIR
+                                    ORDER BY FLBM_ID_FLAT_BOM) AS NR_ROW_CUIR,
+                                   CUIR_CD_SOURCE_SYSTEM AS MCIR_CD_SOURCE_SYSTEM
+         FROM
+           (SELECT *
+            FROM DDWH02_DM_MA.TFCT_CUIR_COMP_USG_IR
+            WHERE CUIR_CD_PLANT_CD = P_ELT_CD_PLANT
+              AND CUIR_CD_STU = '4'
+              AND TO_DATE (CUIR_ID_TIME_IND_REQ_DT, 'J') <= (TO_DATE (P_ELT_DT_JOB_DATE_ELAB, 'YYYYMMDD') +TO_NUMBER (P_DAY_TIMELINE)) ) ,
+           (SELECT *
+            FROM DDWH01_DW_MA.TM_MAMD_MAT_MASTER
+            WHERE MAMD_CD_PLANT_CD = P_ELT_CD_PLANT ) COMP ,
+           (SELECT SKFD_CD_SERIE,
+                   MAX (SKFD_DT_FIXED_KEY_DT) SKFD_DT_FIXED_KEY_DT
+            FROM DDWH01_DW_MA.TD_SKFD_SERIE_KEY_FIXED_DT
+            WHERE SKFD_CD_PLANT_CD = P_ELT_CD_PLANT
+            GROUP BY SKFD_CD_SERIE) ,
+           (SELECT *
+            FROM DDWH01_DW_MA.TM_FLBM_FLAT_BOM
+            WHERE FLBM_CD_PLANT_CD = P_ELT_CD_PLANT
+              AND FLBM_CD_USAGE = '1'
+              AND FLBM_FL_LOGICAL_STATUS = '1' )
+         WHERE CUIR_CD_COMP = COMP.MAMD_CD_PART_NBR (+)
+           AND CUIR_FL_COMP_CAT = 'L'
+           AND CUIR_CD_SERIE=SKFD_CD_SERIE (+)
+           AND CUIR_CD_PART_NBR_IR = FLBM_CD_PART_NBR
+           AND CUIR_CD_COMP = FLBM_CD_REQ_ITM
+           AND TO_DATE (CUIR_ID_TIME_EXPL_DT, 'J') BETWEEN FLBM_DT_VALID_STR_DT AND FLBM_DT_VALID_END_DT-1 )
+      GROUP BY MCIR_CD_PLANT_CD,
+               MCIR_CD_IND_ID,
+               MCIR_CD_SALE_ORD_NBR,
+               MCIR_CD_SALE_ORD_LN,
+               MCIR_CD_SCHED_LINE_ID,
+               MCIR_ID_MTRL_PART_NBR_IR,
+               MCIR_CD_PART_NBR_IR,
+               MCIR_CD_IND_REQ_CAT,
+               MCIR_DT_IND_REQ_DT,
+               MCIR_ID_CUST_CUST_CD,
+               MCIR_CD_CUST_CD,
+               MCIR_CD_SERIE,
+               MCIR_DT_KEY_FIXED_DATE,
+               MCIR_DT_EXPL_DT,
+               MCIR_ID_MTRL_COMP,
+               MCIR_CD_COMP,
+               MCIR_CD_PROCUR_TP,
+               MCIR_CD_COMP_ASS_MARK,
+               MCIR_FL_LEAF_COMP_MARK,
+               MCIR_CD_SOURCE_SYSTEM)) QRY

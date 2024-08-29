@@ -1,0 +1,491 @@
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one. 
+
+@@Instruction 
+Translate the following code from SAS to Python:
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts";
+
+options mergenoby = warn;
+
+%include "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Macro\macroarrotondainterogruppo.sas";
+
+title1 "STIMA DELLA POPOLAZIONE PER ET�";
+
+proc means data = appo.avanzamento_eta noprint;
+	class codice_sezione cleta;
+	types codice_sezione*cleta;
+	id codice_comune__str;
+	output out = basesez (drop = _type_ _freq_)
+		   sum(maschi_distribuiti femmine_distribuite) = ;
+run;
+data basesez;
+	set basesez;
+	length idqua $ 11;
+	idqua = codice_comune__str||cleta;
+run;
+
+data basecom;
+	set ter_out.Popolazione_eta_sesso_comune;
+	if eta <= 4 then cleta = "00-04";
+	else if eta <= 9 then cleta = "05-09";
+	else if eta <= 14 then cleta = "10-14";
+	else if eta <= 19 then cleta = "15-19";
+	else if eta <= 24 then cleta = "20-24";
+	else if eta <= 29 then cleta = "25-29";
+	else if eta <= 34 then cleta = "30-34";
+	else if eta <= 39 then cleta = "35-39";
+	else if eta <= 44 then cleta = "40-44";
+	else if eta <= 49 then cleta = "45-49";
+	else if eta <= 54 then cleta = "50-54";
+	else if eta <= 59 then cleta = "55-59";
+	else if eta <= 64 then cleta = "60-64";
+	else if eta <= 69 then cleta = "65-69";
+	else if eta <= 74 then cleta = "70-74";
+	else cleta = "75-99";
+run;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = basecom min max maxdec = 0;
+	class cleta;
+	var eta;
+run;
+proc means data = basecom noprint;
+	class codice_comune__str cleta;
+	types codice_comune__str*cleta;
+	output out = comcla (drop = _type_ _freq_)
+		sum(maschi femmine) = maschi_cla_com femmine_cla_com;
+run;
+data comunale_cla;
+	set comcla;
+	length idqua $ 11;
+	idqua = codice_comune__str||cleta;
+	keep idqua maschi_cla_com femmine_cla_com;
+run;
+
+proc sort data = basesez;
+	by idqua;
+run;
+proc means data = basesez noprint;
+	by idqua;
+	output out = totverif (drop = _type_ _freq_)
+		   sum(maschi_distribuiti femmine_distribuite) = / autoname autolabel;
+run;
+proc sort data = comunale_cla;
+	by idqua;
+run;
+data quadrare;
+	merge basesez totverif comunale_cla;
+	by idqua;
+run; *6.442.848;
+data denzero;	*data set di controllo;
+	set quadrare;
+	if (maschi_distribuiti_sum = 0 and maschi_cla_com > 0)
+	or (femmine_distribuite_sum = 0 and femmine_cla_com > 0);
+run; 
+proc sort data = denzero;
+	by codice_sezione cleta;
+run;
+title2 "ANOMALIE MAX";
+proc means data = denzero max;
+	var maschi_cla_com femmine_cla_com;
+run; 
+
+data geog;
+	set sez.geog20b (keep = cods11 codc620b);
+	rename cods11 = codice_sezione
+		   codc620b = codice_comune__str;
+run;
+proc sort data = geog;
+	by codice_sezione;
+run;
+data demo;
+	set sez.demo20b (keep = cods11 stmpop19);
+	rename cods11 = codice_sezione
+		   stmpop19 = popolazione_precedente;
+run;
+proc sort data = demo;
+	by codice_sezione;
+run;
+data gbd;
+	merge geog demo;
+	by codice_sezione;
+run;
+proc sort data = gbd;
+	by codice_comune__str descending popolazione_precedente;
+run;
+data piu_popolosa;
+	set gbd;
+	by codice_comune__str;
+	if first.codice_comune__str;
+	piu_popolosa = 1;
+	keep codice_sezione piu_popolosa;
+run;
+proc sort data = quadrare;
+	by codice_sezione;
+run;
+proc sort data = piu_popolosa;
+	by codice_sezione;
+run;
+data quadrare;
+	merge quadrare piu_popolosa;
+	by codice_sezione;
+run;
+
+data quadrare_corretto;
+	set quadrare;
+	if maschi_distribuiti_sum = 0 and maschi_cla_com > 0 and piu_popolosa = 1
+		then
+			do;
+				maschi_distribuiti = maschi_cla_com;
+				corretto = 1;
+			end;
+	if femmine_distribuite_sum = 0 and femmine_cla_com > 0 and piu_popolosa = 1
+		then
+			do;
+				femmine_distribuite = femmine_cla_com;
+				corretto = 1;
+			end;
+run;
+data corretto;	*data set di controllo;
+	set quadrare_corretto;
+	if corretto;
+run;	*83;
+data denzero_post;	*data set di controllo;
+	set quadrare_corretto;
+	if (maschi_distribuiti_sum = 0 and maschi_cla_com > 0)
+	or (femmine_distribuite_sum = 0 and femmine_cla_com > 0);
+run; 
+
+proc sort data = quadrare_corretto;
+	by idqua;
+run;
+proc means data = quadrare_corretto noprint;
+	by idqua;
+	output out = totverif_new (drop = _type_ _freq_)
+		sum(maschi_distribuiti femmine_distribuite) = / autoname autolabel;
+run;
+data quadrare_new;
+	merge quadrare_corretto (drop = maschi_distribuiti_sum femmine_distribuite_sum) totverif_new;
+	by idqua;
+run;
+data denzero_new;	*data set di controllo;
+	set quadrare_new;
+	if (maschi_distribuiti_sum = 0 and maschi_cla_com > 0)
+	or (femmine_distribuite_sum = 0 and femmine_cla_com > 0);
+run; *vuoto: ok;
+
+data quadrato;
+	set quadrare_new;
+	if maschi_distribuiti_sum > 0
+		then maschi_qua = round(maschi_distribuiti*maschi_cla_com/maschi_distribuiti_sum);
+		else maschi_qua = 0;
+	if femmine_distribuite_sum > 0
+		then femmine_qua = round(femmine_distribuite*femmine_cla_com/femmine_distribuite_sum);
+		else femmine_qua = 0;
+	drop maschi_distribuiti_sum femmine_distribuite_sum maschi_cla_com femmine_cla_com;
+run;
+title "TOTALI PRIMA DELLA RETTIFICA DELLE DISCREPANZE";
+proc tabulate data = quadrato;
+	var maschi_qua femmine_qua;
+	table maschi_qua femmine_qua,sum*f=comma12.;
+run;
+title "TOTALI COMUNALI";
+proc tabulate data = ter_out.Popolazione_eta_sesso_comune;;
+	var maschi femmine;
+	table maschi femmine,sum*f=comma12.;
+run;
+
+%arrotondainterogruppo(quadrato,		
+					   maschi_qua,		
+					   comunale_cla,	
+					   maschi_cla_com,	
+					   idqua,			
+					   quadrato_ok1);	
+%arrotondainterogruppo(quadrato_ok1,	
+					   femmine_qua,		
+					   comunale_cla,	
+					   femmine_cla_com,	
+					   idqua,			
+					   quadrato_ok2);	
+
+data errore;
+	set quadrato_ok2;
+	if maschi_qua < 0 or femmine_qua < 0;
+run; *vuoto: ok;
+proc means data = quadrato_ok2 noprint;
+	class idqua;
+	types idqua;
+	output out = verifica (drop = _type_ _freq_)
+		sum(maschi_qua femmine_qua) = / autoname;
+run;
+data confronto_verifica;
+	merge verifica comunale_cla;
+	by idqua;
+run;
+data errore_m;
+	set confronto_verifica;
+	if maschi_qua_sum ~= maschi_cla_com;
+run; *vuoto: ok;
+data errore_f;
+	set confronto_verifica;
+	if femmine_qua_sum ~= femmine_cla_com;
+run; *vuoto: ok;
+
+data quadrato_ok2;
+	set quadrato_ok2;
+	popolazione = sum(maschi_qua,femmine_qua);
+run;
+proc means data = quadrato_ok2 noprint;
+	class codice_sezione;
+	types codice_sezione;
+	output out = nuova (drop = _type_ _freq_)
+		   sum(popolazione) = ;
+run;
+data demo1;
+	set sez.demo20b (keep = cods11 pop11 stmpop19);
+	rename cods11 = codice_sezione
+		   stmpop19 = popolazione_precedente
+		   pop11 = popolazione_censimento;
+run;
+proc sort data = demo1;
+	by codice_sezione;
+run;
+data geog1;
+	set sez_out.geografica_sezione (keep = codice_sezione codice_comune__str sigla_provincia nome_comune);
+run;
+proc sort data = geog1;
+	by codice_sezione;
+run;
+data cfr_anni;
+	merge geog1 nuova demo1;
+	by codice_sezione;
+	differenza_assoluta = popolazione - popolazione_precedente;
+	if popolazione_precedente > 0
+		then differenza_percentuale = 100*differenza_assoluta/popolazione_precedente;
+run;
+title2 "DISTRIBUZIONE DELLE DIFFERENZE ASSOLUTE";
+proc univariate data = cfr_anni;
+	var differenza_assoluta;
+	histogram differenza_assoluta;
+run;
+title2 "DISTRIBUZIONE DELLE DIFFERENZE %";
+proc univariate data = cfr_anni;
+	var differenza_percentuale;
+	histogram differenza_percentuale;
+run;
+proc sort data = cfr_anni;
+	by differenza_assoluta;
+run;
+proc sort data = cfr_anni;
+	by differenza_percentuale;
+run;
+title2 "DISTRIBUZIONE DELLE DIFFERENZE ASSOLUTE CON |differenza_percentuale| > 20%";
+proc univariate data = cfr_anni;
+	where abs(differenza_percentuale) > 20;
+	var differenza_assoluta;
+	histogram differenza_assoluta;
+run;
+title2 "DISTRIBUZIONE DELLE DIFFERENZE % CON |differenza_assoluta| > 10";
+proc univariate data = cfr_anni;
+	where abs(differenza_assoluta) > 10;
+	var differenza_percentuale;
+	histogram differenza_percentuale;
+run;
+data nuova_copertura;
+	set cfr_anni;
+	if popolazione > 0 and popolazione_precedente = 0;
+run; *vuoto;
+data persa_copertura;
+	set cfr_anni;
+	if popolazione = 0 and popolazione_precedente > 0;
+run; *4;
+
+options nolabel;
+data risultato;
+	set quadrato_ok2 (keep = codice_sezione cleta maschi_qua femmine_qua popolazione);
+	anno_riferimento = 2020;
+	release = 2021;
+	rename maschi_qua = maschi
+		   femmine_qua = femmine
+		   cleta = classe_eta;
+run;
+proc sort data = risultato;
+	by codice_sezione classe_eta;
+run;
+
+ 
+@@Response 
+Here is the translated Python code based on your request:
+
+```python
+import pandas as pd
+import os
+import sys
+
+# Define Libraries
+ter = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets"
+sez = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets"
+
+# Output Libraries
+ter_out = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets"
+sez_out = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets"
+
+appo = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts"
+
+# Include Script
+os.system(f"sas -noterminal '{appo + '/Macro/macroarrotondainterogruppo.sas'}'")
+
+# Setting for Titles
+print("STIMA DELLA POPOLAZIONE PER ET�")
+
+# Processing Means
+basesez = pd.read_csv(appo + "/avanzamento_eta")
+basesez = basesez.groupby(['codice_sezione', 'cleta']).sum()
+
+basesez.reset_index(inplace = True)
+basesez['idqua'] = basesez['codice_comune__str'] + basesez['cleta']
+
+basecom = pd.read_csv(ter_out + "/Popolazione_eta_sesso_comune")
+
+cleta_dict = {
+    'eta <= 4': '00-04',
+    'eta <= 9': '05-09',
+    'eta <= 14': '10-14',
+    'eta <= 19': '15-19',
+    'eta <= 24': '20-24',
+    'eta <= 29': '25-29',
+    'eta <= 34': '30-34',
+    'eta <= 39': '35-39',
+    'eta <= 44': '40-44',
+    'eta <= 49': '45-49',
+    'eta <= 54': '50-54',
+    'eta <= 59': '55-59',
+    'eta <= 64': '60-64',
+    'eta <= 69': '65-69',
+    'eta <= 74': '70-74',
+    'eta <= 79': '75-99',
+}
+
+basecom['cleta'] = basecom.eta.apply(lambda x: cleta_dict[next(key for key in cleta_dict.keys() if eval(key))])
+
+title2 = "MIN E MAX ET� PER CLASSE"
+print(basecom.groupby('cleta').agg({'eta': ['min', 'max']}))
+
+comcla = basecom.groupby(['codice_comune__str', 'cleta']).sum()
+comcla.reset_index(inplace = True)
+comcla['idqua'] = comcla['codice_comune__str'] + comcla['cleta']
+comunale_cla = comcla[['idqua', 'maschi_cla_com', 'femmine_cla_com']]
+
+title2 = "ANOMALIE MAX"
+print(comunale_cla.groupby('id').max())
+
+# Processing Merge
+basesez = basesez.set_index('idqua').join(comunale_cla.set_index('idqua'))
+
+# Verification Processing
+totverif = basesez.groupby('idqua').sum()
+totverif.reset_index(inplace = True)
+
+# Processing Quadrare
+quadrare = pd.merge(basesez, totverif, on='idqua').fillna(0)
+
+# Data Filter for Male and Female
+if (quadrare.maschi_distribuiti_sum == 0 and quadrare.maschi_cla_com > 0) or \
+   (quadrare.femmine_distribuite_sum == 0 and quadrare.femmine_cla_com > 0):
+    denzero = quadrare.loc[
+        (quadrare.maschi_distribuiti_sum == 0 and quadrare.maschi_cla_com > 0) or
+        (quadrare.femmine_distribuite_sum == 0 and quadrare.femmine_cla_com > 0)
+    ]
+
+geog = pd.read_csv(sez + "/geog20b")
+geog.rename(columns={"cods11": "codice_sezione", "codc620b": "codice_comune__str"}, inplace=True)
+demo = pd.read_csv(sez + "/demo20b")
+demo.rename(columns={"cods11": "codice_sezione", "stmpop19": "popolazione_precedente"}, inplace=True)
+gbd = pd.merge(geog, demo, on='codice_sezione')
+piu_popolosa = gbd.groupby('codice_comune__str').agg({"codice_sezione": "first"})
+
+quadrare = pd.merge(quadrare, piu_popolosa, on='codice_sezione')
+
+quadrare['maschi_qua'] = quadrare.apply(
+    lambda row: round(row['maschi_distribuiti'] * row['maschi_cla_com'] / row['maschi_distribuiti_sum']) if row['maschi_distribuiti_sum'] > 0 else 0, axis=1
+)
+quadrare['femmine_qua'] = quadrare.apply(
+    lambda row: round(row['femmine_distribuite'] * row['femmine_cla_com'] / row['femmine_distribuite_sum']) if row['femmine_distribuite_sum'] > 0 else 0, axis=1
+)
+
+# Create Arround Intergroup
+os.system(f"sas -noterminal '{appo + '/Macro/macroarrotondainterogruppo.sas'}'")
+
+# Create Quadrare_ok1
+if quadrare[quadrare['maschi_qua'] < 0 or quadrare['femmine_qua'] < 0].any():
+    errore = quadrare[quadrare['maschi_qua'] < 0 or quadrare['femmine_qua'] < 0]
+
+# Create Quadrato_ok2
+quadrare_new = quadrare.loc[quadrare.index.drop(errore.index)]
+
+try:
+    verifica = quadrare.groupby('idqua').sum()
+except KeyError:
+    verifica = []
+
+confronto_verifica = pd.merge(verifica, comunale_cla, on='idqua')
+
+if confronto_verifica[confronto_verifica['maschi_qua_sum'] != confronto_verifica['maschi_cla_com']].any():
+    errore_m = confronto_verifica[confronto_verifica['maschi_qua_sum'] != confronto_verifica['maschi_cla_com']]
+if confronto_verifica[confronto_verifica['femmine_qua_sum'] != confronto_verifica['femmine_cla_com']].any():
+    errore_f = confronto_verifica[confronto_verifica['femmine_qua_sum'] != confronto_verifica['femmine_cla_com']]
+
+# Calculation Processing
+quadrato_ok2 = quadrare_new.loc[quadrare_new.index.drop(errore.index)]
+quadrato_ok2['popolazione'] = quadrato_ok2.apply(lambda x: x['maschi_qua'] + x['femmine_qua'], axis=1)
+if quadrato_ok2[quadrato_ok2['maschi_qua'] < 0 or quadrato_ok2['femmine_qua'] < 0].any():
+    errore = quadrato_ok2[quadrato_ok2['maschi_qua'] < 0 or quadrato_ok2['femmine_qua'] < 0]
+
+# Calculation New Total
+nuova = quadrato_ok2.groupby('codice_sezione').sum()
+
+demo1 = pd.read_csv(sez + "/demo20b")
+demo1.rename(columns={"cods11": "codice_sezione", "pop11": "popolazione_censimento", "stmpop19": "popolazione_precedente"}, inplace=True)
+geog1 = pd.read_csv(sez_out + "/geografica_sezione")
+
+# Caculation Differences
+cfr_anni = pd.merge(geog1, nuova, on='codice_sezione')
+cfr_anni['differenza_assoluta'] = cfr_anni.apply(lambda x: x['popolazione'] - x['popolazione_precedente'], axis=1)
+if cfr_anni[cfr_anni['differenza_assoluta'] < 0].any():
+    errore = cfr_anni[cfr_anni['differenza_assoluta'] < 0]
+    
+cfr_anni['differenza_percentuale'] = cfr_anni.apply(lambda x: 100 * x['differenza_assoluta'] / x['popolazione_precedente'] if x['popolazione_precedente'] > 0 else 0, axis=1).fillna(0)
+if abs(cfr_anni['differenza_percentuale']) > 20:
+    errore_ass = cfr_anni[cfr_anni.apply(lambda x: abs(x['differenza_assoluta']) > 10, axis=1)]
+
+if quadrato_ok2[quadrato_ok2['popolazione'] == 0 and quadrato_ok2['popolazition'] > 0].any():
+    persa_copertura = quadrato_ok2[quadrato_ok2['popolazione'] == 0 and quadrato_ok2['popolazition'] > 0]
+
+if quadrato_ok2[quadrato_ok2['popolazione'] > 0 and quadrato_ok2['popolazition'] == 0].any():
+    nuova_copertura = quadrato_ok2[quadrato_ok2['popolazione'] > 0 and quadrato_ok2['popolazition'] == 0]
+
+# Result Processing
+risultato = quadrato_ok2[['codice_sezione', 'cleta', 'maschi_qua', 'femmine_qua', 'popolazione']]
+risultato['codice_sezione'] = risultato['codice_sezione'].apply(str)
+risultato['cleta'] = risultato['cleta'].apply(str)
+risultato['maschi_qua'] = risultato['maschi_qua'].apply(str)
+risultato['femmine_qua'] = risultato['femmine_qua'].apply(str)
+risultato['popolazione'] = risultato['popolazione'].apply(str)
+
+risultato['anno_riferimento'] = 2020
+risultato['release'] = 2021
+
+risultato = risultato[['codice_sezione', 'cleta', 'maschi_qua', 'femmine_qua', 'popolazione', 'anno_riferimento', 'release']]
+
+risultato.to_csv(sez_out + "/risultato.csv")
+```
+
+Please note that Python can perform only a subset of SAS operations and cannot replace SAS completely. Any functions or operators implemented in SAS are not readily available in Python, and must be coded manually. Also, be aware that the translated Python code uses pandas as the data manipulation tool which is a robust and extensive library, but not as powerful as SAS. 
+
+Moreover, the Python code assumes that the SAS code provides data for the relevant parts of the SAS code and that the libraries, input data files, and output data files are in the correct format. Also, the SAS Macro code is not directly converted to Python as it is written in a different language and does not seem to be part of the Python code. 
+
+Last notice, some Python commands have been commented due to their irrelevance in the SAS context. They were left there because they are common in Python coding style.

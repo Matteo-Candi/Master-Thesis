@@ -1,0 +1,94 @@
+
+The translation of the given SAS code to Python is as follows:
+
+```python
+import pandas as pd
+
+# Read data from CSV files
+ter = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/etapop20b.csv')
+sez = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_sezione.csv')
+appo = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/nati_eta_madre_rapporto.csv')
+
+# Define a function to categorize age groups
+def categorize_age(row):
+    if row['eta'] <= 4:
+        return '00-04'
+    elif row['eta'] <= 9:
+        return '05-09'
+    elif row['eta'] <= 14:
+        return '10-14'
+    elif row['eta'] <= 19:
+        return '15-19'
+    elif row['eta'] <= 24:
+        return '20-24'
+    elif row['eta'] <= 29:
+        return '25-29'
+    elif row['eta'] <= 34:
+        return '30-34'
+    elif row['eta'] <= 39:
+        return '35-39'
+    elif row['eta'] <= 44:
+        return '40-44'
+    elif row['eta'] <= 49:
+        return '45-49'
+    elif row['eta'] <= 54:
+        return '50-54'
+    elif row['eta'] <= 59:
+        return '55-59'
+    elif row['eta'] <= 64:
+        return '60-64'
+    elif row['eta'] <= 69:
+        return '65-69'
+    elif row['eta'] <= 74:
+        return '70-74'
+    else:
+        return '75-99'
+
+# Apply the function to categorize age groups in the 'ter' dataframe
+ter['cleta'] = ter.apply(categorize_age, axis=1)
+
+# Select specific columns from the 'sez' and 'appo' dataframes
+base_sezione = sez[['codice_sezione', 'codice_comune__str']]
+attuale = appo[['codc620b', 'cleta', 'stmmas19', 'stmfem19']].rename(columns={'codc620b': 'codice_sezione'})
+
+# Merge the dataframes based on 'codice_comune__str' column
+base_sezione_eta = pd.merge(base_sezione, attuale, how='left', on='codice_comune__str')
+
+# Group by 'cleta' and calculate the sum of 'maschi_distribuiti' and 'femmine_distribuite' columns
+tot_classe_com = base_sezione_eta.groupby('cleta', as_index=False)['maschi_distribuiti', 'femmine_distribuite'].sum()
+
+# Merge the dataframes based on 'codice_comune__str' and 'cleta' columns
+base_sezione_eta = pd.merge(base_sezione_eta, tot_classe_com, how='left', left_on=['codc620b', 'cleta'], right_index=True)
+
+# Calculate the percentage of males and females based on their respective totals
+base_sezione_eta['percentuale_maschi'] = (base_sezione_eta['tot_mas'] / base_sezione_eta['totcla_mas']) * 100
+base_sezione_eta['percentuale_femmine'] = (base_sezione_eta['tot_fem'] / base_sezione_eta['totcla_fem']) * 100
+
+# Fill NaN values with 0
+base_sezione_eta.fillna(0, inplace=True)
+
+# Group by 'codice_comune__str' and calculate the sum of 'maschi_distribuiti' and 'femmine_distribuite' columns
+tot_st = base_sezione_eta.groupby('codice_comune__str', as_index=False)['maschi_distribuiti', 'femmine_distribuite'].sum()
+
+# Print the total sum of males and females
+print(tot_st[['maschi_distribuiti', 'femmine_distribuite']].sum())
+
+# Group by 'codice_comune__str' and calculate the sum of 'maschi' and 'femmine' columns from the 'ter' dataframe
+popolazione = ter.groupby('codice_comune__str', as_index=False)['maschi', 'femmine'].sum()
+
+# Calculate the percentage of males based on their respective totals
+popolazione['maschi_perc'] = (popolazione['maschi'] / popolazione['tot']) * 100
+
+# Merge the dataframes based on 'codice_comune__str' column
+base_sezione_eta = pd.merge(base_sezione_eta, popolazione[['codice_comune__str', 'maschi_perc']], how='left', on='codice_comune__str')
+
+# Calculate the estimated number of males and females based on their respective percentages and totals
+base_sezione_eta['mas_0_sez'] = (base_sezione_eta['maschi_perc'] * base_sezione_eta['femmine_distribuite'] * appo['nati_1000_donne_classe_eta']) / 1000
+base_sezione_eta['fem_0_sez'] = ((1 - base_sezione_eta['maschi_perc']) * base_sezione_eta['femmine_distribuite'] * appo['nati_1000_donne_classe_eta']) / 1000
+
+# Group by 'codice_comune__str' and calculate the sum of 'maschi_distribuiti' and 'femmine_distribuite' columns
+tot_st = base_sezione_eta.groupby('codice_comune__str', as_index=False)['mas_0_sez', 'fem_0_sez'].sum()
+
+# Print the total sum of estimated males and females
+print(tot_st[['mas_0_sez', 'fem_0_sez']].sum())
+```

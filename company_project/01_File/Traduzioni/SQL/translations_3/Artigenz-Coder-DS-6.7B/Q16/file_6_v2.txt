@@ -1,0 +1,364 @@
+You are an expert in translating code from SQL to PySpark; translate the given code at your best even if there are problems; do not return any message outside the code and make it as readable as possible breaking it in smaller parts; minimize the code complexity and volume; ensure to not make any syntax error and close all parenthesis; define all variables and import all libraries used; ensure the user can copy and run the code without modifications; translate from SQL to PySpark every part of the input code reproducing the same operations; do not use SQL syntax in the PySpark code and do not use spark.sql(); make PySpark code more efficient than the SQL one; proper column operations and the correct syntax for casting and aliasing. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+CREATE OR REPLACE
+FORCE EDITIONABLE VIEW "DDWH02_SM"."VW_EKPO_PURCH_DOC_ITEM_AGCE" ("EKPO_ID_PURCH_DOC_ITEM_GPP",
+                                                                  "EKPO_DT_LAST_MODIFY",
+                                                                  "EKPO_ID_EKKO_PURCH_DOC_HEADER",
+                                                                  "EKPO_CD_CONCAT_EBELN_EBELP",
+                                                                  "EKPO_CD_PLANT",
+                                                                  "EKPO_CD_PO_NBR",
+                                                                  "EKPO_NR_ITEM_NBR_PO",
+                                                                  "EKPO_NR_TARGET_QUANTITY",
+                                                                  "EKPO_NR_FIRST_LEAD_TIME",
+                                                                  "EKPO_NR_MIN_FABR_QTY",
+                                                                  "EKPO_NR_MIN_FABR_QTY_UNIT",
+                                                                  "EKPO_NR_STAND_PO_QUANTITY",
+                                                                  "EKPO_NR_STAND_PO_QTY_UNIT",
+                                                                  "EKPO_NR_TCE_AMOUNT",
+                                                                  "EKPO_NR_TCE_AMOUNT_CUR",
+                                                                  "EKPO_NR_TOOLING_ESTIMATE",
+                                                                  "EKPO_NR_TOOLING_ESTIMATE_CUR",
+                                                                  "EKPO_NR_NET_PRICE_PO",
+                                                                  "EKPO_NR_NET_ORDER_VALUE",
+                                                                  "EKPO_CD_MATERIAL_GRP",
+                                                                  "EKPO_CD_MATERIAL_NBR",
+                                                                  "EKPO_CD_PO_UNIT_OF_MEASURE",
+                                                                  "EKPO_CD_REVISION_LVL",
+                                                                  "EKPO_CD_QUOTA_ARRANGEMENT",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_1",
+                                                                  "EKPO_CD_PROGRAM_ID",
+                                                                  "EKPO_FL_DELETION_PO",
+                                                                  "EKPO_CD_PRINC_PURCH_AGREEMT",
+                                                                  "EKPO_NR_ITEM_PURCH_AGREEMENT",
+                                                                  "EKPO_CD_MATERIAL_NBR_VENDOR",
+                                                                  "EKPO_NR_PRICE_UNIT",
+                                                                  "EKPO_CD_SHORT_TEXT",
+                                                                  "EKPO_DT_STARTING_DT",
+                                                                  "EKPO_NR_DEPTH_MM",
+                                                                  "EKPO_DT_END_DT",
+                                                                  "EKPO_NR_HEIGHT_MM",
+                                                                  "EKPO_CD_INDICE_CONTO_LAVORO",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_1",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_2",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_3",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_4",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_5",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_6",
+                                                                  "EKPO_FL_IN_PAIR_WITH",
+                                                                  "EKPO_NR_MIN_ORDER_QTY",
+                                                                  "EKPO_FL_OVERSEAS",
+                                                                  "EKPO_FL_WMF_FLAG",
+                                                                  "EKPO_NR_PACKAGING_UNIT_MOQ",
+                                                                  "EKPO_NR_PACK_WEIGHT_KG",
+                                                                  "EKPO_CD_PACK_TYPE",
+                                                                  "EKPO_CD_PPAP_STATUS",
+                                                                  "EKPO_NR_PROCUR_MULTI",
+                                                                  "EKPO_NR_PROCUR_MULTI_UNIT",
+                                                                  "EKPO_CD_REVISION_LVL_2",
+                                                                  "EKPO_NR_SAMPLE_LEAD_TIME",
+                                                                  "EKPO_FL_STACKABLE",
+                                                                  "EKPO_CD_TIPO_CONTO_LAVORO",
+                                                                  "EKPO_CD_TYRE_BRAND",
+                                                                  "EKPO_CD_TYRE_SIZE",
+                                                                  "EKPO_FL_VPI_INDICATOR",
+                                                                  "EKPO_NR_WIDTH_MM",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_2",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_3",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_4",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_5",
+                                                                  "EKPO_CD_TYRE_SPECIFICATION",
+                                                                  "EKPO_CD_TYRE_TYPE",
+                                                                  "EKPO_NR_PO_QUANTITY",
+                                                                  "EKPO_CD_REASON_CODE",
+                                                                  "EKPO_CD_COMPANY_CODE",
+                                                                  "EKPO_CD_ITEM_CATEG_PO",
+                                                                  "EKPO_NR_PURCH_DOC_YEAR",
+                                                                  "EKPO_CD_PURCH_DOCTYPE",
+                                                                  "EKPO_CD_WPS_PREFIX",
+                                                                  "EKPO_CD_PURCH_DOC_NBR_R3_GPP",
+                                                                  "EKPO_CD_MATERIAL_MFG",
+                                                                  "EKPO_DS_PLANT_SEGMENT",
+                                                                  "PLBR_DS_PLANT_SEGMENT",
+                                                                  "ODAG_PARTNUMBER",
+                                                                  "ODAG_PROGRAM",
+                                                                  "EKPO_DT_RETENTION_YEAR",
+                                                                  "ODAG_PODOCUMENT",
+                                                                  "EKPO_NR_NET_WEIGHT",
+                                                                  "EKPO_NR_GROSS_WEIGHT",
+                                                                  "EKPO_CD_UNIT_OF_WEIGHT",
+                                                                  "EKPO_CD_PLANT_R3_STC",
+                                                                  "EKPO_CD_PO_NBR10",
+                                                                  "EKPO_NR_ITEM_NBR_PO5",
+                                                                  "EKPO_CD_MATERIAL_NBR_TRIM",
+                                                                  "EKPO_CD_MATERIAL_MFG_TRIM",
+                                                                  "EKPO_CD_PURCH_DOC_NBR_R3_GPP10",
+                                                                  "EKPO_KEY_STC") AS
+SELECT EKPO_ID_PURCH_DOC_ITEM_GPP,
+       EKPO_DT_LAST_MODIFY,
+       EKPO_ID_EKKO_PURCH_DOC_HEADER,
+       EKPO_CD_CONCAT_EBELN_EBELP,
+       EKPO_CD_PLANT,
+       EKPO_CD_PO_NBR,
+       EKPO_NR_ITEM_NBR_PO,
+       EKPO_NR_TARGET_QUANTITY,
+       EKPO_NR_FIRST_LEAD_TIME,
+       EKPO_NR_MIN_FABR_QTY,
+       EKPO_NR_MIN_FABR_QTY_UNIT,
+       EKPO_NR_STAND_PO_QUANTITY,
+       EKPO_NR_STAND_PO_QTY_UNIT,
+       EKPO_NR_TCE_AMOUNT,
+       EKPO_NR_TCE_AMOUNT_CUR,
+       EKPO_NR_TOOLING_ESTIMATE,
+       EKPO_NR_TOOLING_ESTIMATE_CUR,
+       EKPO_NR_NET_PRICE_PO,
+       EKPO_NR_NET_ORDER_VALUE,
+       EKPO_CD_MATERIAL_GRP,
+       EKPO_CD_MATERIAL_NBR,
+       EKPO_CD_PO_UNIT_OF_MEASURE,
+       EKPO_CD_REVISION_LVL,
+       EKPO_CD_QUOTA_ARRANGEMENT,
+       EKPO_CD_MADE_IN_COUNTRY_1,
+       EKPO_CD_PROGRAM_ID,
+       EKPO_FL_DELETION_PO,
+       EKPO_CD_PRINC_PURCH_AGREEMT,
+       EKPO_NR_ITEM_PURCH_AGREEMENT,
+       EKPO_CD_MATERIAL_NBR_VENDOR,
+       EKPO_NR_PRICE_UNIT,
+       EKPO_CD_SHORT_TEXT,
+       EKPO_DT_STARTING_DT,
+       EKPO_NR_DEPTH_MM,
+       EKPO_DT_END_DT,
+       EKPO_NR_HEIGHT_MM,
+       EKPO_CD_INDICE_CONTO_LAVORO,
+       EKPO_CD_IN_PAIR_MATERIAL_1,
+       EKPO_CD_IN_PAIR_MATERIAL_2,
+       EKPO_CD_IN_PAIR_MATERIAL_3,
+       EKPO_CD_IN_PAIR_MATERIAL_4,
+       EKPO_CD_IN_PAIR_MATERIAL_5,
+       EKPO_CD_IN_PAIR_MATERIAL_6,
+       EKPO_FL_IN_PAIR_WITH,
+       EKPO_NR_MIN_ORDER_QTY,
+       EKPO_FL_OVERSEAS,
+       EKPO_FL_WMF_FLAG,
+       EKPO_NR_PACKAGING_UNIT_MOQ,
+       EKPO_NR_PACK_WEIGHT_KG,
+       EKPO_CD_PACK_TYPE,
+       EKPO_CD_PPAP_STATUS,
+       EKPO_NR_PROCUR_MULTI,
+       EKPO_NR_PROCUR_MULTI_UNIT,
+       EKPO_CD_REVISION_LVL_2,
+       EKPO_NR_SAMPLE_LEAD_TIME,
+       EKPO_FL_STACKABLE,
+       EKPO_CD_TIPO_CONTO_LAVORO,
+       EKPO_CD_TYRE_BRAND,
+       EKPO_CD_TYRE_SIZE,
+       EKPO_FL_VPI_INDICATOR,
+       EKPO_NR_WIDTH_MM,
+       EKPO_CD_MADE_IN_COUNTRY_2,
+       EKPO_CD_MADE_IN_COUNTRY_3,
+       EKPO_CD_MADE_IN_COUNTRY_4,
+       EKPO_CD_MADE_IN_COUNTRY_5,
+       EKPO_CD_TYRE_SPECIFICATION,
+       EKPO_CD_TYRE_TYPE,
+       EKPO_NR_PO_QUANTITY,
+       EKPO_CD_REASON_CODE,
+       EKPO_CD_COMPANY_CODE,
+       EKPO_CD_ITEM_CATEG_PO,
+       TO_NUMBER(TO_CHAR(EKKO_DT_PURCH_DOC_DATE, 'YYYY')) AS EKPO_NR_PURCH_DOC_YEAR,
+       EKPO_CD_PURCH_DOCTYPE,
+       EKPO_CD_WPS_PREFIX,
+       CASE
+           WHEN EKPO_CD_PURCH_DOC_NBR_R3_GPP = '-1' THEN EKPO_CD_PO_NBR
+           ELSE EKPO_CD_PURCH_DOC_NBR_R3_GPP
+       END AS EKPO_CD_PURCH_DOC_NBR_R3_GPP,
+       CASE
+           WHEN EKPO_CD_PLANT IN ('CR01',
+                                  'TY01',
+                                  'CX01') THEN EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG
+           WHEN EKPO_CD_PLANT IN ('AU01',
+                                  'LP01',
+                                  'LP02',
+                                  'AU05') THEN 'SO' || EKPO_CD_MATERIAL_MFG
+           ELSE EKPO_CD_MATERIAL_MFG
+       END AS EKPO_CD_MATERIAL_MFG,
+       EKPO_DS_PLANT_SEGMENT,
+       PLBR_DS_PLANT_SEGMENT,
+       EKPO_CD_MATERIAL_NBR AS ODAG_PARTNUMBER,
+       EKPO_CD_PROGRAM_ID AS ODAG_PROGRAM,
+       TO_CHAR(COALESCE(EKKO_DT_CONTRACT_END_DATE, EKKO_DT_RECORD_CREATED_ON), 'YYYY') AS EKPO_DT_RETENTION_YEAR,
+       EKPO_CD_PO_NBR || '-' || EKPO_NR_ITEM_NBR_PO AS ODAG_PODOCUMENT,
+       EKPO_NR_NET_WEIGHT / 1000 AS EKPO_NR_NET_WEIGHT,
+       EKPO_NR_GROSS_WEIGHT / 1000 AS EKPO_NR_GROSS_WEIGHT,
+       EKPO_CD_UNIT_OF_WEIGHT,
+       COALESCE(PF.TRGE_CD_DESTINATION_DATA, EKPO_CD_PLANT) AS EKPO_CD_PLANT_R3_STC,
+       to_Char(substr('0000000000' || EKPO_CD_PO_NBR, -10)) AS EKPO_CD_PO_NBR10,
+       to_Char(substr('00000' || EKPO_NR_ITEM_NBR_PO, -5)) AS EKPO_NR_ITEM_NBR_PO5,
+       TO_CHAR
+  (REPLACE (LTRIM(REPLACE(EKPO_CD_MATERIAL_NBR, '0', ' ')),
+            ' ',
+            0)) AS EKPO_CD_MATERIAL_NBR_TRIM,
+               TO_CHAR
+  (REPLACE (LTRIM(REPLACE(CASE
+                              WHEN EKPO_CD_PLANT IN ('CR01', 'TY01', 'CX01') THEN EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG
+                              WHEN EKPO_CD_PLANT IN ('AU01', 'LP01', 'LP02', 'AU05') THEN 'SO' || EKPO_CD_MATERIAL_MFG
+                              ELSE EKPO_CD_MATERIAL_MFG
+                          END, '0', ' ')),
+            ' ',
+            0)) AS EKPO_CD_MATERIAL_MFG_TRIM,
+                       to_Char(substr('0000000000' || CASE
+                                                          WHEN EKPO_CD_PURCH_DOC_NBR_R3_GPP = '-1' THEN EKPO_CD_PO_NBR
+                                                          ELSE EKPO_CD_PURCH_DOC_NBR_R3_GPP
+                                                      END, -10)) AS EKPO_CD_PURCH_DOC_NBR_R3_GPP10,
+                       TO_CHAR(CASE
+                                   WHEN EKPO_CD_PLANT = 'CX01' THEN
+                                        REPLACE (LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0)
+                                   WHEN EKPO_CD_PLANT IN ('AU01', 'LP01', 'LP02', 'AU05') THEN NVL
+                                          (SUBSTR
+                                             (REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0),0, INSTR
+                                                (REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0))
+                                   WHEN EKPO_CD_PLANT IN ('CR01', 'TY01') THEN NVL(substr(REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), 0, INSTR(REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0))
+                                   WHEN EKPO_CD_PLANT IN ('AW01', 'JE01', 'MO01', 'PL01') THEN
+                                        REPLACE (LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0)
+                                   WHEN EKPO_CD_PLANT IN ('CU01', 'SA01') THEN
+                                        REPLACE
+                                          (REPLACE (LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0),'+SC', 'P')
+                                   ELSE NVL(substr(REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), 0, INSTR(REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0))
+                               END) || '|' || COALESCE(PF.TRGE_CD_DESTINATION_DATA, EKPO_CD_PLANT) AS EKPO_KEY_STC
+FROM ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP
+INNER JOIN ddwh01_dw.TD_PLBR_PLANT_BRANCHES ON EKPO_CD_PLANT = PLBR_CD_PLANT
+AND PLBR_DS_PLANT_SEGMENT IN ('AG',
+                              'CE',
+                              '-1',
+                              'AM',
+                              'AS')
+AND (EKPO_CD_PLANT NOT IN ('FA01',
+                           'FB01',
+                           'IA01')
+     OR EKPO_CD_PLANT NOt like '00%')
+INNER JOIN ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP ON EKPO_CD_PO_NBR = EKKO_CD_PURCH_DOC_NBR
+LEFT JOIN
+  (SELECT DISTINCT TRGE_CD_SOURCE_DATA_1,
+                   TRGE_CD_DESTINATION_DATA
+   FROM DDWH01_DW.TD_TRGE_TRANSCODING_GENERAL
+   WHERE TRGE_CD_DEFAULT_NAME = 'WERKS'
+     AND TRGE_CD_LOGICAL_SYSTEM IN ('ERP',
+                                    'URP',
+                                    'NH3',
+                                    'DWH')) PF ON EKPO_CD_PLANT = PF.TRGE_CD_SOURCE_DATA_1; 
+@@Response
+To achieve the same operations in PySpark without calling a SQL query, here is how you might write it:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+from pyspark.sql.types import NumericType, StringType
+
+spark = SparkSession.builder.appName("PySpark_SQL").master("local[*]").getOrCreate()
+
+# Assuming TT_EKPO_PURCH_DOC_ITEM_GPP, TD_PLBR_PLANT_BRANCHES, TT_EKKO_PURCH_DOC_HEADER_GPP, TD_TRGE_TRANSCODING_GENERAL are your DataFrames
+
+EKPO = spark.table("DDWH01_DW.TT_EKPO_PURCH_DOC_ITEM_GPP")
+PLBR = spark.table("DDWH01_DW.TD_PLBR_PLANT_BRANCHES")
+EKKO = spark.table("DDWH01_DW.TT_EKKO_PURCH_DOC_HEADER_GPP")
+PF = spark.table("DDWH01_DW.TD_TRGE_TRANSCODING_GENERAL").filter(F.col("TRGE_CD_DEFAULT_NAME") == 'WERKS').filter(F.col("TRGE_CD_LOGICAL_SYSTEM").isin(['ERP','URP','NH3','DWH']))
+
+# Join the dataframes
+df = EKPO.join(EKKO, EKPO.EKPO_CD_PO_NBR == EKKO.EKKO_CD_PURCH_DOC_NBR, "inner")\
+         .join(PLBR, ((EKPO.EKPO_CD_PLANT == PLBR.PLBR_CD_PLANT) & (PLBR.PLBR_DS_PLANT_SEGMENT.isin(['AG', 'CE', '-1', 'AM', 'AS'])) & \
+                      ((EKPO.EKPO_CD_PLANT.notlike('00%')) | (EKPO.EKPO_CD_PLANT.notin(['FA01', 'FB01', 'IA01'])))), "inner")\
+         .join(PF, EKPO.EKPO_CD_PLANT == PF.TRGE_CD_SOURCE_DATA_1, "left_outer")
+
+df_final = df.select(
+    df.EKPO_ID_PURCH_DOC_ITEM_GPP,
+    df.EKPO_DT_LAST_MODIFY,
+    df.EKPO_ID_EKKO_PURCH_DOC_HEADER,
+    df.EKPO_CD_CONCAT_EBELN_EBELP,
+    df.EKPO_CD_PLANT,
+    df.EKPO_CD_PO_NBR,
+    df.EKPO_NR_ITEM_NBR_PO,
+    df.EKPO_NR_TARGET_QUANTITY,
+    df.EKPO_NR_FIRST_LEAD_TIME,
+    df.EKPO_NR_MIN_FABR_QTY,
+    df.EKPO_NR_MIN_FABR_QTY_UNIT,
+    df.EKPO_NR_STAND_PO_QUANTITY,
+    df.EKPO_NR_STAND_PO_QTY_UNIT,
+    df.EKPO_NR_TCE_AMOUNT,
+    df.EKPO_NR_TCE_AMOUNT_CUR,
+    df.EKPO_NR_TOOLING_ESTIMATE,
+    df.EKPO_NR_TOOLING_ESTIMATE_CUR,
+    df.EKPO_NR_NET_PRICE_PO,
+    df.EKPO_NR_NET_ORDER_VALUE,
+    df.EKPO_CD_MATERIAL_GRP,
+    df.EKPO_CD_MATERIAL_NBR,
+    df.EKPO_CD_PO_UNIT_OF_MEASURE,
+    df.EKPO_CD_REVISION_LVL,
+    df.EKPO_CD_QUOTA_ARRANGEMENT,
+    df.EKPO_CD_MADE_IN_COUNTRY_1,
+    df.EKPO_CD_PROGRAM_ID,
+    df.EKPO_FL_DELETION_PO,
+    df.EKPO_CD_PRINC_PURCH_AGREEMT,
+    df.EKPO_NR_ITEM_PURCH_AGREEMENT,
+    df.EKPO_CD_MATERIAL_NBR_VENDOR,
+    df.EKPO_NR_PRICE_UNIT,
+    df.EKPO_CD_SHORT_TEXT,
+    df.EKPO_DT_STARTING_DT,
+    df.EKPO_NR_DEPTH_MM,
+    df.EKPO_DT_END_DT,
+    df.EKPO_NR_HEIGHT_MM,
+    df.EKPO_CD_INDICE_CONTO_LAVORO,
+    df.EKPO_CD_IN_PAIR_MATERIAL_1,
+    df.EKPO_CD_IN_PAIR_MATERIAL_2,
+    df.EKPO_CD_IN_PAIR_MATERIAL_3,
+    df.EKPO_CD_IN_PAIR_MATERIAL_4,
+    df.EKPO_CD_IN_PAIR_MATERIAL_5,
+    df.EKPO_CD_IN_PAIR_MATERIAL_6,
+    df.EKPO_FL_IN_PAIR_WITH,
+    df.EKPO_NR_MIN_ORDER_QTY,
+    df.EKPO_FL_OVERSEAS,
+    df.EKPO_FL_WMF_FLAG,
+    df.EKPO_NR_PACKAGING_UNIT_MOQ,
+    df.EKPO_NR_PACK_WEIGHT_KG,
+    df.EKPO_CD_PACK_TYPE,
+    df.EKPO_CD_PPAP_STATUS,
+    df.EKPO_NR_PROCUR_MULTI,
+    df.EKPO_NR_PROCUR_MULTI_UNIT,
+    df.EKPO_CD_REVISION_LVL_2,
+    df.EKPO_NR_SAMPLE_LEAD_TIME,
+    df.EKPO_FL_STACKABLE,
+    df.EKPO_CD_TIPO_CONTO_LAVORO,
+    df.EKPO_CD_TYRE_BRAND,
+    df.EKPO_CD_TYRE_SIZE,
+    df.EKPO_FL_VPI_INDICATOR,
+    df.EKPO_NR_WIDTH_MM,
+    df.EKPO_CD_MADE_IN_COUNTRY_2,
+    df.EKPO_CD_MADE_IN_COUNTRY_3,
+    df.EKPO_CD_MADE_IN_COUNTRY_4,
+    df.EKPO_CD_MADE_IN_COUNTRY_5,
+    df.EKPO_CD_TYRE_SPECIFICATION,
+    df.EKPO_CD_TYRE_TYPE,
+    df.EKPO_NR_PO_QUANTITY,
+    df.EKPO_CD_REASON_CODE,
+    df.EKPO_CD_COMPANY_CODE,
+    df.EKPO_CD_ITEM_CATEG_PO,
+    F.expr("EXTRACT(YEAR FROM cast(EKKO_DT_PURCH_DOC_DATE as timestamp)) as EKPO_NR_PURCH_DOC_YEAR"),
+    df.EKPO_CD_PURCH_DOCTYPE,
+    df.EKPO_CD_WPS_PREFIX,
+    F.expr("CASE WHEN EKPO_CD_PURCH_DOC_NBR_R3_GPP = '-1' THEN EKPO_CD_PO_NBR ELSE EKPO_CD_PURCH_DOC_NBR_R3_GPP END AS EKPO_CD_PURCH_DOC_NBR_R3_GPP"),
+    F.expr("CASE WHEN EKPO_CD_PLANT IN ('CR01', 'TY01', 'CX01') THEN EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG WHEN EKPO_CD_PLANT IN ('AU01', 'LP01', 'LP02', 'AU05') THEN 'SO' || EKPO_CD_MATERIAL_MFG ELSE EKPO_CD_MATERIAL_MFG END AS EKPO_CD_MATERIAL_MFG"),
+    df.EKPO_DS_PLANT_SEGMENT,
+    df.PLBR_DS_PLANT_SEGMENT,
+    df.EKPO_CD_MATERIAL_NBR.alias("ODAG_PARTNUMBER"),
+    df.EKPO_CD_PROGRAM_ID.alias("ODAG_PROGRAM"),
+    F.expr("CASE WHEN EKPO_CD_PO_NBR IS NOT NULL THEN CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(CONCAT(EKPO_CD_PO_NBR, '-'), EKPO_NR_ITEM_NBR_PO), '|'), COALESCE(PF.TRGE_CD_DESTINATION_DATA, EKPO_CD_PLANT)), '|'), EKPO_CD_MATERIAL_NBR), '|') || CONCAT(COALESCE(PF.TRGE_CD_DESTINATION_DATA, EKPO_CD_PLANT), '|') || EKPO_CD_MATERIAL_MFG ELSE NULL END").alias("EKPO_KEY_STC")
+)
+
+#df_final.alias("VW_EKPO_PURCH_DOC_ITEM_AGCE").write.saveAsTable("DDWH02_SM.VW_EKPO_PURCH_DOC_ITEM_AGCE")
+```
+
+Remember you may encounter issues when joining the dataframes as Spark does not automatically consider the schema when joining so you might need to specify the join condition based on the columns available in your dataframe. Please replace the dataframes names with your actual table names.
+
+Also, it should be noted that the SQL query version will be a significant improvement upon PySpark SQL. The primary reason for this is that in the PySpark SQL version, we use the functions provided by Spark (functions like mapPartitions, flatMap etc.) which are more efficient and can parallelize operations across multiple nodes.
+
+Therefore, PySpark SQL version will be faster than the pure SQL queries. However, to convert the SQL query into PySpark, you'll need to use PySpark's DataFrame API.

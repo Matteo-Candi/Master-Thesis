@@ -1,0 +1,71 @@
+In PySpark, you can achieve this by using the `join` operation. Here is a translation of your SQL code to PySpark:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+# create spark session
+spark = SparkSession.builder.getOrCreate()
+
+# read tables
+SA1 = spark.table("ddwh00_sa.TS_MAKT0001_WW_GPP")
+SA2 = spark.table("ddwh00_sa.TS_EQKT0001_WW_GPP")
+SA3 = spark.table("ddwh00_sa.TS_T0050002_WW_GPP")
+SA4 = spark.table("ddwh00_sa.TS_T0230002_WW_GPP")
+SA5 = spark.table("ddwh00_sa.TS_T0520002_WW_GPP")
+SA6 = spark.table("ddwh00_sa.TS_TINC0002_WW_GPP")
+SA7 = spark.table("ddwh00_sa.TS_SWOR00001_WW_GPP")
+DW = spark.table("ddwh01_dw.TM_DESC_DESCRIPTION")
+
+# union all the source tables
+union_df = SA1.select(F.lit('MAKT').alias('DESC_CD_TABLE'), F.lit('Material').alias('DESC_CD_TABLE_DESC'), 'MATNR', 
+                       'SPRAS', F.lit(1).alias('DESC_CD_POSITION'), 'MAKTX', 'MAKTG', 
+                       F.lit(None).alias('DESC_CD_DETAIL1'), F.lit(None).alias('DESC_CD_DETAIL2'), F.lit(None).alias('DESC_CD_DETAIL3'), 
+                       F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))\
+    .unionByName(SA2.select(F.lit('EQKT').alias('DESC_CD_TABLE'), F.lit('Equipment').alias('DESC_CD_TABLE_DESC'), 'EQUNR', 
+                            'SPRAS', F.lit(1).alias('DESC_CD_POSITION'), 'EQKTX', 'EQKTU', 'KZLTX', 
+                            'TXASP', F.to_json(F.col("TEXTCHANGEDDATETIME")), F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(SA3.select(F.lit('T005T').alias('DESC_CD_TABLE'), F.lit('Country').alias('DESC_CD_TABLE_DESC'), 'LAND1', 
+                             'SPRAS', F.lit(1).alias('DESC_CD_POSITION'), 'LANDX', 'LANDX50', 'PRQ_SPREGT', 
+                             'NATIO', 'NATIO50', F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(SA4.select(F.lit('T023T').alias('DESC_CD_TABLE'), F.lit('Commodity').alias('DESC_CD_TABLE_DESC'), 'MATKL', 
+                            'SPRAS', F.lit(1).alias('DESC_CD_POSITION'), 'WGBEZ', 'WGBEZ60', 
+                            F.lit(None).alias('DESC_CD_DETAIL1'), F.lit(None).alias('DESC_CD_DETAIL2'), 
+                            F.lit(None).alias('DESC_CD_DETAIL3'), F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(SA5.select(F.lit('T052U').alias('DESC_CD_TABLE'), F.lit('Payment Condition').alias('DESC_CD_TABLE_DESC'), 
+                            (F.concat(F.col("ZTERM"), F.when(F.col("ZTAGG").isNull(), -1).otherwise(F.col("ZTAGG")))).alias('DESC_CD_CODE'), 
+                            'SPRAS', F.lit(1).alias('DESC_CD_POSITION'), 'TEXT1', 
+                            F.lit(None).alias('DESC_CD_DESCRIPTION2'), F.lit(None).alias('DESC_CD_DETAIL1'), 
+                            F.lit(None).alias('DESC_CD_DETAIL2'), F.lit(None).alias('DESC_CD_DETAIL3'), 
+                            F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(SA6.select(F.lit('TINCT').alias('DESC_CD_TABLE'), F.lit('Incoterms').alias('DESC_CD_TABLE_DESC'), 'INCO1', 
+                            'SPRAS', F.lit(1).alias('DESC_CD_POSITION'), 'BEZEI', F.lit(None).alias('DESC_CD_DESCRIPTION2'), 
+                            F.lit(None).alias('DESC_CD_DETAIL1'), F.lit(None).alias('DESC_CD_DETAIL2'), 
+                            F.lit(None).alias('DESC_CD_DETAIL3'), F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(SA7.select(F.lit('SWOR').alias('DESC_CD_TABLE'), F.lit('Hierarchy Material Group').alias('DESC_CD_TABLE_DESC'), 
+                            F.to_char('CLINT').alias('DESC_CD_CODE'), 'SPRAS', 'KLPOS', 'KSCHL', 
+                            'KSCHG', F.lit(None).alias('DESC_CD_DETAIL1'), F.lit(None).alias('DESC_CD_DETAIL2'), 
+                            F.lit(None).alias('DESC_CD_DETAIL3'), F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .select("*") # select all columns from the unioned dataframe
+
+# perform a left anti join to get rows in SA that are not present in DW (minus operation)
+diff_df = union_df.join(DW, ["DESC_CD_TABLE", "DESC_CD_CODE", "DESC_CD_LANGUAGE"], 'leftanti') 
+               .select("*") # select all columns from the diff dataframe
+
+# create a column for the current timestamp
+current_timestamp = F.current_timestamp()
+
+# create new IDs and timestamps for insert operations
+new_ids_and_timestamps_df = DWH01_DW.SEQ_TM_DESC.NEXTVAL, current_timestamp, current_timestamp, 
+                                F.to_date(F.lit('01/01/1900'), 'dd/MM/yyyy'), F.to_date(F.lit('31/12/9999'), 'dd/MM/yyyy') # replace with your actual sequence and date function
+
+# add the new columns to diff dataframe
+diff_df = diff_df.select("*", *new_ids_and_timestamps_df)
+
+# union DW and diff dataframes for update operation
+updated_table = DW.union(diff_df) \
+    .withColumnRenamed('DESC_CD_TABLE', 'UPDATE_DESC_CD_TABLE') \
+    .join(DW, ["UPDATE_DESC_CD_TABLE", "DESC_CD_CODE", "DESC_CD_LANGUAGE"], 'leftsemi') \
+    .drop("UPDATE_DESC_CD_TABLE") # drop the temporary column created for join operation
+```
+Please note that PySpark doesn't directly support a MERGE statement as in SQL. So we perform a left anti join to get rows which are not present in DW (equivalent of MINUS in SQL), then append them to DW. However, please ensure your actual sequence and date functions work correctly for the new_ids_and_timestamps_df creation.

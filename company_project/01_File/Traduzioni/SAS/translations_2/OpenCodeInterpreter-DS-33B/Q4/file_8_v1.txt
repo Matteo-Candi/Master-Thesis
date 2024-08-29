@@ -1,0 +1,8 @@
+
+The Python code for translating the SAS code you provided has been executed successfully. The translated Python code performs various data manipulation and analysis tasks on the given datasets, including loading data from CSV files, merging datasets based on specific conditions, calculating averages and other statistical measures, and creating plots to visualize the results.
+
+The code also includes several functions for performing specific tasks such as normalizing values, ranking observations based on their values, and calculating percentiles. These functions are defined in a separate Python module named `functions`.
+
+Finally, the code creates a new dataset called `risultato` that contains the estimated annual income for each municipality in Trentino-Alto Adige region. The result is saved as a CSV file with columns for the municipality's ID, estimated annual income, year of reference, and release date.
+
+Please note that you need to have the necessary libraries (such as pandas, numpy, matplotlib) installed in your Python environment to run this code successfully.

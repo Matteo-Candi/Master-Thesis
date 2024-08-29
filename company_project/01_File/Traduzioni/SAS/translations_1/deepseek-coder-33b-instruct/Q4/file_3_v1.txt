@@ -1,0 +1,23 @@
+Here is the equivalent Python code using pandas library. Please note that the Python version is not exactly same as SAS due to some differences in libraries and methods available in both languages.
+
+```python
+import pandas as pd
+from sas7bdat import SAS7BDAT
+
+# Reading data from SAS files
+ter = pd.read_sas(SAS7BDAT('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\etapop20b.sas7bdat'))
+sez = pd.read_sas(SAS7BDAT('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\geografica_comune.sas7bdat'))
+appo = pd.read_sas(SAS7BDAT('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\nati_eta_madre_provincia_istat.sas7bdat'))
+
+# Data manipulation
+xclasse = ter[['codc620b', 'eta']].copy()
+xclasse['time'] = 2019
+xclasse['eta1_a'] = xclasse['eta'].apply(lambda eta: "Y_UN17" if 15 <= eta <= 17 else ("Y" + str(int(eta)) if 18 <= eta <= 49 else ("Y_GE50" if 50 <= eta <= 54 else None)))
+xclasse = xclasse.dropna()
+xclasse = xclasse[['codc620b', 'eta1_a', 'time']].rename(columns={'codc620b':'codice_comune__str'})
+xclasse = pd.concat([xclasse, ter['tot_fem'].rename('femmine')], axis=1)
+provinciale_donne = xclasse.groupby(['codice_comune__str', 'eta1_a']).sum().reset_index()
+nati = appo[['valore', 'codice_provincia', 'eta1_a']].rename(columns={'valore':'nati'})
+nati_donne = pd.merge(nati, provinciale_donne, on=['codice_provincia', 'eta1_a'])
+nati_donne['nati_1000_donne_classe_eta'] = 1000 * nati_donne['nati'] / nati_donne['femmine']
+```

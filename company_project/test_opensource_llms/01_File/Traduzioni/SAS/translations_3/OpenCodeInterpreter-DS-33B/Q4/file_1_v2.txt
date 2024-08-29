@@ -1,0 +1,36 @@
+
+```python
+# Import necessary libraries
+import pandas as pd
+from typing import Dict, List, Tuple
+
+def quadraturagruppo(daquadrare: pd.DataFrame, 
+                       daquad: str, 
+                       totpergru: pd.DataFrame, 
+                       perquad: str, 
+                       giaquad: str, 
+                       vargruppo: str, 
+                       quadrato: str) -> Dict[str, pd.DataFrame]:
+    """This function is used to calculate the sum of squares in a given dataset."""
+    
+    # Sort dataframe by the grouping variable
+    daquadrare = daquadrare.sort_values(by=vargruppo)
+    
+    # Calculate the total sum of the square for each group
+    somma = daquadrare.groupby([vargruppo]).sum()[daquad].reset_index()
+    
+    # Merge with total dataframe
+    somma = pd.merge(somma, totpergru, on=vargruppo)
+    somma['datot'] = somma[perquad] * somma[daquad]
+    somma = somma.drop([perquad], axis=1)
+    
+    # Calculate the square for each group and variable in the dataframe
+    quadrare = pd.merge(daquadrare, somma, on=vargruppo)
+    quadrare[giaquad] = (quadrare[daquad] * quadrare[perquad]) / quadrare['datot']
+    
+    # Drop unnecessary columns from the result dataframe
+    quadrato = quadrare.drop([daquad, 'datot', perquad], axis=1)
+    
+    # Return the resulting dataframes
+    return {vargruppo: somma, quadrato: quadrato}
+```

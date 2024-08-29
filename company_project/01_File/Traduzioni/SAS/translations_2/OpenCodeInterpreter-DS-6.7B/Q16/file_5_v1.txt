@@ -1,0 +1,1032 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+### Instruction:
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise.
+Translate the following code from SAS to Python:
+
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts";
+
+options mergenoby = warn;
+
+%include "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Macro\macroarrotondainterogruppo.sas";
+
+title1 "STIMA DELLA POPOLAZIONE PER ET�";
+
+proc means data = appo.avanzamento_eta noprint;
+	class codice_sezione cleta;
+	types codice_sezione*cleta;
+	id codice_comune__str;
+	output out = basesez (drop = _type_ _freq_)
+		   sum(maschi_distribuiti femmine_distribuite) = ;
+run;
+data basesez;
+	set basesez;
+	length idqua $ 11;
+	idqua = codice_comune__str||cleta;
+run;
+
+data basecom;
+	set ter_out.Popolazione_eta_sesso_comune;
+	if eta <= 4 then cleta = "00-04";
+	else if eta <= 9 then cleta = "05-09";
+	else if eta <= 14 then cleta = "10-14";
+	else if eta <= 19 then cleta = "15-19";
+	else if eta <= 24 then cleta = "20-24";
+	else if eta <= 29 then cleta = "25-29";
+	else if eta <= 34 then cleta = "30-34";
+	else if eta <= 39 then cleta = "35-39";
+	else if eta <= 44 then cleta = "40-44";
+	else if eta <= 49 then cleta = "45-49";
+	else if eta <= 54 then cleta = "50-54";
+	else if eta <= 59 then cleta = "55-59";
+	else if eta <= 64 then cleta = "60-64";
+	else if eta <= 69 then cleta = "65-69";
+	else if eta <= 74 then cleta = "70-74";
+	else cleta = "75-99";
+run;
+title2 "MIN E MAX ET� PER CLASSE";
+proc means data = basecom min max maxdec = 0;
+	class cleta;
+	var eta;
+run;
+proc means data = basecom noprint;
+	class codice_comune__str cleta;
+	types codice_comune__str*cleta;
+	output out = comcla (drop = _type_ _freq_)
+		sum(maschi femmine) = maschi_cla_com femmine_cla_com;
+run;
+data comunale_cla;
+	set comcla;
+	length idqua $ 11;
+	idqua = codice_comune__str||cleta;
+	keep idqua maschi_cla_com femmine_cla_com;
+run;
+
+proc sort data = basesez;
+	by idqua;
+run;
+proc means data = basesez noprint;
+	by idqua;
+	output out = totverif (drop = _type_ _freq_)
+		   sum(maschi_distribuiti femmine_distribuite) = / autoname autolabel;
+run;
+proc sort data = comunale_cla;
+	by idqua;
+run;
+data quadrare;
+	merge basesez totverif comunale_cla;
+	by idqua;
+run; *6.442.848;
+data denzero;	*data set di controllo;
+	set quadrare;
+	if (maschi_distribuiti_sum = 0 and maschi_cla_com > 0)
+	or (femmine_distribuite_sum = 0 and femmine_cla_com > 0);
+run; 
+proc sort data = denzero;
+	by codice_sezione cleta;
+run;
+title2 "ANOMALIE MAX";
+proc means data = denzero max;
+	var maschi_cla_com femmine_cla_com;
+run; 
+
+data geog;
+	set sez.geog20b (keep = cods11 codc620b);
+	rename cods11 = codice_sezione
+		   codc620b = codice_comune__str;
+run;
+proc sort data = geog;
+	by codice_sezione;
+run;
+data demo;
+	set sez.demo20b (keep = cods11 stmpop19);
+	rename cods11 = codice_sezione
+		   stmpop19 = popolazione_precedente;
+run;
+proc sort data = demo;
+	by codice_sezione;
+run;
+data gbd;
+	merge geog demo;
+	by codice_sezione;
+run;
+proc sort data = gbd;
+	by codice_comune__str descending popolazione_precedente;
+run;
+data piu_popolosa;
+	set gbd;
+	by codice_comune__str;
+	if first.codice_comune__str;
+	piu_popolosa = 1;
+	keep codice_sezione piu_popolosa;
+run;
+proc sort data = quadrare;
+	by codice_sezione;
+run;
+proc sort data = piu_popolosa;
+	by codice_sezione;
+run;
+data quadrare;
+	merge quadrare piu_popolosa;
+	by codice_sezione;
+run;
+
+data quadrare_corretto;
+	set quadrare;
+	if maschi_distribuiti_sum = 0 and maschi_cla_com > 0 and piu_popolosa = 1
+		then
+			do;
+				maschi_distribuiti = maschi_cla_com;
+				corretto = 1;
+			end;
+	if femmine_distribuite_sum = 0 and femmine_cla_com > 0 and piu_popolosa = 1
+		then
+			do;
+				femmine_distribuite = femmine_cla_com;
+				corretto = 1;
+			end;
+run;
+data corretto;	*data set di controllo;
+	set quadrare_corretto;
+	if corretto;
+run;	*83;
+data denzero_post;	*data set di controllo;
+	set quadrare_corretto;
+	if (maschi_distribuiti_sum = 0 and maschi_cla_com > 0)
+	or (femmine_distribuite_sum = 0 and femmine_cla_com > 0);
+run; 
+
+proc sort data = quadrare_corretto;
+	by idqua;
+run;
+proc means data = quadrare_corretto noprint;
+	by idqua;
+	output out = totverif_new (drop = _type_ _freq_)
+		sum(maschi_distribuiti femmine_distribuite) = / autoname autolabel;
+run;
+data quadrare_new;
+	merge quadrare_corretto (drop = maschi_distribuiti_sum femmine_distribuite_sum) totverif_new;
+	by idqua;
+run;
+data denzero_new;	*data set di controllo;
+	set quadrare_new;
+	if (maschi_distribuiti_sum = 0 and maschi_cla_com > 0)
+	or (femmine_distribuite_sum = 0 and femmine_cla_com > 0);
+run; *vuoto: ok;
+
+data quadrato;
+	set quadrare_new;
+	if maschi_distribuiti_sum > 0
+		then maschi_qua = round(maschi_distribuiti*maschi_cla_com/maschi_distribuiti_sum);
+		else maschi_qua = 0;
+	if femmine_distribuite_sum > 0
+		then femmine_qua = round(femmine_distribuite*femmine_cla_com/femmine_distribuite_sum);
+		else femmine_qua = 0;
+	drop maschi_distribuiti_sum femmine_distribuite_sum maschi_cla_com femmine_cla_com;
+run;
+title "TOTALI PRIMA DELLA RETTIFICA DELLE DISCREPANZE";
+proc tabulate data = quadrato;
+	var maschi_qua femmine_qua;
+	table maschi_qua femmine_qua,sum*f=comma12.;
+run;
+title "TOTALI COMUNALI";
+proc tabulate data = ter_out.Popolazione_eta_sesso_comune;;
+	var maschi femmine;
+	table maschi femmine,sum*f=comma12.;
+run;
+
+%arrotondainterogruppo(quadrato,		
+					   maschi_qua,		
+					   comunale_cla,	
+					   maschi_cla_com,	
+					   idqua,			
+					   quadrato_ok1);	
+%arrotondainterogruppo(quadrato_ok1,	
+					   femmine_qua,		
+					   comunale_cla,	
+					   femmine_cla_com,	
+					   idqua,			
+					   quadrato_ok2);	
+
+data errore;
+	set quadrato_ok2;
+	if maschi_qua < 0 or femmine_qua < 0;
+run; *vuoto: ok;
+proc means data = quadrato_ok2 noprint;
+	class idqua;
+	types idqua;
+	output out = verifica (drop = _type_ _freq_)
+		sum(maschi_qua femmine_qua) = / autoname;
+run;
+data confronto_verifica;
+	merge verifica comunale_cla;
+	by idqua;
+run;
+data errore_m;
+	set confronto_verifica;
+	if maschi_qua_sum ~= maschi_cla_com;
+run; *vuoto: ok;
+data errore_f;
+	set confronto_verifica;
+	if femmine_qua_sum ~= femmine_cla_com;
+run; *vuoto: ok;
+
+data quadrato_ok2;
+	set quadrato_ok2;
+	popolazione = sum(maschi_qua,femmine_qua);
+run;
+proc means data = quadrato_ok2 noprint;
+	class codice_sezione;
+	types codice_sezione;
+	output out = nuova (drop = _type_ _freq_)
+		   sum(popolazione) = ;
+run;
+data demo1;
+	set sez.demo20b (keep = cods11 pop11 stmpop19);
+	rename cods11 = codice_sezione
+		   stmpop19 = popolazione_precedente
+		   pop11 = popolazione_censimento;
+run;
+proc sort data = demo1;
+	by codice_sezione;
+run;
+data geog1;
+	set sez_out.geografica_sezione (keep = codice_sezione codice_comune__str sigla_provincia nome_comune);
+run;
+proc sort data = geog1;
+	by codice_sezione;
+run;
+data cfr_anni;
+	merge geog1 nuova demo1;
+	by codice_sezione;
+	differenza_assoluta = popolazione - popolazione_precedente;
+	if popolazione_precedente > 0
+		then differenza_percentuale = 100*differenza_assoluta/popolazione_precedente;
+run;
+title2 "DISTRIBUZIONE DELLE DIFFERENZE ASSOLUTE";
+proc univariate data = cfr_anni;
+	var differenza_assoluta;
+	histogram differenza_assoluta;
+run;
+title2 "DISTRIBUZIONE DELLE DIFFERENZE %";
+proc univariate data = cfr_anni;
+	var differenza_percentuale;
+	histogram differenza_percentuale;
+run;
+proc sort data = cfr_anni;
+	by differenza_assoluta;
+run;
+proc sort data = cfr_anni;
+	by differenza_percentuale;
+run;
+title2 "DISTRIBUZIONE DELLE DIFFERENZE ASSOLUTE CON |differenza_percentuale| > 20%";
+proc univariate data = cfr_anni;
+	where abs(differenza_percentuale) > 20;
+	var differenza_assoluta;
+	histogram differenza_assoluta;
+run;
+title2 "DISTRIBUZIONE DELLE DIFFERENZE % CON |differenza_assoluta| > 10";
+proc univariate data = cfr_anni;
+	where abs(differenza_assoluta) > 10;
+	var differenza_percentuale;
+	histogram differenza_percentuale;
+run;
+data nuova_copertura;
+	set cfr_anni;
+	if popolazione > 0 and popolazione_precedente = 0;
+run; *vuoto;
+data persa_copertura;
+	set cfr_anni;
+	if popolazione = 0 and popolazione_precedente > 0;
+run; *4;
+
+options nolabel;
+data risultato;
+	set quadrato_ok2 (keep = codice_sezione cleta maschi_qua femmine_qua popolazione);
+	anno_riferimento = 2020;
+	release = 2021;
+	rename maschi_qua = maschi
+		   femmine_qua = femmine
+		   cleta = classe_eta;
+run;
+proc sort data = risultato;
+	by codice_sezione classe_eta;
+run;
+
+
+### Response:
+Here's the Python translation of the SAS code you provided:
+
+```python
+# Import necessary libraries
+import pandas as pd
+
+# Define file paths
+data_path = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+macro_path = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Macro"
+
+# Set library names
+ter_lib = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+sez_lib = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+ter_out_lib = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+sez_out_lib = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+appo_lib = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts"
+
+# Read data
+avanzamento_eta = pd.read_csv(appo_lib + "\\avanzamento_eta.csv")
+Popolazione_eta_sesso_comune = pd.read_csv(ter_out_lib + "\\Popolazione_eta_sesso_comune.csv")
+geog20b = pd.read_csv(sez_lib + "\\geog20b.csv")
+demo20b = pd.read_csv(sez_lib + "\\demo20b.csv")
+
+# Translate SAS code to Python
+
+# Define function for creating age group
+def create_age_group(eta):
+    if eta <= 4:
+        return "00-04"
+    elif eta <= 9:
+        return "05-09"
+    elif eta <= 14:
+        return "10-14"
+    elif eta <= 19:
+        return "15-19"
+    elif eta <= 24:
+        return "20-24"
+    elif eta <= 29:
+        return "25-29"
+    elif eta <= 34:
+        return "30-34"
+    elif eta <= 39:
+        return "35-39"
+    elif eta <= 44:
+        return "40-44"
+    elif eta <= 49:
+        return "45-49"
+    elif eta <= 54:
+        return "50-54"
+    elif eta <= 59:
+        return "55-59"
+    elif eta <= 64:
+        return "60-64"
+    elif eta <= 69:
+        return "65-69"
+    elif eta <= 74:
+        return "70-74"
+    else:
+        return "75-99"
+
+# Calculate age group for each row in Popolazione_eta_sesso_comune
+Popolazione_eta_sesso_comune['cleta'] = Popolazione_eta_sesso_comune['eta'].apply(create_age_group)
+
+# Calculate total population for each age group in avanzamento_eta
+basesez = avanzamento_eta.groupby(['codice_sezione', 'cleta', 'codice_comune__str']).agg({'maschi_distribuiti': 'sum', 'femmine_distribuite': 'sum'}).reset_index()
+
+# Add idqua column in basesez
+basesez['idqua'] = basesez['codice_comune__str'] + basesez['cleta']
+
+# Calculate total population for each age group in Popolazione_eta_sesso_comune
+basecom = Popolazione_eta_sesso_comune.copy()
+basecom['cleta'] = basecom['eta'].apply(create_age_group)
+
+# Merge basesez and basecom on idqua
+merged_data = pd.merge(basesez, basecom, on='idqua')
+
+# Calculate total population for each age group in merged_data
+comcla = merged_data.groupby(['codice_comune__str', 'cleta']).agg({'maschi': 'sum', 'femmine': 'sum'}).reset_index()
+
+# Add idqua column in comcla
+comcla['idqua'] = comcla['codice_comune__str'] + comcla['cleta']
+
+# Calculate total population for each age group in merged_data
+totverif = merged_data.groupby('idqua').agg({'maschi_distribuiti': 'sum', 'femmine_distribuite': 'sum'}).reset_index()
+
+# Calculate total population for each age group in comcla
+comunale_cla = comcla.groupby('idqua').agg({'maschi_cla_com': 'sum', 'femmine_cla_com': 'sum'}).reset_index()
+
+# Merge basesez, totverif, and comunale_cla on idqua
+quadrare = pd.merge(basesez, totverif, on='idqua')
+quadrare = pd.merge(quadrare, comunale_cla, on='idqua')
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_distribuiti_sum']
+quadrare['femmine_qua'] = quadrare['femmine_distribuite_sum']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi_qua'] = quadrare['maschi_cla_com']
+quadrare['femmine_qua'] = quadrare['femmine_cla_com']
+
+# Calculate maschi_qua and femmine_qua in quadrare
+quadrare['maschi

@@ -1,0 +1,24 @@
+Here is the Python equivalent of your SAS code. Please note that some parts may not be directly translatable due to differences between SAS and Python, such as the `%include` statement which includes a file in SAS but does not exist in Python. Also, please replace any paths with actual path on your system:
+
+```python
+import pandas as pd
+from scipy import stats
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+
+# Loading data from Excel files
+consumi_tag = pd.read_excel('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/tag_00026.xlsx', sheet_name='TAG-00026_4')
+reddito_tag = pd.read_excel('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/tag_00027.xlsx', sheet_name='TAG-00027_2')
+provincia = pd.read_excel('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/provincia_110.xlsx')
+corrispo = pd.read_excel('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/Codici-statistici-e-denominazioni-al-31_12_2020.xls', sheet_name='CODICI al 31_12_2020')
+consumi_istat = pd.read_csv('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/quadratura_consumi.csv')
+territorio = pd.read_excel('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_comune.xls')
+reddito = pd.read_excel('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/economica_comune.xls')
+popolazione = pd.read_excel('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/Popolazione_eta_sesso_comune.xls')
+eco = pd.read_excel('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets/econom20b.xls')
+```
+
+Please note that the above code is just to load the data and not to execute any specific task as in your SAS script. The rest of the tasks like merging, sorting, filtering, calculating means, correlations, plotting graphs etc are not directly translatable from SAS to Python due to differences in syntax and functions available in both languages.

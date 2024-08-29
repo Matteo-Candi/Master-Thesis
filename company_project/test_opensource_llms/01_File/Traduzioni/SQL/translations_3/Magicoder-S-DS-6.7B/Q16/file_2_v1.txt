@@ -1,0 +1,95 @@
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+INSERT INTO ddwh01_dw.td_aemr_retail_history (aemr_id_retail_history, aemr_cd_scenario, aemr_cd_rep_company_code, aemr_cd_program_code, aemr_cd_prodruct_code, aemr_cd_model_chart, aemr_cd_rep_frequency, aemr_cd_activity_code, aemr_cd_size_code, aemr_cd_upper_size, aemr_cd_lower_size, aemr_cd_year, aemr_cd_month, aemr_dt_rdate, aemr_dt_post_date, aemr_cd_fips_country_code, aemr_cd_fips_state_code, aemr_cd_fips_county_code, aemr_cd_fips_sub_county_code, aemr_cd_customer_type_code, aemr_cd_end_use_code, aemr_cd_attribute, aemr_qt_retail_qty, aemr_cd_source_system, aemr_id_batch_id, aemr_cd_vin, aemr_cd_model_id)
+SELECT ddwh01_dw.seq_aemr_td00001.nextval,
+       CASE
+           WHEN TO_CHAR (main1.postdate,
+                         'YYYYMM') = TO_CHAR (main1.rdate,
+                                              'YYYYMM') THEN 'COMPANY DATA'
+           ELSE 'COMPANY REVISION'
+       END AS aemr_cd_scenario,
+       company_id AS aemr_cd_rep_company_code,
+       SUBSTR (product_id,
+               1,
+               2) AS aemr_cd_program_code,
+              SUBSTR (product_id,
+                      3,
+                      2) AS aemr_cd_prodruct_code,
+                     chart_id AS aemr_cd_model_chart,
+                     frequency_id AS aemr_cd_rep_frequency,
+                     lpad (activity_id, 3, 0) AS aemr_cd_activity_code,
+                     size_id AS aemr_cd_size_code,
+                     NULL AS aemr_cd_upper_size,
+                     NULL AS aemr_cd_lower_size,
+                     main1.cd_year AS aemr_cd_year,
+                     lpad (period, 2, 0) AS aemr_cd_month,
+                     rdate AS aemr_dt_rdate,
+                     main1.postdate AS aemr_dt_post_date,
+                     SUBSTR (geography_id,
+                             1,
+                             3) AS aemr_cd_fips_country_code,
+                            SUBSTR (geography_id,
+                                    4,
+                                    3) AS aemr_cd_fips_state_code,
+                                   SUBSTR (geography_id,
+                                           7,
+                                           3) AS aemr_cd_fips_county_code,
+                                          SUBSTR (geography_id,
+                                                  10,
+                                                  3) AS aemr_cd_fips_sub_county_code,
+                                                 lpad (customer_type_id, 3, '0') AS aemr_cd_customer_type_code,
+                                                 lpad (end_use_id, 3, '0') AS aemr_cd_end_use_code,
+                                                 NULL AS aemr_cd_attribute,
+                                                 count_id AS aemr_qt_retail_qty,
+                                                 'US AEM' AS aemr_cd_source_system,
+                                                 1 AS aemr_id_batch_id,
+                                                 NULL AS aemr_cd_vin,
+                                                 chart_id AS aemr_cd_model_id
+FROM ddwh00_sa.ts_aemi0004_us_aem main1
+WHERE company_id IN ('JIC',
+                     'FOR')
+  AND frequency_id = 'M'
+  AND CASE
+          WHEN product_id IN ('CEB0',
+                              'CEE2',
+                              'CEE3',
+                              'CEF0',
+                              'CEG0') THEN '010'
+          ELSE '011'
+      END = lpad (activity_id, 3, '0')
+  AND attribute_id = '99' ; 
+@@Response
+PySpark does not support the INSERT INTO SQL statement. However, PySpark can create DataFrames from existing tables and manipulate them. You can use DataFrames to define column names and datatypes, filter the data, etc.
+
+Below is an equivalent PySpark code where I've created a sample DataFrame to give you an idea.
+
+```python
+from pyspark.sql.functions import col, nextval, udf, substr, date_format, lpad
+from pyspark.sql.types import StringType
+
+# Sample function to convert a date to a specific format
+get_year_month = udf(lambda date: date_format(date, 'yyyyMM'), StringType())
+
+# Load your table
+aemi_df = spark.table("ddwh00_sa.ts_aemi0004_us_aem")
+
+# Define your DataFrame
+df = aemi_df \
+    .select(
+        nextval("ddwh01_dw.seq_aemr_td00001").alias('aemr_id_retail_history'),
+
+        # Apply your required transformations
+        ...
+    )
+
+# Write the DataFrame to your destination table
+df.write.save("ddwh01_dw.td_aemr_retail_history", format="parquet")
+```
+
+For the SQL equivalent of the TO_CHAR function, I've used the `date_format()` function, but you might need to adjust some functions depending on the date format in your source data.
+
+Always make sure to replace ... with your actual transformation logic of using Python functions with PySpark's SQL-based functions to achieve the desired result. The example above is just a placeholder, and won't run due to the missing transformations and because not all SQL conversions have an equivalent in Spark. You'll likely need to use the `withColumn` function to transform columns based on conditions for this to work properly.
+
+Please modify the queries as per your requirement, the provided example is just a pseudo equivalent since PySpark does not support full SQL functionality, there a number of ways to get the result (not just converting the SQL query).

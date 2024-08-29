@@ -1,0 +1,42 @@
+
+The PySpark equivalent of the given SQL code is as follows:
+```python
+# Assuming `spark` is your SparkSession and that `main1_df` is a DataFrame
+from pyspark.sql import functions as F, Window
+
+def get_scenario(row):
+    if row['postdate'].strftime("%Y%m") == row['rdate'].strftime("%Y%m"):
+        return "COMPANY DATA"
+    else:
+        return "COMPANY REVISION"
+
+scenario_udf = F.udf(get_scenario)
+
+main1_df = main1_df.withColumn("aemr_cd_scenario", scenario_udf(F.struct([main1_df[col] for col in ["postdate"], [main1_df[col] for col in ["rdate"]]))) \
+                        .withColumn("aemr_cd_rep_company_code", main1_df["company_id"]) \
+                        .withColumn("aemr_cd_program_code", F.substr(main1_df["product_id"], 1, 2)) \
+                        .withColumn("aemr_cd_prodruct_code", F.substr(main1_df["product_id"], 3, 2)) \
+                        .withColumn("aemr_cd_model_chart", main1_df["chart_id"]) \
+                        .withColumn("aemr_cd_rep_frequency", main1_df["frequency_id"]) \
+                        .withColumn("aemr_cd_activity_code", F.lpad(main1_df["activity_id"], 3, "0")) \
+                        .withColumn("aemr_cd_size_code", main1_df["size_id"]) \
+                        .withColumn("aemr_cd_upper_size", F.lit(None)) \
+                        .withColumn("aemr_cd_lower_size", F.lit(None)) \
+                        .withColumn("aemr_cd_year", main1_df["cd_year"]) \
+                        .withColumn("aemr_cd_month", F.lpad(main1_df["period"], 2, "0")) \
+                        .withColumn("aemr_dt_rdate", main1_df["rdate"]) \
+                        .withColumn("aemr_dt_post_date", main1_df["postdate"]) \
+                        .withColumn("aemr_cd_fips_country_code", F.substr(main1_df["geography_id"], 1, 3)) \
+                        .withColumn("aemr_cd_fips_state_code", F.substr(main1_df["geography_id"], 4, 3)) \
+                        .withColumn("aemr_cd_fips_county_code", F.substr(main1_df["geography_id"], 7, 3)) \
+                        .withColumn("aemr_cd_fips_sub_county_code", F.substr(main1_df["geography_id"], 10, 3)) \
+                        .withColumn("aemr_cd_customer_type_code", F.lpad(main1_df["customer_type_id"], 3, "0")) \
+                        .withColumn("aemr_cd_end_use_code", F.lpad(main1_df["end_use_id"], 3, "0")) \
+                        .withColumn("aemr_cd_attribute", F.lit(None)) \
+                        .withColumn("aemr_qt_retail_qty", main1_df["count_id"]) \
+                        .withColumn("aemr_cd_source_system", F.lit('US AEM')) \
+                        .withColumn("aemr_id_batch_id", F.lit(1)) \
+                        .withColumn("aemr_cd_vin", F.lit(None)) \
+                        .withColumn("aemr_cd_model_id", main1_df["chart_id"])
+main1_filtered = main1_df.where((main1_df['company_id'].isin('JIC', 'FOR')) & (main1_df['frequency_id'] == 'M') & ((F.substr(main1_df["product_id"], -2, 5).isin('CEB0', 'CEE2', 'CEE3', 'CEF0', 'CEG0') & F.lpad(main1_df["activity_id"], 3, "0") == '010'))
+```

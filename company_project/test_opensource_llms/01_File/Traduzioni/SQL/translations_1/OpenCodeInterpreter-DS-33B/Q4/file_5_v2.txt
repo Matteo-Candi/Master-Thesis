@@ -1,0 +1,23 @@
+
+Translating the given SQL code to PySpark is not straightforward as PySpark does not support all SQL functions used in your SQL query and it also has different syntax for writing queries. However, a best attempt can be made by translating some of the SQL operations into PySpark equivalents. 
+
+For instance, the `TO_CHAR` function in your SQL code is used to extract the year from a date field. In Spark, you would use the `year()` function instead:
+```python
+from pyspark.sql import functions as F
+df = df.withColumn('fbil_nr_accg_doc_fiscal_year', F.year(F.col('inol_dt_document_date')))
+```
+Similarly, the `NVL` function is used to replace null values with a specific value. In PySpark, you would use the `when()` and `otherwise()` functions:
+```python
+df = df.withColumn('fbil_id_pvan_vcl', F.when(F.col('inol_id_vele_vcl_legacy').isNull(), -1).otherwise(F.col('inol_id_vele_vcl_legacy')))
+```
+The `SELECT` statement in your SQL query is translated into a `select()` function, and the `FROM` clause into a DataFrame assignment:
+```python
+df = spark.sql("""
+    SELECT -1 AS fbil_id_comp_company,
+           '-1' AS fbil_cd_accg_doc_code,
+           to_number (TO_CHAR (inol.inol_dt_document_date, 'YYYY')) AS fbil_nr_accg_doc_fiscal_year,
+           ...
+    FROM ddwh01_dw.td_inol_invoice_orders_lines inol
+""")
+```
+Please note that the full translation of your SQL query to PySpark would be quite complex and may require additional steps or transformations specific to your data and schema.

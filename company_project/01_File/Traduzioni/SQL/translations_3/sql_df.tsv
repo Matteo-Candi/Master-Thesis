@@ -1,0 +1,258 @@
+	model	quantization	file	version	input_tokens	max_length	time	output_tokens	lloc	primary_errors_rank	secondary_errors_index	commented_lines	cyclomatic_complexity_index	halstead_volume	maintainability_index	syntax_error	loop	partial_code	primary_error_text
+0	CodeQwen1.5-7B-Chat	Q16	file_1	v1	909.0	3636.0	50.12	1742.0	7.0	Good	0.05	11.9	14.3	0.0	100.0		False	False	"Undefined variable 'spark'
+Undefined variable 'df_sa_to_insert'
+Undefined variable 'DDWH01_DW'
+Undefined variable 'to_date'
+Undefined variable 'SYSDATE'
+Undefined variable 'p_ELT_ID_BATCH'
+Undefined variable 'n_ELT_ID_JOB_LOG'
+"
+1	CodeQwen1.5-7B-Chat	Q16	file_2	v1	1247.0	4988.0	65.4	2534.0	28.0	Good	0.03	14.5	3.6	72.3	77.3		False	False	"Using variable 'main_df' before assignment
+Undefined variable 'pyspark'
+"
+2	CodeQwen1.5-7B-Chat	Q16	file_3	v1	1992.0	7968.0	92.7	3935.0								"  File ""<unknown>"", line 25
+    .filter((PLBR_PLANT_BRANCHES.PLBR_DS_PLANT_SEGMENT == ""AG"") |
+           ^
+SyntaxError: '(' was never closed
+"	False	False	
+3	CodeQwen1.5-7B-Chat	Q16	file_4	v1	2607.0	10428.0	155.72	5154.0	7.0	Poor	0.01	3.8	14.3	167.2	77.5		False	False	"Undefined variable 'spark'
+"
+4	CodeQwen1.5-7B-Chat	Q16	file_5	v1	4384.0	17536.0	181.62	7946.0	14.0	Poor	0.04	4.8	7.1	59.5	75.6		False	False	"Duplicate key 'inol_cd_progressive_order' in dictionary
+Duplicate key 'inol_cd_progressive_order' in dictionary
+Undefined variable 'inol_id_vele_vcl_legacy'
+Undefined variable 'inol_cd_cmm_doc_code'
+Undefined variable 'delta'
+Undefined variable 'inol'
+Undefined variable 'vele'
+Undefined variable 'inol_cd_cmm_doc_pos_code'
+"
+5	CodeQwen1.5-7B-Chat	Q16	file_6	v1	5810.0	23240.0	168.51	8461.0								"  File ""<unknown>"", line 122
+    df = df.withColumn(""EKPO_KEY_STC"",
+                      ^
+SyntaxError: '(' was never closed
+"	False	False	
+6	CodeQwen1.5-7B-Chat	Q16	file_1	v2	999.0	3996.0	48.04	1917.0	11.0	Good	0.05	14.0	9.1	23.3	89.2		False	False	"Undefined variable 'spark'
+"
+7	CodeQwen1.5-7B-Chat	Q16	file_2	v2	1337.0	5348.0	65.21	2721.0	6.0	Poor	0.02	7.1	16.7	38.0	87.7		False	False	"No name 'nextval' in module 'pyspark.sql.functions'
+Undefined variable 'substring'
+Undefined variable 'when'
+"
+8	CodeQwen1.5-7B-Chat	Q16	file_3	v2	2082.0	8328.0	103.43	3900.0	10.0	Good	0.01	2.4	10.0	28.5	77.3		False	False	
+9	CodeQwen1.5-7B-Chat	Q16	file_4	v2	2697.0	10788.0	263.59	5182.0	20.0	Very poor	0.01	5.3	5.0	104.2	71.1		False	False	"Module 'pyspark.sql.functions' has no 'next_sequence' member
+Undefined variable 'spark'
+Undefined variable 'n_ELT_ID_JOB_LOG'
+"
+10	CodeQwen1.5-7B-Chat	Q16	file_5	v2	4474.0	17896.0	260.9	8922.0	91.0	Extremely poor	0.0	1.9	8.8	575.2	45.1		False	False	"Undefined variable 'lit'
+"
+11	CodeQwen1.5-7B-Chat	Q16	file_6	v2	5900.0	23600.0	210.41	10020.0								"  File ""<unknown>"", line 123
+    col(""EKPO_NR_NET_WEIGHT"")/1000.alias(""EKPO_NR_NET_WEIGHT""),
+                                  ^
+SyntaxError: invalid decimal literal
+"	False	False	
+12	OpenCodeInterpreter-DS-6.7B	Q16	file_1	v1	904.0	3616.0	59.12	2052.0	6.0	Very poor	0.07	8.7	16.7	0.0	100.0		False	False	"Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Undefined variable 'spark'
+Undefined variable 'next_sequence_value'
+"
+13	OpenCodeInterpreter-DS-6.7B	Q16	file_2	v1	1166.0	4664.0	69.49	2474.0	28.0	Good	0.08	1.9	3.6	25.3	66.8		False	False	"Undefined variable 'spark'
+Undefined variable 'lit'
+"
+14	OpenCodeInterpreter-DS-6.7B	Q16	file_3	v1	1890.0	7560.0	58.78	2876.0								"  File ""<unknown>"", line 14
+    .withColumn(""EKKO_NR_PURCH_DOC_YEAR"",F.year(F.col(""EKKO_DT_PURCH_DOC_DATE"")))
+IndentationError: unexpected indent
+"	False	False	
+15	OpenCodeInterpreter-DS-6.7B	Q16	file_4	v1	2434.0	9736.0	116.65	4106.0								"  File ""<unknown>"", line 47
+    .whenNotMatchedInsert(values = {""DESC_ID_TABLE""              : F.lit(DDWH01_DW.SEQ_TM_DESC.next()()),
+IndentationError: unexpected indent
+"	False	False	
+16	OpenCodeInterpreter-DS-6.7B	Q16	file_5	v1	4078.0	16312.0	131.41	5603.0								"  File ""<unknown>"", line 46
+    .withColumn('fbil_id_pvan_vcl', F.when(col('inol_id_vele_vcl_legacy').isNull(), -1).otherwise(col('inol_id_vele_vcl_legacy'))]\
+                                                                                                                                 ^
+SyntaxError: closing parenthesis ']' does not match opening parenthesis '('
+"	False	False	
+17	OpenCodeInterpreter-DS-6.7B	Q16	file_6	v1	5186.0	16384.0	84.36	6095.0	16.0	Good	0.03	17.5	6.2	13.9	89.2		False	False	"Undefined variable 'save_or_export'
+Undefined variable 'F'
+"
+18	OpenCodeInterpreter-DS-6.7B	Q16	file_1	v2	994.0	3976.0	66.54	2190.0	25.0	Good	0.02	9.6	4.0	0.0	100.0		False	False	"Undefined variable 'DDWH01_DW'
+Undefined variable 'spark'
+Undefined variable 'datetime'
+"
+19	OpenCodeInterpreter-DS-6.7B	Q16	file_2	v2	1256.0	5024.0	51.36	2622.0								"  File ""<unknown>"", line 37
+    1.cast(""int"") as ""aemr_id_batch_id"",
+     ^
+SyntaxError: invalid decimal literal
+"	False	False	
+20	OpenCodeInterpreter-DS-6.7B	Q16	file_3	v2	1980.0	7920.0	87.37	3540.0	17.0	Good	0.02	19.7	5.9	116.7	83.6		False	False	"Undefined variable 'concat'
+Undefined variable 'lit'
+Undefined variable 'when'
+Undefined variable 'length'
+"
+21	OpenCodeInterpreter-DS-6.7B	Q16	file_4	v2	2524.0	10096.0	155.23	4611.0								"  File ""<unknown>"", line 18
+    sa = sa_makt.select('MAKT' as ""DESC_CD_TABLE"", 'Material' as ""DESC_CD_TABLE_DESC"", ""*"" from (sa_eqkt.select('EQKT' as ""DESC_CD_TABLE"", 'Equipment' as ""DESC_CD_TABLE_DESC"", ""*"" from (sa_t005.select('T005T' as ""DESC_CD_TABLE"", 'Country' as ""DESC_CD_TABLE_DESC"", ""*"" from (sa_t023.select('T023T' as ""DESC_CD_TABLE"", 'Commodity' as ""DESC_CD_TABLE_DESC"", ""*"" from (sa_t052.select('T052U' as ""DESC_CD_TABLE"", 'Payment Condition' as ""DESC_CD_TABLE_DESC"", ""*"" from (sa_tinc.select('TINCT' as ""DESC_CD_TABLE"", 'Incoterms' as ""DESC_CD_TABLE_DESC"", ""*"" from sa_swor.select('SWOR' as ""DESC_CD_TABLE"", 'Hierarchy Material Group' as ""DESC_CD_TABLE_DESC"", ""*"")).union(sa_swor))).union(sa_t052))).union(sa_t023))).union(sa_t005))).union(sa_eqkt)
+                               ^^
+SyntaxError: invalid syntax
+"	False	False	
+22	OpenCodeInterpreter-DS-6.7B	Q16	file_5	v2	4168.0	16384.0	78.01	4461.0									False	False	
+23	OpenCodeInterpreter-DS-6.7B	Q16	file_6	v2	5276.0	16384.0	537.61	9337.0								"  File ""<unknown>"", line 109
+    , """"""TO_CHAR(CASE WHEN EKPO_CD_PLANT = 'CX01' THEN REPLACE (LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0) WHEN EKPO_CD_PLANT IN ('AU01', 'LP01', 'LP02', 'AU05') THEN NVL(SUBSTR(REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0),0, INSTR(REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0)) WHEN EKPO_CD_PLANT IN ('CR01', 'TY01') THEN NVL(substr(REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), 0, INSTR(REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0)) WHEN EKPO_CD_PLANT IN ('AW01', 'JE01', 'MO01', 'PL01') THEN REPLACE (LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0) WHEN EKPO_CD_PLANT IN ('CU01', 'SA01') THEN REPLACE(REPLACE (LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0),'+SC', 'P') ELSE NVL(substr(REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), 0, INSTR(REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0)) END) || '|' || coalesce(PF.TRGE_CD_DESTINATION_DATA, EKPO_CD_PLANT) as EKPO_KEY_STC"").alias(""EKPO_KEY_STC""))
+      ^
+SyntaxError: unterminated triple-quoted string literal (detected at line 109)
+"	False	False	
+24	Artigenz-Coder-DS-6.7B	Q16	file_1	v1	904.0	3616.0	81.18	1890.0	12.0	Good	0.02	14.0	8.3	27.0	88.0		False	False	"Undefined variable 'spark'
+"
+25	Artigenz-Coder-DS-6.7B	Q16	file_2	v1	1166.0	4664.0	84.12	2803.0	5.0	Good	0.02	1.9	20.0	84.0	79.4		False	False	"Undefined variable 'ddwh00_sa'
+"
+26	Artigenz-Coder-DS-6.7B	Q16	file_3	v1	1890.0	7560.0	162.9	4713.0	5.0	Extremely poor	0.01	7.5	20.0	99.4	86.5		False	False	"Undefined variable 'ddwh01_dw'
+"
+27	Artigenz-Coder-DS-6.7B	Q16	file_4	v1	2434.0	9736.0	114.3	3634.0								"  File ""<unknown>"", line 6
+    .select('MAKT' as DESC_CD_TABLE,
+                   ^^
+SyntaxError: invalid syntax
+"	False	False	
+28	Artigenz-Coder-DS-6.7B	Q16	file_5	v1	4078.0	16312.0	238.63	7976.0	25.0	Poor	0.07	0.0	4.0	0.0	100.0		False	False	"Undefined variable 'spark'
+"
+29	Artigenz-Coder-DS-6.7B	Q16	file_6	v1	5186.0	16384.0	215.22	8832.0	6.0	Good	0.03	0.8	16.7	0.0	100.0		False	False	
+30	Artigenz-Coder-DS-6.7B	Q16	file_1	v2	994.0	3976.0	92.29	2515.0	27.0	Good	0.01	10.9	3.7	0.0	100.0		False	False	
+31	Artigenz-Coder-DS-6.7B	Q16	file_2	v2	1256.0	5024.0	131.3	2857.0	6.0	Good	0.02	8.5	16.7	118.6	85.6		False	False	
+32	Artigenz-Coder-DS-6.7B	Q16	file_3	v2	1980.0	7920.0	106.9	3375.0								"  File ""<unknown>"", line 13
+    EKKO_AGCE = (EKKO_purch_doc_header
+                ^
+SyntaxError: '(' was never closed
+"	False	False	
+33	Artigenz-Coder-DS-6.7B	Q16	file_4	v2	2524.0	10096.0	271.76	4040.0	17.0	Mediocre	0.02	5.4	5.9	54.0	74.8		False	False	"Module 'pyspark.sql.functions' has no 'date' member
+Module 'pyspark.sql.functions' has no 'date' member
+Undefined variable 'n_ELT_ID_JOB_LOG'
+"
+34	Artigenz-Coder-DS-6.7B	Q16	file_5	v2	4168.0	16384.0	235.16	7317.0								"  File ""<unknown>"", line 95
+    ""CASE WHEN inol.inol_cd_document_type IN ('1') THEN 1 ELSE 0 END - 
+    ^
+SyntaxError: unterminated string literal (detected at line 95)
+"	False	False	
+35	Artigenz-Coder-DS-6.7B	Q16	file_6	v2	5276.0	16384.0	207.81	8042.0	10.0	Good	0.03	2.5	10.0	84.0	74.0		False	False	
+36	Magicoder-S-DS-6.7B	Q16	file_1	v1	904.0	3616.0	52.93	2154.0	6.0	Extremely poor	0.08	7.2	16.7	54.0	86.8		False	False	"Undefined variable 'next_sequence_value'
+Undefined variable 'target'
+Undefined variable 'p_ELT_ID_BATCH'
+Undefined variable 'Date'
+Undefined variable 'n_ELT_ID_JOB_LOG'
+Undefined variable 'sa'
+"
+37	Magicoder-S-DS-6.7B	Q16	file_2	v1	1166.0	4664.0	51.77	1689.0	7.0	Good	0.4	35.7	14.3	0.0	100.0		False	False	"No name 'nextval' in module 'pyspark.sql.functions'
+Undefined variable 'spark'
+"
+38	Magicoder-S-DS-6.7B	Q16	file_3	v1	1890.0	7560.0	78.4	3409.0	4.0	Very poor	0.02	0.0	25.0	68.0	73.9		False	False	"Undefined variable 'ddwh01_dw'
+"
+39	Magicoder-S-DS-6.7B	Q16	file_4	v1	2434.0	9736.0	142.26	6079.0	18.0	Poor	0.02	4.5	5.6	175.1	69.4		False	False	"Undefined variable 'spark'
+Undefined variable 'sqlContext'
+"
+40	Magicoder-S-DS-6.7B	Q16	file_5	v1	4078.0	16312.0	118.92	7484.0								"  File ""<unknown>"", line 41
+    -1.alias(""fbil_id_comp_company""),
+      ^
+SyntaxError: invalid decimal literal
+"	False	False	
+41	Magicoder-S-DS-6.7B	Q16	file_6	v1	5186.0	16384.0	193.75	8400.0	5.0	Good	0.02	0.0	20.0	0.0	100.0		False	False	
+42	Magicoder-S-DS-6.7B	Q16	file_1	v2	994.0	3976.0	52.99	1817.0	7.0	Good	0.13	11.4	14.3	0.0	100.0		False	False	"Undefined variable 'spark'
+Undefined variable 'seq'
+"
+43	Magicoder-S-DS-6.7B	Q16	file_2	v2	1256.0	5024.0	81.4	2832.0	10.0	Extremely poor	0.01	0.0	20.0	131.2	63.1		False	False	"Module 'pyspark.sql.functions' has no 'seq_aemr_td00001' member
+Undefined variable 'IntegerType'
+Undefined variable 'StructType'
+Undefined variable 'StructField'
+Undefined variable 'StringType'
+Undefined variable 'TimestampType'
+"
+44	Magicoder-S-DS-6.7B	Q16	file_3	v2	1980.0	7920.0	79.72	3602.0	7.0	Good	0.04	8.3	14.3	25.5	88.5		False	False	
+45	Magicoder-S-DS-6.7B	Q16	file_4	v2	2524.0	10096.0	25.56	3182.0	6.0	Good	0.09	26.7	16.7	23.3	100.0		False	False	
+46	Magicoder-S-DS-6.7B	Q16	file_5	v2	4168.0	16384.0	184.94	7294.0								"  File ""<unknown>"", line 113
+    F.col('inol.fbil_id_time_accounting_date'))).filter(""inol.inol_fl_delete_line IS NULL"")
+                                               ^
+SyntaxError: unmatched ')'
+"	False	False	
+47	Magicoder-S-DS-6.7B	Q16	file_6	v2	5276.0	16384.0	219.83	9156.0								"  File ""<unknown>"", line 37
+    .select([
+IndentationError: unexpected indent
+"	False	False	
+48	deepseek-coder-33b-instruct	Q4	file_1	v1	904.0	3616.0	33.29	946.0								"  File ""<unknown>"", line 29
+    .withColumn('VENL_DT_START_VALIDITY', F.to_date(F.lit(""01/01/1900""), ""dd/MM/yyyy""))) \
+                                                                                       ^
+SyntaxError: unmatched ')'
+"	False	False	
+49	deepseek-coder-33b-instruct	Q4	file_2	v1	1166.0	4664.0	35.9	1000.0								"  File ""<unknown>"", line 25
+    .select(seq_num, ""*"") 
+IndentationError: unexpected indent
+"	False	False	
+50	deepseek-coder-33b-instruct	Q4	file_3	v1	1890.0	7560.0	43.45	1172.0	7.0	Good	0.02	5.5	14.3	99.4	81.2		False	False	"Undefined variable 'df_EKO'
+"
+51	deepseek-coder-33b-instruct	Q4	file_4	v1	2434.0	9736.0	73.9	2038.0								"  File ""<unknown>"", line 50
+    .select(""*"") # select all columns from the diff dataframe
+IndentationError: unexpected indent
+"	False	False	
+52	deepseek-coder-33b-instruct	Q4	file_5	v1	4078.0	16312.0	58.17	1360.0								"  File ""<unknown>"", line 3
+    from ddwh01_dw.td_inol_invoice_orders_lines inol
+                                                ^^^^
+SyntaxError: invalid syntax
+"	False	False	
+53	deepseek-coder-33b-instruct	Q4	file_6	v1	5186.0	16384.0	61.53	1332.0								"  File ""<unknown>"", line 29
+    concat(substring((ltrim(rtrim(regexp_replace(when(col(""EKPO_CD_PLANT"") == ""CX01"", col(""TRGE_CD_DESTINATION_DATA""), coalesce(col(""PF.TRGE_CD_DESTINATION_DATA""), col(""EKPO_CD_PLANT""))).alias(""EKPO_KEY_STC""))), -10))
+          ^
+SyntaxError: '(' was never closed
+"	False	False	
+54	deepseek-coder-33b-instruct	Q4	file_1	v2	994.0	3976.0	40.12	1168.0	11.0	Good	0.02	13.6	9.1	0.0	100.0		False	False	"Undefined variable 'n_ELT_ID_JOB_LOG'
+"
+55	deepseek-coder-33b-instruct	Q4	file_2	v2	1256.0	5024.0	28.89	747.0	5.0	Good	0.02	4.8	20.0	53.8	85.4		False	False	
+56	deepseek-coder-33b-instruct	Q4	file_3	v2	1980.0	7920.0	50.55	1389.0	10.0	Good	0.08	6.0	10.0	99.4	78.7		False	False	
+57	deepseek-coder-33b-instruct	Q4	file_4	v2	2524.0	10096.0	69.77	1912.0								"  File ""<unknown>"", line 8
+    SA = spark.read.format('jdbc').options(url='jdbc:oracle:thin:@localhost:1521:xe', dbtable='(SELECT  'MAKT' DESC_CD_TABLE , 'Material' DESC_CD_TABLE_DESC , MATNR DESC_CD_CODE , SPRAS DESC_CD_LANGUAGE , 1 DESC_CD_POSITION , MAKTX DESC_CD_DESCRIPTION1 , MAKTG DESC_CD_DESCRIPTION2 , NULL DESC_CD_DETAIL1 ,NULL DESC_CD_DETAIL2 ,NULL DESC_CD_DETAIL3 ,'WW GPP' DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_MAKT0001_WW_GPP SA UNION ALL SELECT 'EQKT' DESC_CD_TABLE ,'Equipment' DESC_CD_TABLE_DESC , EQUNR DESC_CD_CODE , SPRAS DESC_CD_LANGUAGE , 1 DESC_CD_POSITION , EQKTX DESC_CD_DESCRIPTION1 , EQKTU DESC_CD_DESCRIPTION2 , KZLTX DESC_CD_DETAIL1 , TXASP DESC_CD_DETAIL2 , TO_CHAR(TEXTCHANGEDDATETIME) DESC_CD_DETAIL3 ,'WW GPP' DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_EQKT0001_WW_GPP SA2 UNION ALL SELECT 'T005T' DESC_CD_TABLE ,'Country' DESC_CD_TABLE_DESC , LAND1 DESC_CD_CODE , SPRAS DESC_CD_LANGUAGE , 1 DESC_CD_POSITION , LANDX DESC_CD_DESCRIPTION1 , LANDX50 DESC_CD_DESCRIPTION2 , PRQ_SPREGT DESC_CD_DETAIL1 , NATIO DESC_CD_DETAIL2 , NATIO50 DESC_CD_DETAIL3 ,'WW GPP' DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_T0050002_WW_GPP SA3 UNION ALL SELECT 'T023T' DESC_CD_TABLE ,'Commodity' DESC_CD_TABLE_DESC , MATKL DESC_CD_CODE , SPRAS DESC_CD_LANGUAGE , 1 DESC_CD_POSITION , WGBEZ DESC_CD_DESCRIPTION1 , WGBEZ60 DESC_CD_DESCRIPTION2 , NULL DESC_CD_DETAIL1 ,NULL DESC_CD_DETAIL2 ,NULL DESC_CD_DETAIL3 ,'WW GPP' DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_T0230002_WW_GPP SA4 UNION ALL SELECT 'T052U' DESC_CD_TABLE ,'Payment Condition' DESC_CD_TABLE_DESC , CONCAT(ZTERM, NVL(ZTAGG, -1)) DESC_CD_CODE , SPRAS DESC_CD_LANGUAGE , 1 DESC_CD_POSITION , TEXT1 DESC_CD_DESCRIPTION1 , NULL DESC_CD_DESCRIPTION2 ,NULL DESC_CD_DETAIL1 ,NULL DESC_CD_DETAIL2 ,NULL DESC_CD_DETAIL3 ,'WW GPP' DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_T0520002_WW_GPP SA5 UNION ALL SELECT 'TINCT' DESC_CD_TABLE ,'Incoterms' DESC_CD_TABLE_DESC , INCO1 DESC_CD_CODE , SPRAS DESC_CD_LANGUAGE , 1 DESC_CD_POSITION , BEZEI DESC_CD_DESCRIPTION1 , NULL DESC_CD_DESCRIPTION2 ,NULL DESC_CD_DETAIL1 ,NULL DESC_CD_DETAIL2 ,NULL DESC_CD_DETAIL3 ,'WW GPP' DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_TINC0002_WW_GPP SA6 UNION ALL SELECT 'SWOR' DESC_CD_TABLE ,'Hierarchy Material Group' DESC_CD_TABLE_DESC , TO_CHAR(CLINT) DESC_CD_CODE , SPRAS DESC_CD_LANGUAGE , KLPOS DESC_CD_POSITION , KSCHL DESC_CD_DESCRIPTION1 , KSCHG DESC_CD_DESCRIPTION2 ,NULL DESC_CD_DETAIL1 ,NULL DESC_CD_DETAIL2 ,NULL DESC_CD_DETAIL3 ,'WW GPP' DESC_CD_SOURCE_SYSTEM FROM ddwh00_sa.TS_SWOR00001_WW_GPP SA7 MINUS SELECT DESC_CD_TABLE ,DESC_CD_TABLE_DESC ,DESC_CD_CODE ,DESC_CD_LANGUAGE ,DESC_CD_POSITION ,DESC_CD_DESCRIPTION1 ,DESC_CD_DESCRIPTION2 ,DESC_CD_DETAIL1 ,DESC_CD_DETAIL2 ,DESC_CD_DETAIL3 ,DESC_CD_SOURCE_SYSTEM FROM ddwh01_dw.TM_DESC_DESCRIPTION DW) SA', driver='oracle.jdbc.driver.OracleDriver').load()
+                                                                                              ^^^^^^^^^^^^^^^
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+"	False	False	
+58	deepseek-coder-33b-instruct	Q4	file_5	v2	4168.0	16384.0	60.81	1432.0	25.0	Good	0.05	12.7	8.0	346.0	72.1		False	False	"Undefined variable 'IntegerType'
+"
+59	deepseek-coder-33b-instruct	Q4	file_6	v2	5276.0	16384.0	39.31	810.0	7.0	Good	0.02	6.7	14.3	166.4	81.3		False	False	
+60	OpenCodeInterpreter-DS-33B	Q4	file_1	v1	904.0	3616.0	27.61	749.0	9.0	Good	0.04	13.3	22.2	0.0	100.0		False	False	
+61	OpenCodeInterpreter-DS-33B	Q4	file_2	v1	1166.0	4664.0	39.07	1109.0								"  File ""<unknown>"", line 12
+    main1_df = main1_df.withColumn(""aemr_cd_scenario"", scenario_udf(F.struct([main1_df[col] for col in [""postdate""], [main1_df[col] for col in [""rdate""]]))) \
+                                                                                                                                                         ^
+SyntaxError: closing parenthesis ')' does not match opening parenthesis '['
+"	False	False	
+62	OpenCodeInterpreter-DS-33B	Q4	file_3	v1	1890.0	7560.0	24.49	540.0								"  File ""<unknown>"", line 15
+    result = df.join(agce_df, 'EKKO_CD_PURCH_DOC_NBR' == 'EKPO_CD_PO_NBR', 'inner') \  # Equivalent to INNER JOIN in SQL
+                                                                                     ^
+SyntaxError: unexpected character after line continuation character
+"	False	False	
+63	OpenCodeInterpreter-DS-33B	Q4	file_4	v1	2434.0	9736.0	11.61	50.0									False	False	
+64	OpenCodeInterpreter-DS-33B	Q4	file_5	v1	4078.0	16312.0	100.13	2599.0								"  File ""<unknown>"", line 31
+    df_final = df.select(-1 as fbil_id_comp_company,
+                            ^^
+SyntaxError: invalid syntax
+"	False	False	
+65	OpenCodeInterpreter-DS-33B	Q4	file_6	v1	5186.0	16384.0	42.86	791.0								"  File ""<unknown>"", line 20
+    ekpo.join(plbr, (ekpo[""EKPO_CD_PLANT""] == plbr[""PLBR_CD_PLANT""]) & ((plbr[""PLBR_DS_PLANT_SEGMENT""].isin('AG', 'CE')) | ((~plbr[""PLBR_CD_PLANT""].startswith(""FA"")) & (~plbr[""PLBR_CD_PLANT""].startswith(""FB"")))) \
+             ^
+SyntaxError: '(' was never closed
+"	False	False	
+66	OpenCodeInterpreter-DS-33B	Q4	file_1	v2	994.0	3976.0	27.67	739.0	9.0	Good	0.03	12.1	11.1	0.0	100.0		False	False	
+67	OpenCodeInterpreter-DS-33B	Q4	file_2	v2	1256.0	5024.0	27.57	703.0	10.0	Good	0.03	14.3	30.0	55.5	87.2		False	False	
+68	OpenCodeInterpreter-DS-33B	Q4	file_3	v2	1980.0	7920.0	59.04	1667.0	18.0	Good	0.04	10.8	5.6	2.0	89.7		False	False	"Undefined variable 'concat'
+Undefined variable 'lit'
+Undefined variable 'coalesce'
+Undefined variable 'year'
+"
+69	OpenCodeInterpreter-DS-33B	Q4	file_4	v2	2524.0	10096.0	17.88	249.0									False	False	
+70	OpenCodeInterpreter-DS-33B	Q4	file_5	v2	4168.0	16384.0	100.54	2588.0								"  File ""<unknown>"", line 24
+    to_number(from_unixtime('inol_dt_document_date'), 'YYYY')) as fbil_nr_accg_doc_fiscal_year, 
+                                                               ^^
+SyntaxError: invalid syntax
+"	False	False	
+71	OpenCodeInterpreter-DS-33B	Q4	file_6	v2	5276.0	16384.0	22.78	325.0	5.0	Good	0.07	27.8	20.0	0.0	100.0		False	False	"Undefined variable 'IntegerType'
+Undefined variable 'StructType'
+Undefined variable 'StructField'
+Undefined variable 'TimestampType'
+"

@@ -1,0 +1,43 @@
+In PySpark, MERGE operation is not directly available. However, we can simulate a merge operation by performing join operations and then updating or inserting the data as per the conditions specified in your SQL script. Here's how you could translate that into PySpark:
+
+```python
+from pyspark.sql import functions as F
+from datetime import datetime
+
+# Load data from SA table
+sa_df = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP").select(F.col("CLIENT").alias("VENL_CD_CLIENT"), 
+                                                            F.col("PARTNER_GUID").alias("VENL_CD_PARTNER_GUID"), 
+                                                            F.col("VENDOR").alias("VENL_CD_VENDOR"), 
+                                                            F.col("CRUSER").alias("VENL_CD_USER"), 
+                                                            F.col("CRDAT").alias("VENL_DT_DATE"), 
+                                                            F.col("CRTIM").alias("VENL_DT_TIME"))
+
+# Load data from DW table
+dw_df = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Create a temporary view for the SA DataFrame
+sa_df.createOrReplaceTempView('SA')
+
+# Merge data from SA and DW tables based on matching VENL_CD_CLIENT and VENL_CD_PARTNER_GUID
+merged_df = sa_df.join(dw_df, ['VENL_CD_CLIENT', 'VENL_CD_PARTNER_GUID'], how='full')  # Using full join to get matched and non-matched records
+
+# Define the update condition: when both VENL_CD_CLIENT and VENL_CD_PARTNER_GUID are not null, it means a match was found in DW table
+update_cond = (F.col('SA.VENL_CD_CLIENT').isNotNull()) & (F.col('SA.VENL_CD_PARTNER_GUID').isNotNull())
+
+# Define the insert condition: when either VENL_CD_CLIENT or VENL_CD_PARTNER_GUID is null, it means no match was found in DW table
+insert_cond = (F.col('SA.VENL_CD_CLIENT').isNull()) | (F.col('SA.VENL_CD_PARTNER_GUID').isNull())
+
+# Perform the update operation if condition is met
+updated_df = merged_df.withColumn('VENL_ID_LAST_MODIFY', F.when(update_cond, datetime.now())) \
+                      .withColumn('VENL_DT_START_VALIDITY', F.to_date(F.lit("01/01/1900"), "dd/MM/yyyy"))) \
+                      .withColumn('VENL_DT_END_VALIDITY', F.to_date(F.lit("31/12/9999"), "dd/MM/yyyy"))) 
+                  
+# Perform the insert operation if condition is met
+inserted_df = updated_df.withColumn('VENL_ID_LINK', F.when(insert_cond, F.expr("NEXTVAL(`ddwh01_dw`.SEQ_TM_VENL)"))) \
+                         .withColumn('VENL_DT_INSERT', F.when(insert_cond, datetime.now())) 
+
+# Write the final DataFrame back to DW table (assuming `mode` is overwrite for simplicity)
+inserted_df.write.mode("overwrite").insertInto("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+
+Please replace the placeholders like 'p_ELT_ID_BATCH', 'n_ELT_ID_JOB_LOG' with actual values or variables as per your application requirements.

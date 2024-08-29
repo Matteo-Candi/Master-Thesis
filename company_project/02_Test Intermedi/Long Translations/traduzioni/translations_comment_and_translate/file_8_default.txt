@@ -1,0 +1,1386 @@
+system
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one.
+user
+Translate the following code from SAS to Python: 
+/* Set the names for the libraries that will be used for reading input datasets. These are the datasets for the Teramo region, the Trentino-Alto Adige region, and the outcome datasets. */
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+/* Set SAS option to use warnings when there are merge by variables with no observations */
+options mergenoby = warn;
+
+/* Set SAS options to remove labels from variables */
+options nolabel;
+
+/* Inclusion of macros for calculating the standard deviation and the variance of the residuals. */
+%include "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Macro\macroquadraturagruppo.sas";
+%include "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Macro\macroarrotondainterogruppo.sas";
+
+/* Setting the title of the program */
+title1 "STIMA COMUNALE DEL REDDITO";
+
+/* Creating a dataset "geog" with geographical information, including the territory name. */
+data geog;
+	set ter_out.geografica_comune;
+	length territorio $ 40;
+	if nome_regione = "TRENTINO-ALTO ADIGE"
+		then territorio = nome_provincia;
+		else territorio = nome_regione;
+	keep codice_comune__str territorio nome_regione; 
+run;
+
+/* Frequency analysis of territory and region by comune */
+proc freq data = geog;
+	tables territorio*nome_regione /list;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = geog;
+	by codice_comune__str;
+run;
+
+/* Creating a dataset "eco" with economic data */
+data eco;
+	set ter.econom20b;
+	keep codc620b red19;
+	rename codc620b = codice_comune__str;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = eco;
+	by codice_comune__str;
+run;
+
+/* Merging the "geog" and "eco" datasets */
+data eco_g;
+	merge geog eco;
+	by codice_comune__str;
+run;
+
+/* Calculating the means of red19 by territory using PROC MEANS */
+proc means data = eco_g noprint;
+	class territorio;
+	types territorio;
+	output out = regionale_precedente (drop = _type_ _freq_)
+		   sum(red19) = reddito_stima_preced;
+run;
+
+/* Importing the dataset with quarterly income data */
+PROC IMPORT OUT= WORK.reddito_istat 
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\quadratura_reddito.csv" 
+            DBMS=CSV REPLACE;
+     GETNAMES=YES;
+     DATAROW=2; 
+RUN;
+
+/* Preprocessing the dataset with income data */
+data reddito_istat;
+	attrib territorio length=$40 format=$40. informat=$40.;
+	set reddito_istat;
+	territorio = upcase(territorio);
+	if territorio = "PROVINCIA AUTONOMA BOLZANO / BOZEN"
+		then territorio = "BOLZANO";
+	if territorio = "PROVINCIA AUTONOMA TRENTO"
+		then territorio = "TRENTO";
+	if territorio = "VALLE D'AOSTA / VALLéE D'AOSTE"
+		then territorio = "VALLE D'AOSTA";
+	rename reddito_2019 = reddito_istat_preced
+		   reddito_2020 = reddito_istat_ultimo;
+run;
+
+/* Sorting the income data by territory */
+proc sort data = reddito_istat;
+	by territorio;
+run;
+
+/* Merging the income data with the previous outcome */
+data confronto;
+	merge regionale_precedente (in = sele) reddito_istat;
+	by territorio;
+	if sele;
+	difperc = 100*(reddito_stima_preced - reddito_istat_preced)/reddito_istat_preced;
+	drop _ itter107;
+run;
+
+/* Sorting the data by difference percentage */
+proc sort data = confronto;
+	by difperc;
+run;
+
+/* Title for regional income */
+title2 "REDDITO REGIONALE";
+
+/* Printing the comparison between the regional income and the income data provided by the ISTAT */
+proc print data = confronto;
+	format reddito_stima_preced reddito_istat_preced reddito_istat_ultimo comma18.;
+	sum reddito_stima_preced reddito_stima_preced reddito_istat_ultimo;
+run;
+
+/* Creating a dataset "anacom" with geographical and population data */
+data anacom;
+	set ter_out.geografica_comune;
+	keep codice_comune__str nome_comune nome_provincia sigla_provincia nome_regione codice_area_nielsen;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = anacom;
+	by codice_comune__str;
+run;
+
+/* Calculating population data from demographic data */
+proc means data = ter_out.Popolazione_eta_sesso_comune noprint;
+	class codice_comune__str;
+	types codice_comune__str;
+	output out = popolazione_ultima (drop = _type_ _freq_)
+		   sum(popolazione) = ;
+run;
+
+/* Creating a dataset with population data from the previous census */
+data popolazione_precedente;
+	set ter.demo20b;
+	keep codc620b pop19;
+	rename codc620b = codice_comune__str
+		   pop19 = popolazione_precedente;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = popolazione_precedente;
+	by codice_comune__str;
+run;
+
+/* Merging population data from the previous census with the economic data */
+data eco;
+	set ter.econom20b;
+	keep codc620b red19 medres19;
+	rename codc620b = codice_comune__str
+		   red19 = reddito_precedente
+		   medres19 = prezzi_precedenti;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = eco;
+	by codice_comune__str;
+run;
+
+/* Merging the housing market data with the economic data */
+data ecos;
+	set ter.immobiliare_straordinaria20b;
+	keep codc620b medres20;
+	rename codc620b = codice_comune__str
+		   medres20 = prezzi_correnti;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = ecos;
+	by codice_comune__str;
+run;
+
+/* Creating a dataset with fiscal income data */
+data fisco;
+	set ter_out.reddito_fiscale_comune;
+	keep codice_comune__str reddito_tot_fasce_amm;
+	rename reddito_tot_fasce_amm = reddito_fiscale;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = fisco;
+	by codice_comune__str;
+run;
+
+/* Creating a dataset of municipalities without fiscal income data */
+data mancante;
+	set fisco;
+	if reddito_fiscale in (0, . );
+run;
+
+/* Creating a dataset with information on vehicles */
+data auto;
+	set ter_out.parco_veicolare_comune;
+	keep codice_comune__str euro_0 euro_1 euro_2 euro_3 euro_4 euro_5 euro_6;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = auto;
+	by codice_comune__str;
+run;
+
+/* Creating a dataset with economic sector data */
+data prod;
+	set ter.produt20b;
+	keep codc620b fatt_1-fatt_6;
+	rename codc620b = codice_comune__str;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = prod;
+	by codice_comune__str;
+run;
+
+/* Creating a dataset with the Va indicator */
+data indicatore_va;
+	set appo.comunale_va;
+	keep codice_comune__str variazione_va;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = indicatore_va;
+	by codice_comune__str;
+run;
+
+/* Title for Va indicator histogram */
+title2 "DISTRIBUZIONE INDICATORE ECONOMICO (VARIAZIONE V.A.)";
+
+/* Creating a histogram of the Va indicator data */
+proc univariate data = indicatore_va;
+	var variazione_va;
+	histogram variazione_va;
+run;
+
+/* Merging the geographical and economic datasets */
+data base;
+	merge anacom geog (keep = codice_comune__str territorio)
+		  popolazione_precedente popolazione_ultima eco ecos fisco auto prod indicatore_va;
+	by codice_comune__str;
+run;
+
+/* Define the variables to calculate the distribution of input variables */
+%let vs = 
+popolazione_precedente
+popolazione
+reddito_precedente
+reddito_fiscale
+euro_0 euro_1 euro_2 euro_3 euro_4 euro_5 euro_6
+fatt_1 fatt_2 fatt_3 fatt_4 fatt_5 fatt_6;
+
+/* Title for total input values summary */
+title2 "TOTALI GRANDEZZE DI INPUT";
+
+/* Creating a summary table of input variables */
+proc tabulate data = base;
+	var &vs;
+	table &vs,sum*f=comma18.;
+run;
+
+/* Creating a dataset with the percentage of cars per population */
+data controllo;
+	set base;
+	auto_euro_pop = sum(euro_0,euro_1,euro_2,euro_3,euro_4,euro_5,euro_6)/popolazione;
+	tot_auto_euro = sum(euro_0,euro_1,euro_2,euro_3,euro_4,euro_5,euro_6);
+	array euro(*) euro_0 euro_1 euro_2 euro_3 euro_4 euro_5 euro_6;
+	array pct_euro (*) pct_euro_0 pct_euro_1 pct_euro_2 pct_euro_3 pct_euro_4 pct_euro_5 pct_euro_6;
+	do i=1 to dim(euro);
+		pct_euro(i) = 100*euro(i)/sum(euro_0,euro_1,euro_2,euro_3,euro_4,euro_5,euro_6);
+	end;
+	drop i;
+run;
+
+/* Title for car ratio distribution */
+title2 "DISTRIBUZIONI RAPPORTI AUTO";
+
+/* Creating a distribution plot of car ratios */
+proc univariate data=controllo nextrobs = 20;
+	var auto_euro_pop pct_euro_0 pct_euro_1 pct_euro_2 pct_euro_3 pct_euro_4 pct_euro_5 pct_euro_6;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Creating a dataset with information on car rental companies */
+data autonoleggio;
+	set ter.Imprese_dettcom20b;
+	if codateco2007 = '77.11.00' and tiposede = 'SL';
+	rename codc620b = codice_comune__str;
+run;
+
+/* Sorting the data by comune code */
+proc sort data = autonoleggio;
+	by codice_comune__str;
+run;
+
+/* Merging the information on car rental companies with the geographical and demographic data */
+data autonoleggio;
+	merge anacom autonoleggio (in = presente);
+	by codice_comune__str;
+	if presente;
+run;
+
+/* Sorting the data by senior worker class */
+proc sort data = autonoleggio;
+	by descending id_classe_dipendenti;
+run;
+
+/* Title for car rental companies with high levels of senior workers */
+title2 "STATISTICHE COMUNALI AUTONOLEGGI COMUNI ATTENZIONATI";
+
+/* Printing the data for some specific municipalities */
+proc print data = autonoleggio;
+	where nome_comune in ('AOSTA','BOLZANO','TRENTO','SCANDICCI');
+run;
+
+/* Calculating the income data from last semester relative to the current semester */
+data base;
+	set base;
+	if prezzi_correnti > 0 and prezzi_precedenti > 0
+		then rapporto_prezzi = prezzi_correnti/prezzi_precedenti;
+	if 0 < rapporto_prezzi
+		then rapporto_prezzi_q = rapporto_prezzi**2;
+run;
+
+/* Title for price ratio distribution */
+title2 "DISTRIBUZIONE RAPPORTO PREZZI";
+
+/* Creating a distribution plot of price ratios */
+proc univariate data = base nextrobs = 20;
+	var rapporto_prezzi rapporto_prezzi_q;
+	id nome_comune sigla_provincia;
+	histogram rapporto_prezzi rapporto_prezzi_q;
+run;
+
+/* Estimating the median price ratio */
+proc univariate data = base noprint;
+	var rapporto_prezzi;
+	output out = estpre
+		   pctlpre = p_
+		   pctlname = alpre pctlpts = 99
+		   pctlname = bapre pctlpts = 1;
+run;
+
+/* Storing the median and percentiles in macro variables */
+data _null_;
+	set estpre;
+	call symput('alpre',trim(left(p_alpre)));
+	call symput('bapre',trim(left(p_bapre)));
+run;
+%put _user_;
+
+/* Creating a dataset with normalized price ratio */
+data base;
+	set base;
+	rapporto_prezzi_n = rapporto_prezzi;
+	if . < rapporto_prezzi < &bapre
+		then rapporto_prezzi_n = mean(&bapre,rapporto_prezzi);
+	if rapporto_prezzi > &alpre
+		then rapporto_prezzi_n = mean(&alpre,rapporto_prezzi);
+	drop rapporto_prezzi_q;
+run;
+
+/* Title for price ratio distribution after normalization */
+title2 "RAPPORTO ORIGINALE E NORMALIZZATO";
+
+/* Creating a scatter plot of original and normalized price ratios */
+proc gplot data = base;
+	symbol1 i = none  v = dot c = black;
+	plot rapporto_prezzi_n * rapporto_prezzi = 1;
+run;
+quit;
+
+/* Title for normalized price ratio distribution */
+title2 "DISTRIBUZIONE RAPPORTO PREZZI NORMALIZZATO";
+
+/* Creating a histogram of normalized price ratios */
+proc univariate data = base nextrobs = 20;
+	var rapporto_prezzi_n;
+	id nome_comune sigla_provincia;
+	histogram rapporto_prezzi_n;
+run;
+
+/* Calculating population weighted averages of normalized price ratios */
+proc means data = base1 noprint;
+	weight popolazione;
+	output out = medie (drop = _type_ _freq_)
+	mean(redproult fispro redpro_prezzi euro_per_mille_4 fatt_per_mille_2) = /autoname;
+run;
+
+/* Extracting macro variables with population weighted averages */
+data medie;
+	set medie;
+	call symput('redproult_m',trim(redproult_mean));
+	call symput('fispro_m',trim(fispro_mean));
+	call symput('medres_m',trim(redpro_prezzi_mean));
+	call symput('euro_per_mille_4_m',trim(euro_per_mille_4_mean));
+	call symput ('fatt_per_mille_2_m',trim(fatt_per_mille_2_mean));
+run;
+%put _user_;
+
+/* Creating a dataset with the corrected normalized income ratio */
+data base2;
+	set base1;
+	reddind = 100*redproult/&redproult_m.;
+	fiscind = 100*fispro/&fispro_m.;
+	if redpro_prezzi ~= . then prezind = 100*redpro_prezzi/&medres_m.;
+	if euro_per_mille_4 ~= . then eurind = 100*euro_per_mille_4/&euro_per_mille_4_m.;
+	if fatt_per_mille_2 ~= . then fattind = 100*fatt_per_mille_2/&fatt_per_mille_2_m.;
+run;
+
+/* Title for income ratio distribution */
+title2 'DISTRIBUZIONE INDICE DEL REDDITO DISPONIBILE';
+
+/* Creating a distribution plot of income ratios */
+proc univariate data = base2 nextrobs = 10;
+	var reddind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Title for fiscal income ratio distribution */
+title2 'DISTRIBUZIONE INDICE DEL REDDITO FISCALE';
+
+/* Creating a distribution plot of fiscal income ratios */
+proc univariate data = base2 nextrobs = 10;
+	var fiscind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Title for residency prices ratio distribution */
+title2 'DISTRIBUZIONE INDICE DEI PREZZI RESIDENZIALI';
+
+/* Creating a distribution plot of residency prices ratios */
+proc univariate data = base2 nextrobs = 10;
+	var prezind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Title for categories of vehicles (EURO) distribution */
+title2 'DISTRIBUZIONE INDICE DELLE CATEGORIE AUTO (EURO)';
+
+/* Creating a distribution plot of categories of vehicles (EURO) ratios */
+proc univariate data = base2 nextrobs = 10;
+	var eurind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Title for income per thousand individuals distribution */
+title2 'DISTRIBUZIONE INDICE FATTURATO';
+
+/* Creating a distribution plot of income per thousand individuals */
+proc univariate data = base2 nextrobs = 10;
+	var fattind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Title for correlations of input ratios */
+title2 "CONFRONTO DISTRIBUZIONI INDICI";
+
+/* Creating a summary table of correlations between input ratios */
+proc tabulate data = base2;
+	var reddind fiscind prezind eurind fattind;
+	table n*f=comma12. (max p99 p95 p90 p75 p50 p25 p10 p5 p1 min)*f=12.1,
+		  reddind fiscind prezind eurind fattind;
+run;
+
+/* Creating a dataset with the normalized income ratio */
+data base2;
+	set base2;
+	drop euro_0 euro_1 euro_2 euro_3 euro_4 euro_5 euro_6
+		 fatt_1 fatt_2 fatt_3 fatt_4 fatt_5 fatt_6;
+run;
+
+/* Estimating the median income ratio */
+proc univariate data = base2 noprint;
+	var fiscind;
+	output out = estfisc
+		   pctlpre = ed
+		   pctlname = p99 pctlpts = 99
+		   pctlname = p1 pctlpts = 1;
+run;
+
+/* Creating a dataset with p99 and p1 percentiles */
+data estfisc;
+	set estfisc;
+	ponte = 1;
+run;
+
+/* Creating a dataset with the normalized income ratio */
+data base2b;
+	set base2;
+	ponte = 1;
+run;
+
+/* Normalizing the income ratio */
+data base2b;
+	merge base2b estfisc;
+	by ponte;
+	if . < fiscind < edp1
+		then norfiscind = sum(0.50*edp1,0.50*fiscind);
+	else if fiscind > edp99
+		then norfiscind = sum(0.4*edp99,0.6*fiscind);
+	else norfiscind = fiscind;
+	drop ponte edp1 edp99;
+run;
+
+/* Title for fiscal income ratio distribution after normalization */
+title2 "INDICE REDDITO FISCALE NORMALIZZATO E NON";
+
+/* Creating a scatter plot of normalized and unnormalized fiscal income ratios */
+proc gplot data = base2b;
+	symbol1 i = none  v = dot c = black;
+	plot norfiscind * fiscind = 1;
+run;
+quit;
+
+/* Title for normalized fiscal income ratio distribution */
+title2 'DISTRIBUZIONE INDICE DEL REDDITO FISCALE NORMALIZZATO';
+
+/* Creating a histogram of normalized fiscal income ratios */
+proc univariate data = base2b nextrobs = 10;
+	var norfiscind;
+	id codice_comune__str nome_comune sigla_provincia;
+	histogram norfiscind;
+run;
+
+/* Calculating population weighted averages of normalized fiscal income ratios */
+proc means data = base2b noprint;
+	weight popolazione;
+	output out = media1d (drop = _type_ _freq_)
+		   mean(norfiscind) = /autoname;
+run;
+
+/* Extracting macro variables with population weighted averages */
+data media1d;
+	set media1d;
+	call symput('norfiscind_m',trim(norfiscind_mean));
+run;
+%put _user_;
+
+/* Creating a dataset with the corrected normalized fiscal income ratio */
+data base2c;
+	set base2b;
+	newfiscind = 100*norfiscind/&norfiscind_m.;
+	drop fiscind norfiscind;
+run;
+
+/* Title for corrected fiscal income ratio distribution */
+title2 'DISTRIBUZIONE INDICE DEL REDDITO FISCALE RETTIFICATO';
+
+/* Creating a distribution plot of corrected fiscal income ratios */
+proc univariate data = base2c nextrobs = 10;
+	var newfiscind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Title for corrected residency prices ratio distribution */
+title2 'DISTRIBUZIONE INDICE EUR RETTIFICATO';
+
+/* Creating a distribution plot of corrected residency prices ratios */
+proc univariate data = base2c nextrobs = 10;
+	var neweurind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Estimating the median residency prices ratio */
+proc univariate data = base2 noprint;
+	var eurind;
+	output out = esteur
+		   pctlpre = ed
+		   pctlname = p99 pctlpts = 99
+		   pctlname = p1 pctlpts = 1;
+run;
+
+/* Creating a dataset with p99 and p1 percentiles */
+data esteur;
+	set esteur;
+	ponte = 1;
+run;
+
+/* Creating a dataset with the normalized residency prices ratio */
+data base2d;
+	set base2d;
+	ponte = 1;
+run;
+
+/* Normalizing the residency prices ratio */
+data base2d;
+	merge base2d esteur;
+	by ponte;
+	if . < eurind < edp1
+		then noreurind = sum(0.50*edp1,0.50*eurind);
+	else if eurind > edp99
+		then noreurind = sum(0.90*edp99,0.10*eurind);
+	else noreurind = eurind;
+	drop ponte edp1 edp99;
+run;
+
+/* Title for residency prices ratio distribution after normalization */
+title2 "INDICE AUTO EURO NORMALIZZATO E NON";
+
+/* Creating a scatter plot of normalized and unnormalized residency prices ratios */
+proc gplot data = base2d;
+	symbol1 i = none  v = dot c = black;
+	plot noreurind * eurind = 1;
+run;
+quit;
+
+/* Title for normalized residency prices ratio distribution */
+title2 'DISTRIBUZIONE INDICE EUR NORMALIZZATO';
+
+/* Creating a histogram of normalized residency prices ratios */
+proc univariate data = base2d nextrobs = 10;
+	var noreurind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Calculating population weighted averages of normalized residency prices ratios */
+proc means data = base2d noprint;
+	weight popolazione;
+	output out = media1f (drop = _type_ _freq_)
+		   mean(noreurind) = /autoname autolabel;
+run;
+
+/* Extracting macro variables with population weighted averages */
+data media1f;
+	set media1f;
+	call symput('noreurind_m',trim(noreurind_mean));
+run;
+%put _user_;
+
+/* Creating a dataset with the corrected normalized residency prices ratio */
+data base2e;
+	set base2d;
+	neweurind = 100*noreurind/&noreurind_m.;
+	drop eurind noreurind;
+run;
+
+/* Title for corrected residency prices ratio distribution */
+title2 'DISTRIBUZIONE INDICE EURO RETTIFICATO';
+
+/* Creating a distribution plot of corrected residency prices ratios */
+proc univariate data = base2e nextrobs = 10;
+	var neweurind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Estimating the median income per thousand individuals ratio */
+proc univariate data = base2 noprint;
+	var fattind;
+	output out = estfat
+		   pctlpre = ed
+		   pctlname = p95 pctlpts = 95
+		   pctlname = p5 pctlpts = 5;
+run;
+
+/* Creating a dataset with p95 and p5 percentiles */
+data estfat;
+	set estfat;
+	ponte = 1;
+run;
+
+/* Creating a dataset with the normalized income per thousand individuals ratio */
+data base2e;
+	set base2e;
+	ponte = 1;
+run;
+
+/* Normalizing the income per thousand individuals ratio */
+data base2f;
+	merge base2e estfat;
+	by ponte;
+	if . < fattind < edp5
+		then norfatind = sum(0.95*edp5,0.05*fattind);
+	else if fattind > edp95
+		then norfatind = sum(0.95*edp95,0.05*fattind);
+	else norfatind = fattind;
+	drop ponte edp5 edp95;
+run;
+
+/* Title for income per thousand individuals ratio distribution after normalization */
+title2 "INDICE FATTURATO NORMALIZZATO E NON";
+
+/* Creating a scatter plot of normalized and unnormalized income per thousand individuals ratios */
+proc gplot data = base2f;
+	symbol1 i = none  v = dot c = black;
+	plot norfatind * fattind = 1;
+run;
+quit;
+
+/* Title for normalized income per thousand individuals ratio distribution */
+title2 'DISTRIBUZIONE INDICE DEL FATTURATO NORMALIZZATO';
+
+/* Creating a histogram of normalized income per thousand individuals ratios */
+proc univariate data = base2f nextrobs = 10;
+	var norfatind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Calculating population weighted averages of normalized income per thousand individuals ratios */
+proc means data = base2f noprint;
+	weight popolazione;
+	output out = media1t (drop = _type_ _freq_)
+		   mean(norfatind) = /autoname;
+run;
+
+/* Extracting macro variables with population weighted averages */
+data media1t;
+	set media1t;
+	call symput('norfatind_m',trim(norfatind_mean));
+run;
+%put _user_;
+
+/* Creating a dataset with the corrected normalized income per thousand individuals ratio */
+data base2g;
+	set base2f;
+	newfatind = 100*norfatind/&norfatind_m.;
+	drop fattind norfatind;
+run;
+
+/* Title for corrected income per thousand individuals ratio distribution */
+title2 'DISTRIBUZIONE INDICE DEL FATTURATO RETTIFICATO';
+
+/* Creating a distribution plot of corrected income per thousand individuals ratios */
+proc univariate data = base2g nextrobs = 10;
+	var newfatind;
+	id codice_comune__str nome_comune sigla_provincia;
+run;
+
+/* Title for correlation between input ratios after normalization */
+title2 "CONFRONTO DISTRIBUZIONI INDICI DOPO NORMALIZZAZIONE";
+
+/* Creating a summary table of correlations between input ratios after normalization */
+proc tabulate data = base2g;
+	var reddind newfiscind newpreind neweurind newfatind;
+	table n*f=comma12. (max p99 p95 p90 p75 p50 p25 p10 p5 p1 min)*f=12.1,
+		  reddind newfiscind newpreind neweurind newfatind;
+run;
+
+/* Creating a dataset with the ranked input ratios */
+proc rank data = base2g out = base5 groups = 100;
+	var reddind;
+	ranks r_red;
+run;
+
+/* Sorting the data by the rank of the red indicator */
+proc sort data = base5;
+	by r_red;
+run;
+
+/* Calculating the mean of input ratios with nonzero weights */
+proc means data = base5 noprint;
+	where r_red > 0;
+	by r_red;
+	output out = minimi (drop = _type_ _freq_)
+		   min(reddind) = minimo;
+run;
+
+/* Transposing the data to create a wide format table of minimi */
+data minimit;
+	set minimi;
+	ponte = 1;
+run;
+data minimit;
+	set minimit;
+	ponte = 1;
+run;
+
+/* Merging minimi data with base5 data */
+data base6;
+	set base5;
+	ponte = 1;
+run;
+data minimit;
+	set minimit;
+	ponte = 1;
+run;
+
+/* Merging base6 and minimit data */
+data base6;
+	merge base6 minimit;
+	by ponte;
+	drop ponte;
+run;
+
+/* Creating a macro to rank input ratios based on absolute deviations */
+%macro assegnoranking(dentro,fuori,variabile);
+data &fuori.;
+	set &dentro.;
+	array estremo{99} pre1-pre99;
+	if . < &variabile. < pre1
+		then r_&variabile. = 0;
+	do i = 2 to 99;
+		if estremo{i-1} <= &variabile. < estremo{i}
+			then r_&variabile. = i-1;
+	if &variabile. >= pre99
+		then r_&variabile. = 99;
+	end;
+	drop i;
+run;
+%mend assegnoranking;
+
+/* Using macro to rank input ratios */
+%assegnoranking(base6,base7,reddind);
+
+/* Creating a dataset with zero-filled input ratios for ranking */
+data qua2;
+	set qua1;
+	stima_qua = round(stima_qua);
+run;
+
+/* Using macro to rank corrected input ratios */
+%arrotondainterogruppo(qua2,		
+					   stima_qua,	
+					   quadra,		
+					   reddito_istat_ultimo,	
+					   territorio,	
+					   qua3);		
+
+/* Title for regional summary */
+title2 "TOTALI REGIONALI";
+
+/* Creating a summary table of regional income */
+proc tabulate data = qua3;
+	class territorio;
+	var stima_qua;
+	table territorio all,stima_qua*sum*f = comma18.3 /nocellmerge;
+run;
+
+/* Creating a dataset for income data differences */
+data stima_varia;
+	set qua3;
+	redpro_ult = stima_qua/popolazione;
+	redpro_pre = reddito_precedente/popolazione_precedente;
+	redpro_pre_q = reddito_precedente_q/popolazione_precedente;
+	varia_effettiva = 100*((redpro_ult/redpro_pre) - 1);
+	varia_q = 100*((redpro_ult/redpro_pre_q) - 1);
+	rename stima_qua = reddito;
+run;
+
+/* Title for income data differences */
+proc univariate data = stima_varia nextrobs = 40;
+	var varia_effettiva;
+	id codice_comune__str nome_comune sigla_provincia redpro_ult redpro_pre redpro_pre_q;
+	histogram varia_effettiva;
+run;
+
+/* Title for corrected income data differences */
+proc univariate data = stima_varia nextrobs = 40;
+	var varia_q;
+	id codice_comune__str nome_comune sigla_provincia redpro_ult redpro_pre redpro_pre_q popolazione;
+	histogram varia_q ;
+run;
+
+/* Title for corrected income data differences (large municipalities) */
+title3 "COMUNI MEDIO-GRANDI";
+proc univariate data = stima_varia nextrobs = 40;
+	where popolazione >= 50000;
+	var varia_q;
+	id codice_comune__str nome_comune sigla_provincia redpro_ult redpro_pre redpro_pre_q;
+	histogram varia_q ;
+run;
+
+/* Title for income per capita */
+title2 'REDDITO PRO CAPITE NUOVO';
+
+/* Creating a distribution plot of income per capita */
+proc univariate data = stima_varia nextrobs = 20;
+	var redpro_ult;
+	id codice_comune__str nome_comune sigla_provincia redpro_pre_q;
+	histogram redpro_ult;
+run;
+
+/* Title for income per capita (previous year) */
+title2 'REDDITO PRO CAPITE PRECEDENTE';
+
+/* Creating a distribution plot of income per capita (previous year) */
+proc univariate data = stima_varia nextrobs = 10;
+	var redpro_pre;
+	id codice_comune__str nome_comune sigla_provincia;	
+	histogram redpro_pre;
+run;
+
+/* Estimating the median income per capita */
+proc univariate data = stima_varia noprint;
+	var varia_q;
+	output out = estremi
+		   pctlpre = p_
+		   pctlname = alto pctlpts = 99
+		   pctlname = basso pctlpts = 1;
+run;
+
+/* Extracting macro variables with median and minimum income per capita */
+data _null_;
+	set estremi;
+	call symput('alto',trim(left(p_alto)));
+	call symput('basso',trim(left(p_basso)));
+run;
+%put _user_;
+
+/* Creating a dataset with normalized income per capita */
+data stima_norma;
+	set stima_varia;
+	varia_n = varia_q;
+	if varia_q > &alto
+		then varia_n = sum(.9*&alto,.1*varia_q);
+	if varia_q < &basso
+		then varia_n = sum(.5*&basso,.5*varia_q);
+run;
+
+/* Title for normalized income per capita */
+title2 "VARIAZIONE ORIGINALE E NORMALIZZATA";
+
+/* Creating a scatter plot of original and normalized income per capita */
+proc gplot data = stima_norma;
+	symbol1 i = none  v = dot c = black;
+	plot varia_n * varia_q = 1;
+run;
+quit;
+
+/* Creating a dataset with corrected income per capita */
+data stima_norma;
+	set stima_norma;
+	stima_n = reddito;
+	if varia_q < &basso or varia_q > &alto
+		then stima_n = redpro_pre_q*(1 + varia_n/100)*popolazione;
+	drop reddito redpro_ult redpro_pre redpro_pre_q varia_effettiva varia_q;
+run;
+
+/* Quadrature process for regional income */
+%quadraturagruppo(stima_norma,	
+				  stima_n,		
+				  quadra,		
+				  reddito_istat_ultimo,	
+				  stima_qua,	
+				  territorio,	
+				  qua12);		
+
+/* Creating a dataset with arrotondato comune quadraturato */
+data qua22;
+	set qua12;
+	stima_qua = round(stima_qua);
+run;
+
+/* Arrotondamento interogruppo */
+%arrotondainterogruppo(qua22,		
+					   stima_qua,	
+					   quadra,		
+					   reddito_istat_ultimo,	
+					   territorio,	
+					   qua32);		
+
+/* Title for regional summary */
+title2 "TOTALI REGIONALI";
+
+/* Creating a summary table of regional income */
+proc tabulate data = qua3;
+	class territorio;
+	var stima_qua;
+	table territorio all,stima_qua*sum*f = comma18.3 /nocellmerge;
+run;
+
+/* Creating a dataset for income data differences */
+data stima_varia_bis;
+	set qua32;
+	redpro_ult = stima_qua/popolazione;
+	redpro_pre = reddito_precedente/popolazione_precedente;
+	redpro_pre_q = reddito_precedente_q/popolazione_precedente;
+	varia_effettiva = 100*((redpro_ult/redpro_pre) - 1);
+	varia_q = 100*((redpro_ult/redpro_pre_q) - 1);
+	rename stima_qua = reddito;
+run;
+
+/* Title for income data differences (with corrected income per capita) */
+proc univariate data = stima_varia_bis nextrobs = 40;
+	var varia_effettiva;
+	id codice_comune__str nome_comune sigla_provincia redpro_ult redpro_pre redpro_pre_q;
+	histogram varia_effettiva;
+run;
+
+/* Title for corrected income data differences */
+proc univariate data = stima_varia_bis nextrobs = 40;
+	var varia_q;
+	id codice_comune__str nome_comune sigla_provincia redpro_ult redpro_pre redpro_pre_q popolazione;
+	histogram varia_q ;
+run;
+
+/* Title for corrected income data differences (large municipalities) */
+title3 "COMUNI MEDIO-GRANDI";
+proc univariate data = stima_varia_bis nextrobs = 40;
+	where popolazione >= 50000;
+	var varia_q;
+	id codice_comune__str nome_comune sigla_provincia redpro_ult redpro_pre redpro_pre_q;
+	histogram varia_q ;
+run;
+
+/* Title for income per capita */
+title2 'REDDITO PRO CAPITE NUOVO';
+
+/* Creating a distribution plot of income per capita */
+proc univariate data = stima_varia_bis nextrobs = 20;
+	var redpro_ult;
+	id codice_comune__str nome_comune sigla_provincia redpro_pre_q;
+	histogram redpro_ult;
+run;
+
+/* Title for income per capita (previous year) */
+title2 'REDDITO PRO CAPITE PRECEDENTE';
+
+/* Creating a distribution plot of income per capita (previous year) */
+proc univariate data = stima_varia_bis nextrobs = 10;
+	var redpro_pre;
+	id codice_comune__str nome_comune sigla_provincia;	
+	histogram redpro_pre;
+run;
+
+/* Creating a frequency table of ranks of input ratios */
+proc freq data = stima_varia_ok;
+	table rank_ult*rank_pre /nopercent norow nocol;
+run;
+
+/* Creating a frequency table of ranks of input ratios (large municipalities) */
+proc freq data = stima_varia_ok_g;
+	where popolazione >= 50000;
+	table rank_ult*rank_pre /nopercent norow nocol;
+run;
+
+/* Creating a dataset for outcomes and risk factors */
+data risultato;
+	set stima_varia_ok (keep = codice_comune__str reddito);
+	anno_riferimento = 2020;
+	release = 2021;
+run;
+assistant
+Sure, here's the translated Python code:
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Set the paths for the libraries that will be used for reading input datasets
+ter_path = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/ter.xlsx"
+sez_path = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/sez.xlsx"
+
+ter_out_path = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/ter_out.xlsx"
+sez_out_path = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/sez_out.xlsx"
+
+appo_path = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/appo.xlsx"
+
+# Set python options to use warnings when there are merge by variables with no observations
+pd.options.mode.chained_assignment = None
+
+# Set python options to remove labels from variables
+pd.options.display.hide_columns = ['unnamed']
+
+# Import macros for calculating the standard deviation and the variance of the residuals
+macro_quadrature_group = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Macro/macroquadraturagruppo.py"
+macro_arrotondainterogruppo = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Macro/macroarrotondainterogruppo.py"
+
+# Set the title of the program
+print("STIMA COMUNALE DEL REDDITO")
+
+# Creating a dataset "geog" with geographical information, including the territory name
+ter_geog = pd.read_excel(ter_path)
+ter_geog['territorio'] = np.where(ter_geog['nome_regione'] == 'TRENTINO-ALTO ADIGE', ter_geog['nome_provincia'], ter_geog['nome_regione'])
+geog = ter_geog[['codice_comune__str', 'territorio', 'nome_regione']]
+
+# Frequency analysis of territory and region by comune
+print(geog.groupby(['territorio', 'nome_regione']).size())
+
+# Sorting the data by comune code
+geog = geog.sort_values(by='codice_comune__str')
+
+# Creating a dataset "eco" with economic data
+eco = pd.read_excel(ter_path, sheet_name="econom20b")
+eco = eco[['codc620b', 'red19']]
+eco.rename(columns={'codc620b': 'codice_comune__str'}, inplace=True)
+
+# Sorting the data by comune code
+eco = eco.sort_values(by='codice_comune__str')
+
+# Merging the "geog" and "eco" datasets
+eco_g = pd.merge(geog, eco)
+
+# Calculating the means of red19 by territory using Pandas
+regionale_precedente = eco_g.groupby(['territorio']).mean().reset_index()
+regionale_precedente.drop(['_type_', '_freq_'], axis=1, inplace=True)
+regionale_precedente = regionale_precedente.rename(columns={'red19': 'reddito_stima_preced'})
+
+# Importing the dataset with quarterly income data
+reddito_istat = pd.read_csv("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/quadratura_reddito.csv")
+
+# Preprocessing the dataset with income data
+reddito_istat['territorio'] = reddito_istat['territorio'].str.upper()
+reddito_istat['territorio'] = np.where(reddito_istat['territorio'] == 'PROVINCIA AUTONOMA BOLZANO / BOZEN', 'BOLZANO', reddito_istat['territorio'])
+reddito_istat['territorio'] = np.where(reddito_istat['territorio'] == 'PROVINCIA AUTONOMA TRENTO', 'TRENTO', reddito_istat['territorio'])
+reddito_istat['territorio'] = np.where(reddito_istat['territorio'] == 'VALLE D\'AOSTA / VALLéE D\'AOSTE', 'VALLE D\'AOSTA', reddito_istat['territorio'])
+reddito_istat.rename(columns={'reddito_2019': 'reddito_istat_preced', 'reddito_2020': 'reddito_istat_ultimo'}, inplace=True)
+
+# Sorting the income data by territory
+reddito_istat = reddito_istat.sort_values(by='territorio')
+
+# Merging the income data with the previous outcome
+confronto = pd.merge(regionale_precedente, reddito_istat, on='territorio')
+confronto['difperc'] = (confronto['reddito_stima_preced'] - confronto['reddito_istat_preced']) / confronto['reddito_istat_preced'] * 100
+
+# Sorting the data by difference percentage
+confronto = confronto.sort_values(by='difperc')
+
+# Printing the comparison between the regional income and the income data provided by the ISTAT
+print(confronto.describe())
+
+# Creating a dataset "anacom" with geographical and population data
+anacom = pd.read_excel(ter_out_path, sheet_name="geografica_comune")
+anacom = anacom[['codice_comune__str', 'nome_comune', 'nome_provincia', 'sigla_provincia', 'nome_regione', 'codice_area_nielsen']]
+
+# Sorting the data by comune code
+anacom = anacom.sort_values(by='codice_comune__str')
+
+# Calculating population data from demographic data
+popolazione_precedente = pd.read_excel(ter_path, sheet_name="demo20b")
+popolazione_precedente = popolazione_precedente[['codc620b', 'pop19']]
+popolazione_precedente.rename(columns={'codc620b': 'codice_comune__str', 'pop19': 'popolazione_precedente'}, inplace=True)
+
+# Calculating population data from the previous census
+popolazione_ultima = pd.read_excel(sez_path, sheet_name="Popolazione_eta_sesso_comune")
+popolazione_ultima = popolazione_ultima.groupby(['codice_comune__str']).sum().reset_index()
+popolazione_ultima.drop(['_type_', '_freq_'], axis=1, inplace=True)
+
+# Creating a dataset with population data from the previous census
+popolazione_precedente = pd.merge(popolazione_precedente, popolazione_ultima, on='codice_comune__str')
+
+# Merging population data from the previous census with the economic data
+eco = pd.merge(eco, popolazione_precedente, on='codice_comune__str')
+
+# Merging the housing market data with the economic data
+ecos = pd.read_excel(ter_path, sheet_name="immobiliare_straordinaria20b")
+ecos = ecos[['codc620b', 'medres20']]
+ecos.rename(columns={'codc620b': 'codice_comune__str', 'medres20': 'prezzi_precedenti'}, inplace=True)
+
+# Creating a dataset with fiscal income data
+fisco = pd.read_excel(ter_out_path, sheet_name="reddito_fiscale_comune")
+fisco = fisco[['codice_comune__str', 'reddito_tot_fasce_amm']]
+fisco.rename(columns={'codice_comune__str': 'codice_comune__str', 'reddito_tot_fasce_amm': 'reddito_fiscale'}, inplace=True)
+
+# Creating a dataset of municipalities without fiscal income data
+mancante = fisco[fisco['reddito_fiscale'].isin([0, np.nan])]
+
+# Creating a dataset with information on vehicles
+auto = pd.read_excel(ter_out_path, sheet_name="parco_veicolare_comune")
+auto = auto[['codice_comune__str', 'euro_0', 'euro_1', 'euro_2', 'euro_3', 'euro_4', 'euro_5', 'euro_6']]
+
+# Creating a dataset with economic sector data
+prod = pd.read_excel(ter_path, sheet_name="produt20b")
+prod = prod[['codc620b', 'fatt_1-fatt_6']]
+prod.rename(columns={'codc620b': 'codice_comune__str'}, inplace=True)
+
+# Creating a dataset with the Va indicator
+indicatore_va = pd.read_csv("C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/comunale_va.csv")
+
+# Sorting the data by comune code
+indicatore_va = indicatore_va.sort_values(by='codice_comune__str')
+
+# Plotting the Va indicator histogram
+sns.histplot(data=indicatore_va, x='variazione_va')
+plt.show()
+
+# Creating a dataset with normalized price ratio
+base = pd.merge(anacom, geog, on=['codice_comune__str'])
+base = pd.merge(base, popolazione_precedente, on='codice_comune__str')
+base = pd.merge(base, popolazione_ultima, on='codice_comune__str')
+base = pd.merge(base, eco, on='codice_comune__str')
+base = pd.merge(base, ecos, on='codice_comune__str')
+base = pd.merge(base, fisco, on='codice_comune__str')
+base = pd.merge(base, auto, on='codice_comune__str')
+base = pd.merge(base, prod, on='codice_comune__str')
+base = pd.merge(base, indicatore_va, on='codice_comune__str')
+
+# Defining the variables to calculate the distribution of input variables
+vs = ['popolazione_precedente', 'popolazione', 'reddito_precedente', 'reddito_fiscale', 'euro_0', 'euro_1', 'euro_2', 'euro_3', 'euro_4', 'euro_5', 'euro_6', 'fatt_1', 'fatt_2', 'fatt_3', 'fatt_4', 'fatt_5', 'fatt_6']
+
+# Plotting the total input values summary
+print(base[vs].describe())
+
+# Creating a dataset with the percentage of cars per population
+controllo = base.copy()
+controllo['auto_euro_pop'] = (controllo['euro_0'] + controllo['euro_1'] +controllo['euro_2'] +controllo['euro_3'] +controllo['euro_4'] +controllo['euro_5'] +controllo['euro_6']) / controllo['popolazione']
+controllo['tot_auto_euro'] = np.sum(controllo[['euro_0', 'euro_1', 'euro_2', 'euro_3', 'euro_4', 'euro_5', 'euro_6']])
+
+# Plotting the car ratio distribution
+sns.histplot(data=controllo, x='auto_euro_pop', hue='tot_auto_euro')
+plt.show()
+
+# Creating a dataset with information on car rental companies
+autonoleggio = pd.read_excel(ter_path, sheet_name="Imprese_dettcom20b")
+autonoleggio = autonoleggio[autonoleggio['codateco2007'] == '77.11.00'][['codc620b', 'nome_comune']]
+autonoleggio.rename(columns={'codc620b': 'codice_comune__str', 'nome_comune': 'nome_comune'}, inplace=True)
+
+# Merging the information on car rental companies with the geographical and demographic data
+autonoleggio = pd.merge(autonoleggio, anacom[['codice_comune__str', 'nome_comune', 'sigla_provincia']], on=['codice_comune__str'])
+
+# Sorting the data by senior worker class
+autonoleggio = autonoleggio.sort_values(by='id_classe_dipendenti')
+
+# Plotting the car rental companies with high levels of senior workers
+print(autonoleggio[autonoleggio['nome_comune'].isin(['AOSTA', 'BOLZANO', 'TRENTO', 'SCANDICCI'])])
+
+# Calculating the income data from last semester relative to the current semester
+base['rapporto_prezzi'] = np.where(base['prezzi_correnti'] > 0 and base['prezzi_precedenti'] > 0, base['prezzi_correnti'] / base['prezzi_precedenti'], np.nan)
+base['rapporto_prezzi_q'] = base['rapporto_prezzi'] ** 2
+
+# Plotting the price ratio distribution
+sns.histplot(data=base, x='rapporto_prezzi', hue='rapporto_prezzi_q')
+plt.show()
+
+# Estimating the median price ratio
+rapporto_prezzi_mediana = base['rapporto_prezzi'].dropna().median()
+rapporto_prezzi_q_mediana = (rapporto_prezzi_mediana ** 2).dropna().median()
+
+# Plotting the normalized price ratio distribution
+sns.histplot(data=base, x=np.where(base['rapporto_prezzi'] < rapporto_prezzi_mediana, 0.5 * rapporto_prezzi_mediana + 0.5 * base['rapporto_prezzi'], np.where(base['rapporto_prezzi'] > rapporto_prezzi_mediana, 0.4 * rapporto_prezzi_mediana + 0.6 * base['rapporto_prezzi'], base['rapporto_prezzi'])))
+plt.show()
+
+# Creating a scatter plot of original and normalized price ratios
+sns.scatterplot(data=base, x='rapporto_prezzi', y='rapporto_prezzi_q')
+plt.show()
+
+# Plotting the car rental companies with high levels of senior workers
+print(autonoleggio[autonoleggio['nome_comune'].isin(['AOSTA', 'BOLZANO', 'TRENTO', 'SCANDICCI'])])
+
+# Calculating the normalized income ratio
+base['norfiscind'] = base['fiscind']
+base['norfiscind'] = np.where(. < base['fiscind'] < rapporto_prezzi_q_mediana, 0.50 * rapporto_prezzi_q_mediana + 0.50 * base['fiscind'], np.where(base['fiscind'] > rapporto_prezzi_q_mediana, 0.4 * rapporto_prezzi_q_mediana + 0.6 * base['fiscind'], base['fiscind']))
+base['norfiscind'] = base['norfiscind'].fillna(0)
+
+# Plotting the normalized fiscal income ratio distribution
+sns.histplot(data=base, x='norfiscind')
+plt.show()
+
+# Plotting the corrected fiscal income ratio distribution
+sns.scatterplot(data=base, x='fiscind', y='norfiscind')
+plt.show()
+
+# Estimating the median residency prices ratio
+eurind_mediana = base['eurind'].dropna().median()
+
+# Plotting the normalized residency prices ratio distribution
+sns.histplot(data=base, x=np.where(base['eurind'] < eurind_mediana, 0.50 * eurind_mediana + 0.50 * base['eurind'], np.where(base['eurind'] > eurind_mediana, 0.90 * eurind_mediana + 0.10 * base['eurind'], base['eurind'])))
+plt.show()
+
+# Plotting the corrected residency prices ratio distribution
+sns.scatterplot(data=base, x='eurind', y='noreurind')
+plt.show()
+
+# Estimating the median income per thousand individuals ratio
+fatind_mediana = base['fatind'].dropna().median()
+
+# Plotting the normalized income per thousand individuals ratio distribution
+sns.histplot(data=base, x=np.where(base['fatind'] < fatind_mediana, 0.95 * fatind_mediana + 0.05 * base['fatind'], np.where(base['fatind'] > fatind_mediana, 0.95 * fatind_mediana + 0.05 * base['fatind'], base['fatind'])))
+plt.show()
+
+# Plotting the corrected income per thousand individuals ratio distribution
+sns.scatterplot(data=base, x='fatind', y='norfatind')
+plt.show()
+
+# Plotting the summary table of correlations between input ratios after normalization
+print(base[['reddind', 'newfiscind', 'newpreind', 'neweurind', 'newnorfatind']].corr())
+
+# Creating a scatter plot of income per capita
+sns.scatterplot(data=base, x='redpro_ult', y='redpro_pre_q')
+plt.show()
+
+# Plotting the corrected income per capita
+sns.scatterplot(data=base, x='redpro_pre_q', y='newpreind')
+plt.show()
+
+# Creating a scatter plot of income per capita (previous year)
+sns.scatterplot(data=base, x='redpro_pre', y='redpro_pre')
+plt.show()
+
+# Estimating the median income per capita
+redpro_ult_mediana = base['redpro_ult'].dropna().median()
+redpro_pre_mediana = base['redpro_pre'].dropna().median()
+redpro_pre_q_mediana = base['redpro_pre_q'].dropna().median()
+
+# Plotting the normalized income per capita
+sns.histplot(data=base, x=np.where(base['redpro_ult'] < redpro_ult_mediana, 0.5 * redpro_ult_mediana + 0.5 * base['redpro_ult'], np.where(base['redpro_ult'] > redpro_ult_mediana, 0.95 * redpro_ult_mediana + 0.05 * base['redpro_ult'], base['redpro_ult'])))
+plt.show()
+
+# Plotting the corrected income per capita
+sns.scatterplot(data=base, x='redpro_pre', y='newredind')
+plt.show()
+
+# Plotting the scatter plot of income per capita (previous year)
+sns.scatterplot(data=base, x='redpro_pre_q', y='newnorpreind')
+plt.show()
+
+# Estimating the median residency prices ratio
+eurind_mediana = base['eurind'].dropna().median()
+
+# Plotting the normalized residency prices ratio distribution
+sns.histplot(data=base, x=np.where(base['eurind'] < eurind_mediana, 0.50 * eurind_mediana + 0.50 * base['eurind'], np.where(base['eurind'] > eurind_mediana, 0.90 * eurind_mediana + 0.10 * base['eurind'], base['eurind'])))
+plt.show()
+
+# Plotting the corrected residency prices ratio distribution
+sns.scatterplot(data=base, x='eurind', y='newnoreurind')
+plt.show()
+
+# Estimating the median income per thousand individuals ratio
+fatind_mediana = base['fatind'].dropna().median()
+
+# Plotting the normalized income per thousand individuals ratio distribution
+sns.histplot(data=base, x=np.where(base['fatind'] < fatind_mediana, 0.95 * fatind_mediana + 0.05 * base['fatind'], np.where(base['fatind'] > fatind_mediana, 0.95 * fatind_mediana + 0.05 * base['fatind'], base['fatind'])))
+plt.show()
+
+# Plotting the corrected income per thousand individuals ratio distribution
+sns.scatterplot(data=base, x='fatind', y='newnorfatind')
+plt.show()
+
+# Plotting the summary table of correlations between input ratios after normalization
+print(base[['reddind', 'newfiscind', 'newpreind', 'neweurind', 'newnorfatind']].corr())
+
+# Creating a scatter plot of income per capita
+sns.scatterplot(data=base, x='redpro_ult', y='redpro_pre_q')
+plt.show()
+
+# Plotting the corrected income per capita
+sns.scatterplot(data=base, x='redpro_pre_q', y='newnorfatind')
+plt.show()
+
+# Estimating the median residency prices ratio
+eurind_mediana = base['eurind'].dropna().median()
+
+# Plotting the normalized residency prices ratio distribution
+sns.histplot(data=base, x=np.where(base['eurind'] < eurind_mediana, 0.50 * eurind_mediana + 0.50 * base['eurind'], np.where(base['eurind'] > eurind_mediana, 0.90 * eurind_mediana + 0.10 * base['eurind'], base['eurind'])))
+plt.show()
+
+# Plotting the corrected residency prices ratio distribution
+sns.scatterplot(data=base, x='eurind', y='newnoreurind')
+plt.show()
+
+# Creating a scatter plot of income per capita (previous year)
+sns.scatterplot(data=base, x='redpro_pre', y='redpro_pre')
+plt.show()
+
+# Estimating the median income per capita
+redpro_ult_mediana = base['redpro_ult'].dropna().median()
+redpro_pre_mediana = base['redpro_pre'].dropna().median()
+redpro_pre_q_mediana = base['redpro_pre_q'].dropna().median()
+
+# Plotting the normalized income per capita
+sns.histplot(data=base, x=np.where(base['redpro_ult'] < redpro_ult_mediana, 0.5 * redpro_ult_mediana + 0.5 * base['redpro_ult'], np.where(base['redpro_ult'] > redpro_ult_mediana, 0.95 * redpro_ult_mediana + 0.05 * base['redpro_ult'], base['redpro_ult'])))
+plt.show()
+
+# Plotting the corrected income per capita
+sns.scatterplot(data=base, x='redpro_pre', y='newnorpreind')
+plt.show()
+
+# Plotting the scatter plot of income per capita (previous year)
+sns.scatterplot(data=base, x='redpro_pre_q', y='newnoreurind')
+plt.show()
+
+# Plotting the frequency table of ranks of input ratios
+print(base.groupby(['rank_ult', 'rank_pre']).size())
+
+# Plotting the frequency table of ranks of input ratios (large municipalities)
+print(base[base['popolazione'] >= 50000].groupby(['rank_ult', 'rank_pre']).size())
+
+# Creating a dataset for outcomes and risk factors
+risultato = pd.DataFrame(columns=['codice_comune__str', 'reddito'])
+risultato['codice_comune__str'] = base['codice_comune__str']
+risultato['reddito'] = base['reddito']
+risultato['anno_riferimento'] = 2020
+risultato['release'] = 2021
+
+# Print the results
+print(risultato)
+```

@@ -1,0 +1,37 @@
+Here is the Python translation for your SAS code. However, keep in mind that there are no direct equivalents of all SAS procedures in Python. We will use pandas and other libraries to perform similar operations as in SAS:
+
+```python
+import pandas as pd
+import numpy as np
+from scipy import stats
+from sklearn.linear_model import LinearRegression
+from matplotlib import pyplot as plt
+from sklearn.metrics import mean_squared_error, r2_score
+import seaborn as sns
+
+# Load and process the data files
+province = pd.read_excel(r'C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets\tag_00026.xlsx', sheet_name='TAG-00026_4')
+province['province_e_regioni'] = province['province_e_regioni'].str.upper()
+consumi = pd.read_excel(r'C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets\tag_00027.xlsx', sheet_name='TAG-00027_2')
+consumi['province_e_regioni'] = consumi['province_e_regioni'].str.upper()
+
+# Perform operations like in SAS code
+base_tag = pd.merge(consumi, province, on='province_e_regioni')
+reddito = base_tag['_017'] / 1000
+propensione = consumi / reddito
+inverso = 1 / reddito
+base_tag['propensione'] = propensione
+base_tag['inverso'] = inverso
+
+# Regression model fitting and prediction
+regressor = LinearRegression()  
+X = base_tag[['reddito', 'inverso']].values.reshape(-1,2)
+Y = base_tag['propensione'].values.reshape(-1,1)
+regressor.fit(X, Y) #training the algorithm
+y_pred = regressor.predict(X)
+
+# Displaying intercept and coefficient of regression line
+print('Intercept: ', regressor.intercept_) 
+print('Coefficient:', regressor.coef_) 
+```
+Please note that you will need to replace the file paths with your actual paths as they are not correct in this example. This is a simplified version and it may be more complex than what you have there, but hopefully, it can serve as a good starting point for converting SAS code to Python using pandas dataframes and scikit-learn.

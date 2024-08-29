@@ -1,0 +1,133 @@
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise. 
+
+@@Instruction 
+Translate the following code from SAS to Python:
+%macro arrotondainterogruppo(ingresso,		
+							 variab,		
+							 datototeff,	
+							 effettiva,		
+							 vargru,		
+							 uscita);		
+
+
+
+
+%put;
+%put %str(WARNING- =================================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- intermedio somma segnali);
+%put %str(WARNING- identificano data set ausiliari della macro arrotondainterogruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni             );
+%put %str(WARNING- =================================================================);
+%put;
+
+
+data intermedio;
+	set &ingresso;
+run;
+proc sort data = intermedio;
+	by &vargru;
+run;
+proc means data = intermedio noprint;
+	by &vargru;
+	output out = somma (keep = &vargru vartot)
+		   sum(&variab) = vartot;
+run;
+proc sort data = &datototeff;
+	by &vargru;
+run;
+data somma;
+	merge somma (in = inso) &datototeff (in = inda);
+	by &vargru;
+	if inso and inda;
+	keep &vargru vartot &effettiva;
+run;
+
+
+data somma;
+	set somma;
+	diff = vartot - &effettiva;
+	keep &vargru diff;
+run;
+
+
+data intermedio;
+	merge intermedio somma (in = presente);
+	by &vargru;
+	if presente;
+run; 
+
+
+proc sort data = intermedio;
+	by &vargru descending &variab;
+run;
+
+
+data intermedio;
+	set intermedio;
+	by &vargru;
+	if first.&vargru then segnale = _N_;
+run;
+data segnali;
+	set intermedio;
+	by &vargru;
+	if first.&vargru;
+	keep &vargru segnale;
+run;
+
+
+data &uscita;
+	merge intermedio (drop = segnale) segnali;
+	by &vargru;
+	if _N_ < segnale + abs(diff) then
+		if diff < 0 then &variab = &variab + 1;
+		else &variab = max(&variab - 1,0);
+	drop diff segnale;
+run;
+
+
+proc datasets library = work;
+	delete intermedio somma segnali;
+run;
+quit;
+
+%mend arrotondainterogruppo;
+ 
+@@Response
+This SAS code is probably a procedure to round the groups of values related to the 'vargru' variable in a data set according to a variable 'variab'. 
+
+Here is an equivalent version of this macro in Python:
+
+```Python
+
+def round_by_intergroup(ingresso, variab, datototeff, effettiva, vargru, uscita):
+
+    print("WARNING- =================================================================") 
+    print("WARNING: Names intermediate and suma are identifying working datasets of function round_by_intergroup")
+    print("WARNING- that are to be deleted after completion                       ")
+    print("WARNING- =================================================================") 
+    print()
+ 
+
+    intermediate = ingresso.copy()
+    intermediate = intermediate.sort_values(by = vargru)
+    suma = intermediate.groupby(vargru).sum()[variab].reset_index()
+    ref = datototeff.sort_values(by = vargru)
+    suma = pd.merge(suma, ref, how = 'inner', on = vargru)
+    suma = suma.drop([effettiva,], axis = 1)
+    suma = suma.drop([vargru,], axis = 1)
+    suma['diff'] = suma['vartot'] - suma[effettiva]
+    suma = suma.drop(['vartot'], axis = 1)
+    
+    for i, row in suma.iterrows():
+        if row.diff >= 0:
+            ingresso[ingresso[vargru] == row[vargru] & ingresso[variab] < suma.loc[i, 'effettiva'], variab] = ingresso[variab] + 1
+        else:
+            ingresso[ingresso[vargru] == row[vargru] & ingresso[variab] > suma.loc[i, 'effettiva'], variab] = max(ingresso[variab] - 1, 0)
+ 
+    return ingresso
+
+
+```
+
+This Python function essentially performs the same operations and actions as the SAS macro. It is essentially performing advanced merging, and row-by-row comparison/change operations.

@@ -1,0 +1,25 @@
+Here is the PySpark code equivalent to your SQL query:
+
+```python
+from pyspark.sql import SparkSession, functions as F
+
+# Create a Spark session
+spark = SparkSession.builder.getOrCreate()
+
+# Read tables from DDWH01_DW
+df_ekpo = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+df_plbr = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+df_ekko = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+df_trge = spark.table("ddwh01_dw.TD_TRGE_TRANSCODING_GENERAL").filter((F.col("TRGE_CD_DEFAULT_NAME") == "WERKS") & (F.col("TRGE_CD_LOGICAL_SYSTEM").isin(["ERP", "URP", "NH3", "DWH"])))
+
+# Join tables
+df = df_ekpo.join(df_plbr, (df_ekpo["EKPO_CD_PLANT"] == df_plbr["PLBR_CD_PLANT"]) & df_plbr["PLBR_DS_PLANT_SEGMENT"].isin(["AG", "CE", "-1", "AM", "AS"]) & ~df_ekpo["EKPO_CD_PLANT"].isin(["FA01", "FB01", "IA01"]))
+df = df.join(df_ekko, df_ekpo["EKPO_CD_PO_NBR"] == df_ekko["EKKO_CD_PURCH_DOC_NBR"])
+df = df.join(df_trge, df_ekpo["EKPO_CD_PLANT"] == df_trge["TRGE_CD_SOURCE_DATA_1"], how='left')
+
+# Select columns and create new ones as per your SQL query
+df = df.select([F.col(c).alias(c) for c in df_ekpo.columns] + [
+    F.when(df_trge["TRGE_CD_DESTINATION_DATA"].isNull(), df_ekpo["EKPO_CD_PLANT"]).otherwise(df_trge["TRGE_CD_DESTINATION_DATA"]).alias("EKPO_KEY_STC")
+])
+```
+This code assumes that your PySpark environment can access the tables in `ddwh01_dw` schema. If not, you may need to load them from a different source (e.g., CSV files) or make sure that they are accessible through your Spark session. Also, this code does not create a view as it is not supported in PySpark. You can save the dataframe `df` into a table using the `saveAsTable` method if you want to create a view.

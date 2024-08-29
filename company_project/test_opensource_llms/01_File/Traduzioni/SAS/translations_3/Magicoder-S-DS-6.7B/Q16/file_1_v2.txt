@@ -1,0 +1,101 @@
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one. 
+
+@@Instruction 
+Translate the following code from SAS to Python:
+%macro quadraturagruppo(daquadrare,		
+						daquad,			
+						totpergru,		
+						perquad,		
+						giaquad,		
+						vargruppo,		
+						quadrato);		
+
+
+
+
+
+%put;
+%put %str(WARNING- ============================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- somma quadrare);
+%put %str(WARNING- identificano data set ausiliari della macro quadraturagruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni        );
+%put %str(WARNING- ============================================================);
+%put;
+
+
+proc sort data = &daquadrare;
+	by &vargruppo;
+run;
+proc means data = &daquadrare noprint;
+	by &vargruppo;
+	output out = somma (keep = &vargruppo datot)
+		   sum(&daquad) = datot;
+run;
+proc sort data = &totpergru;
+	by &vargruppo;
+run;
+data somma;
+	merge somma (in = inso) &totpergru (in = into);
+	by &vargruppo;
+	if inso and into;
+	keep &vargruppo datot &perquad;
+run; 
+
+
+data quadrare;
+	merge &daquadrare somma (in = presente);
+	by &vargruppo;
+	if presente;
+	&giaquad = &daquad*&perquad/datot;
+run;
+
+
+data &quadrato;
+	set quadrare;
+	drop &daquad datot &perquad;
+run;
+
+
+proc datasets library = work;
+	delete somma quadrare;
+run;
+quit;
+
+%mend quadraturagruppo;
+ 
+@@Response
+Here is the translated Python code:
+
+```python
+import pandas as pd
+
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+  
+    # Warning messages
+    print("============================================================")
+    print("WARNING: This macro names auxiliary data sets")
+    print("WARNING: somma quadrare that are deleted at the end of")
+    print("WARNING: calculations. Please check their names.")
+    print("============================================================")
+   
+    # Sort, mean and merge daquadrare and totpergru
+    dq = daquadrare.sort_values(by=[vargruppo]).groupby(vargruppo)
+    dq = pd.DataFrame({vargruppo: dq.last()[vargruppo], "datot": dq.sum()[daquad]})
+    tot_ = totpergru.sort_values(by=[vargruppo])
+    merged = pd.merge(dq, tot_, how='inner', on=vargruppo)
+
+    # Calculate the new column "giaquad"
+    merged[giaquad] = merged[daquad] * merged[perquad] / merged["datot"]
+    
+    # Result dataframe 
+    quadrato = pd.merge(daquadrare, merged, how='inner', on=vargruppo).drop([daquad,'datot',perquad], axis=1)
+    
+    # Cleanup: Delete dataframes used before
+    del dq, tot_, merged
+    gc.collect()
+
+    return quadrato
+```
+
+This code is structured as a function, taking `daquadrare`, `daquad`, `totpergru`, `perquad`, `giaquad`, `vargruppo`, and returning the dataframe named `quadrato`. Variables like `perquad`, `giaquad`, `vargruppo` remain as arguments in case they are to be chained. Note that in Python, we use pandas in place of SAS's proc-statements to read, manipulate and merge data. The dataframes are kept in memory while the function is running, preventing unnecessary I/O operations. After the function, the del statement is used to free those chunks of memory.

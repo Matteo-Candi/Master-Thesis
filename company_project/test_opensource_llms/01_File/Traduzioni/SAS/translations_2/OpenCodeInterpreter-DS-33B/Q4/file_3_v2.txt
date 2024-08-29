@@ -1,0 +1,45 @@
+
+Sure, here is the Python equivalent of your SAS code. Please note that this translation may not perfectly match the original SAS script due to differences between SAS and Python syntax, libraries used, or other factors.
+
+```python
+import pandas as pd
+from pathlib import Path
+
+# Define file paths
+data_dir = Path('C:/Users/mcandi/OneDrive – KPMG/Desktop/project/SAS_scripts/Data_sets')
+ter_file = data_dir / 'etapop20b.csv'
+sez_file = data_dir / 'sezionepop20b.csv'
+appo_file = data_dir / 'nati_eta_madre_provincia_istat.csv'
+geog_file = data_dir / 'geografica_comune.csv'
+
+# Load datasets
+ter = pd.read_csv(ter_file)
+sez = pd.read_csv(sez_file)  # Not used in the script, but loaded for potential future use
+appo = pd.read_csv(appo_file)
+geog = pd.read_csv(geog_file)
+
+# Transform data and merge datasets
+ter['time'] = 2019
+ter['eta1_a'] = ter['eta'].apply(lambda x: 'Y_UN17' if 15 <= x <= 17 else ('Y' + str(x)) if 18 <= x <= 49 else ('Y_GE50' if 50 <= x <= 54 else None))
+ter = ter.dropna()[['codc620b', 'eta1_a', 'eta']]
+ter.rename(columns={'codc620b': 'codice_comune__str'}, inplace=True)
+ter['femmine'] = ter['tot_fem']
+
+# Group by and calculate min, max for each group
+grouped = ter.groupby('eta1_a')
+summary = grouped['eta'].agg(['min', 'max'])
+print(summary)
+
+# Sort datasets by codice_comune__str
+ter.sort_values('codice_comune__str', inplace=True)
+geog.sort_values('codice_comune__str', inplace=True)
+appo.sort_values(['codice_provincia', 'eta1_a'], inplace=True)
+
+# Merge datasets on codice_comune__str
+merged = pd.merge(ter, geog, how='inner', on='codice_comune__str')
+nati_donne = pd.merge(appo, merged, how='inner', on=['codice_provincia', 'eta1_a'])
+
+# Calculate new variable and create a new dataframe
+nati_donne['nati_1000_donne_classe_eta'] = nati_donne['nati'] * 1000 / nati_donne['femmine']
+print(nati_donne)
+```

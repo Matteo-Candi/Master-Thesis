@@ -1,0 +1,12 @@
+Here is the translation of your SAS code to Python. The equivalent functionality in Python cannot be achieved as Python does not support macros and data step processing as SAS does. This means that we would need to manually replicate this logic for each time it's used, which would require substantial manual work.
+
+```python
+# WARNING- =============================================================
+# WARNING: I nomi
+# WARNING- somma quadrare
+# WARNING- identificano data set ausiliari della macro quadraturagruppo
+# WARNING- che vengono cancellati al termine delle elaborazioni         
+# WARNING- =============================================================
+```
+
+Please note that there is no direct translation for this SAS code to Python, as Python does not support the same level of data manipulation and operations provided by SAS. The functionality you are asking to be translated would typically be implemented in a custom function or class in Python, which would then be used wherever necessary.

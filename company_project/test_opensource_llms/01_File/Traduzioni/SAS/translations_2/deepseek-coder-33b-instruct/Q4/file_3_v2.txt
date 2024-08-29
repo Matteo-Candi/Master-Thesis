@@ -1,0 +1,37 @@
+Here's the equivalent Python code using pandas and numpy libraries. Please note that SAS has a different data processing methodology than Python, so some operations in Python may not be as straightforward or efficient. 
+
+```python
+import os
+import pandas as pd
+import numpy as np
+
+# Define file paths
+ter_path = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+sez_path = ter_path  # Same path for sez and ter
+out_path = ter_path  # Same path for sez_out and ter_out
+appo_path = ter_path
+
+# Load data from SAS datasets
+ter = pd.read_csv(os.path.join(ter_path, "etapop20b.csv"))
+geografica_comune = pd.read_csv(os.path.join(out_path, "geografica_comune.csv"))
+nati_eta_madre_provincia_istat = pd.read_csv(os.path.join(appo_path, "nati_eta_madre_provincia_istat.csv"))
+
+# Process data
+ter['time'] = 2019
+ter['eta1_a'] = np.where((15 <= ter['eta']) & (ter['eta'] <= 17), 'Y_UN17', 
+                         np.where((18 <= ter['eta']) & (ter['eta'] <= 49), 'Y'+ter['eta'].astype(str).str.strip(), 
+                                  np.where((50 <= ter['eta']) & (ter['eta'] <= 54), 'Y_GE50', '')))
+xclasse = ter[ter['eta1_a'] != '']  # Delete rows where eta1_a is empty
+xclasse = xclasse[['codc620b', 'eta1_a', 'time', 'tot_fem']]
+xclasse.columns = ['codice_comune__str', 'eta1_a', 'time', 'femmine']  # Rename columns
+xclasse = xclasse.groupby('eta1_a')['eta'].agg(['min', 'max'])  # Calculate min and max of eta for each class
+
+# Merge dataframes
+xclageo = pd.merge(geografica_comune, xclasse, on='codice_comune__str')
+provinciale_donne = xclageo.groupby(['codice_provincia', 'eta1_a'])['femmine'].sum().reset_index()
+provinciale_donne.columns = ['codice_provincia', 'eta1_a', 'donne_classe_eta']  # Rename columns
+nati_eta_madre_provincia_istat.columns = ['valore']  # Rename column
+nati = nati_eta_madre_provincia_istat.rename(columns={'valore': 'nati'})  # Rename column
+nati_donne = pd.merge(nati, provinciale_donne, on=['codice_provincia', 'eta1_a'])
+nati_donne['nati_1000_donne_classe_eta'] = 1000 * nati_donne['nati'] / nati_donne['donne_classe_eta']  # Calculate ratio
+```

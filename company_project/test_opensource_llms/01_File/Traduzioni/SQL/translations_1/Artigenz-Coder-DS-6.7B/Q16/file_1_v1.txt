@@ -1,0 +1,85 @@
+You are an expert in translating code from SQL to PySpark. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE); 
+@@Response
+PySpark does not support MERGE INTO statement like SQL. However, we can achieve the same result by using "join()", "when()", "otherwise()" functions. Here is the PySpark translation:
+
+```python
+# Import necessary modules
+from pyspark.sql import functions as F
+from pyspark.sql.functions import col, when, to_date, sysdate, lit
+
+# Load data from ddwh00_sa.TS_VENL0001_WW_GPP
+sa_data = spark.table('ddwh00_sa.TS_VENL0001_WW_GPP')
+
+# Load data from ddwh01_dw.TM_VENL_MASTER_LINK
+dw_data = spark.table('ddwh01_dw.TM_VENL_MASTER_LINK')
+
+# Perform left anti join to get the data that is only in sa_data but not in dw_data
+diff_data = sa_data.alias('sa').join(dw_data.alias('dw'), (sa_data.VENL_CD_CLIENT == dw_data.VENL_CD_CLIENT) & (sa_data.VENL_CD_PARTNER_GUID == dw_data.VENL_CD_PARTNER_GUID), 'left_anti')
+
+# Perform left semi join to get the data that is only in dw_data but not in sa_data
+dw_not_sa_data = dw_data.alias('dw').join(sa_data.alias('sa'), (dw_data.VENL_CD_CLIENT == sa_data.VENL_CD_CLIENT) & (dw_data.VENL_CD_PARTNER_GUID == sa_data.VENL_CD_PARTNER_GUID), 'left_semi')
+
+# Perform left semi join to get the data that is in both sa_data and dw_data
+common_data = dw_data.alias('dw').join(sa_data.alias('sa'), (dw_data.VENL_CD_CLIENT == sa_data.VENL_CD_CLIENT) & (dw_data.VENL_CD_PARTNER_GUID == sa_data.VENL_CD_PARTNER_GUID), 'left_semi')
+
+# Update VENL_CD_VENDOR, VENL_CD_USER, VENL_DT_DATE, VENL_DT_TIME, VENL_DT_LAST_MODIFY, VENL_ID_BATCH_LAST_MODIFY for the common_data
+updated_data = common_data.withColumn("VENL_CD_VENDOR", col("sa.VENL_CD_VENDOR")) \
+                           .withColumn("VENL_CD_USER", col("sa.VENL_CD_USER")) \
+                           .withColumn("VENL_DT_DATE", col("sa.VENL_DT_DATE")) \
+                           .withColumn("VENL_DT_TIME", col("sa.VENL_DT_TIME")) \
+                           .withColumn("VENL_DT_LAST_MODIFY", sysdate()) \
+                           .withColumn("VENL_ID_BATCH_LAST_MODIFY", when(col("p_ELT_ID_BATCH").isNotNull(), col("p_ELT_ID_BATCH")).otherwise(lit("n_ELT_ID_JOB_LOG")))
+
+# Insert data into TM_VENL_MASTER_LINK for the diff_data
+insert_data = diff_data.withColumn("VENL_ID_LINK", F.expr("nextval('DDWH01_DW.SEQ_TM_VENL')")) \
+                       .withColumn("VENL_DT_START_VALIDITY", to_date("01/01/1900", "DD/MM/YYYY")) \
+                       .withColumn("VENL_DT_END_VALIDITY", to_date("31/12/9999", "DD/MM/YYYY")) \
+                       .withColumn("VENL_DT_INSERT", sysdate()) \
+                       .withColumn("VENL_ID_BATCH_LAST_MODIFY", when(col("p_ELT_ID_BATCH").isNotNull(), col("p_ELT_ID_BATCH")).otherwise(lit("n_ELT_ID_JOB_LOG"))) \
+                       .withColumn("VENL_DT_LAST_MODIFY", sysdate())
+
+# Write the updated_data and insert_data to TM_VENL_MASTER_LINK
+updated_data.write.mode("overwrite").saveAsTable("ddwh01_dw.TM_VENL_MASTER_LINK")
+insert_data.write.mode("append").saveAsTable("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+
+This code first performs the left anti and left semi joins to get the data that is different between the two tables. Then, it updates the common data and inserts the diff data into the target table. Please replace the table names and column names with your actual table and column names.

@@ -1,0 +1,49 @@
+
+The Python equivalent of your SAS code would look like this:
+
+```python
+# Import required libraries
+import pandas as pd
+
+# Load the data from the CSV files
+ter = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/etapop20b.csv')
+sez = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_comune.csv') 
+appo = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/nati_eta_madre_provincia_istat.csv') 
+
+# Set time and length of new variable
+ter['time'] = 2019
+sez['length eta1_a'] = sez['codc620b'].astype(str) + "_" + ter['eta'].astype(str)
+
+# Filter data based on the conditions specified in SAS code
+filter_condition = (ter['eta'] >= 15) & (ter['eta'] <= 17)
+ter.loc[filter_condition, 'length eta1_a'] = "Y_UN17"
+
+filter_condition = (ter['eta'] >= 18) & (ter['eta'] <= 49)
+ter.loc[filter_condition, 'length eta1_a'] = "Y" + ter['eta'].astype(str).map(lambda x: str(int(x)))
+
+filter_condition = (ter['eta'] >= 50) & (ter['eta'] <= 54)
+ter.loc[filter_condition, 'length eta1_a'] = "Y_GE50"
+
+# Keep only the required columns
+ter = ter[['codc620b', 'length eta1_a', 'eta', 'time', 'tot_fem']]
+
+# Rename columns
+ter.rename(columns={'codc620b':'codice_comune__str','tot_fem':'femmine'}, inplace=True) 
+
+# Sort the data by codice_comune__str
+sez.sort_values('codice_comune__str', inplace=True)
+ter.sort_values('codice_comune__str', inplace=True)
+appo.sort_values(['codice_provincia','length eta1_a'], inplace=True)
+
+# Merge dataframes based on codice_comune__str
+merged = pd.merge(sez, ter, how='inner', on=['codice_comune__str'])
+
+# Perform the operation specified in SAS code to calculate donne_classe_eta
+donne_classe_eta = merged.groupby(['codice_provincia','length eta1_a']).femmine.sum().reset_index()
+
+# Merge with dataframe from appo (nati)
+merged = pd.merge(appo, donne_classe_eta, how='inner', on=['codice_provincia','length eta1_a'])
+
+# Perform the operation specified in SAS code to calculate nati_1000_donne_classe_eta
+merged['nati_1000_donne_classe_eta'] = 1000 * merged['valore'] / merged['femmine']
+```

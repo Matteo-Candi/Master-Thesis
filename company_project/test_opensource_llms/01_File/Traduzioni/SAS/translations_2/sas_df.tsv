@@ -1,0 +1,157 @@
+	model	quantization	file	version	input_tokens	max_length	time	output_tokens	lloc	primary_errors_rank	secondary_errors_index	commented_lines	cyclomatic_complexity_index	halstead_volume	maintainability_index	syntax_error	loop	partial_code	primary_error_text
+0	CodeQwen1.5-7B-Chat	Q16	file_1	v1	511.0	65536.0	13.66	1026.0	19.0	Good	0.2	25.9	5.3	15.5	91.2		False	False	
+1	CodeQwen1.5-7B-Chat	Q16	file_2	v1	739.0	65536.0	20.44	1549.0	28.0	Good	0.1	30.2	3.6	70.3	84.0		False	False	
+2	CodeQwen1.5-7B-Chat	Q16	file_3	v1	876.0	65536.0	22.6	1769.0	25.0	Good	0.06	22.2	4.0	160.3	80.1		False	False	
+3	CodeQwen1.5-7B-Chat	Q16	file_4	v1	3152.0	65536.0	62.0	5356.0	77.0	Good	0.01	17.2	1.3	407.7	64.1		False	False	"Undefined variable 'quadra'
+Undefined variable 'LinearRegression'
+Undefined variable 'parametri'
+"
+4	CodeQwen1.5-7B-Chat	Q16	file_5	v1	3688.0	65536.0	74.04	6572.0								"  File ""<unknown>"", line 20
+    bascom['cleta'] = np.where(bascom['eta'] <= 4, '00-04',
+                              ^
+SyntaxError: '(' was never closed
+"	False	False	
+5	CodeQwen1.5-7B-Chat	Q16	file_6	v1	4558.0	65536.0	107.12	8653.0								"  File ""<unknown>"", line 15
+    np.where(x_base_eta['eta'] <= 9, '05-09',
+    
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+"	False	False	
+6	CodeQwen1.5-7B-Chat	Q16	file_7	v1	7619.0	65536.0	346.15	17919.0									True	False	
+7	CodeQwen1.5-7B-Chat	Q16	file_1	v2	601.0	65536.0	13.41	1120.0	17.0	Good	0.21	32.1	5.9	15.5	93.6		False	False	
+8	CodeQwen1.5-7B-Chat	Q16	file_2	v2	829.0	65536.0	22.78	1730.0	27.0	Good	0.07	21.6	3.7	153.2	79.2		False	False	
+9	CodeQwen1.5-7B-Chat	Q16	file_3	v2	966.0	65536.0	22.87	1866.0	26.0	Good	0.06	7.7	15.4	116.7	70.6		False	False	
+10	CodeQwen1.5-7B-Chat	Q16	file_4	v2	3242.0	65536.0	70.96	5766.0								"  File ""<unknown>"", line 16
+    def macroarrotondainterogruppo(df, consumi_qua, quadra, consumi_totali, codice_comune__str, base_out3):
+    ^^^
+IndentationError: expected an indented block after function definition on line 13
+"	False	False	
+11	CodeQwen1.5-7B-Chat	Q16	file_5	v2	3778.0	65536.0	59.8	6108.0	72.0	Mediocre	0.02	11.3	6.9	883.6	57.9		False	False	"Undefined variable 'bassesz'
+"
+12	CodeQwen1.5-7B-Chat	Q16	file_6	v2	4647.0	65536.0	128.03	9477.0								"  File ""<unknown>"", line 28
+    np.where(x_base_eta['eta'] <= 9, '05-09',
+    
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+"	False	False	
+13	CodeQwen1.5-7B-Chat	Q16	file_7	v2	7709.0	65536.0	4171.41	65531.0									True	False	
+14	OpenCodeInterpreter-DS-6.7B	Q16	file_1	v1	533.0	16384.0	13.97	1108.0	11.0	Good	0.27	31.8	9.1	15.5	97.7		False	False	"Undefined variable 'pd'
+"
+15	OpenCodeInterpreter-DS-6.7B	Q16	file_2	v1	736.0	16384.0	25.3	1764.0	22.0	Good	0.19	35.0	4.5	55.5	87.6		False	False	
+16	OpenCodeInterpreter-DS-6.7B	Q16	file_3	v1	909.0	16384.0	24.3	1897.0	21.0	Good	0.03	20.5	19.0	149.3	80.8		False	False	
+17	OpenCodeInterpreter-DS-6.7B	Q16	file_4	v1	3285.0	16384.0	72.16	5815.0	92.0	Good	0.01	16.4	1.1	458.8	61.6		False	False	
+18	OpenCodeInterpreter-DS-6.7B	Q16	file_5	v1	3826.0	16384.0	448.7	16384.0									True	False	
+19	OpenCodeInterpreter-DS-6.7B	Q16	file_6	v1	4744.0	16384.0	424.26	16384.0									True	False	
+20	OpenCodeInterpreter-DS-6.7B	Q16	file_7	v1	7890.0	16384.0	172.82	12770.0								"  File ""<unknown>"", line 207
+    def arrotondainterogruppo(qua2, stima_qua, quadra, consumi_istat_ultimo, territorio):
+    ^^^
+IndentationError: expected an indented block after function definition on line 202
+"	False	False	
+21	OpenCodeInterpreter-DS-6.7B	Q16	file_1	v2	623.0	16384.0	13.43	1201.0	13.0	Good	0.18	26.1	7.7	15.5	94.8		False	False	"Undefined variable 'pd'
+"
+22	OpenCodeInterpreter-DS-6.7B	Q16	file_2	v2	826.0	16384.0	20.9	1686.0	29.0	Good	0.16	27.9	13.8	68.5	82.8		False	False	
+23	OpenCodeInterpreter-DS-6.7B	Q16	file_3	v2	999.0	16384.0	26.18	2055.0	25.0	Poor	0.02	16.1	4.0	156.9	77.0		False	False	"Module 'pandas' has no 'read_sas7bdat' member
+Module 'pandas' has no 'read_sas7bdat' member
+Module 'pandas' has no 'read_sas7bdat' member
+Module 'pandas' has no 'read_sas7bdat' member
+"
+24	OpenCodeInterpreter-DS-6.7B	Q16	file_4	v2	3375.0	16384.0	74.11	5982.0	74.0	Good	0.01	11.5	1.4	544.8	59.8		False	False	"Undefined variable 'base_out3'
+Undefined variable 'parametri'
+"
+25	OpenCodeInterpreter-DS-6.7B	Q16	file_5	v2	3916.0	16384.0	93.16	7353.0	96.0	Poor	0.01	4.0	1.0	1874.7	45.8		False	False	"Undefined variable 'quadrato_ok1'
+Undefined variable 'sez_path'
+Undefined variable 'quadrato_ok2'
+Undefined variable 'geog1'
+Undefined variable 'nuova'
+"
+26	OpenCodeInterpreter-DS-6.7B	Q16	file_6	v2	4834.0	16384.0	108.16	8613.0	70.0	Good	0.01	12.5	4.3	461.7	61.3		False	False	"Undefined variable 'tot_classe_com'
+Undefined variable 'base_eta'
+Undefined variable 'attuale'
+"
+27	OpenCodeInterpreter-DS-6.7B	Q16	file_7	v2	7980.0	16384.0	329.77	16384.0	75.0	Mediocre	0.02	0.0	4.0	116.7	44.2		True	False	"Module 'pandas' has no 'ols' member; maybe 'os'?
+Module 'pandas' has no 'ols' member; maybe 'os'?
+"
+28	Artigenz-Coder-DS-6.7B	Q16	file_1	v1	533.0	16384.0	14.63	1099.0	16.0	Good	0.17	30.8	6.2	15.5	94.0		False	False	"Undefined variable 'pd'
+"
+29	Artigenz-Coder-DS-6.7B	Q16	file_2	v1	736.0	16384.0	19.56	1505.0	33.0	Good	0.11	0.0	12.1	68.5	53.5		False	False	
+30	Artigenz-Coder-DS-6.7B	Q16	file_3	v1	909.0	16384.0	23.58	1834.0	23.0	Good	0.02	17.0	17.4	102.0	79.3		False	False	
+31	Artigenz-Coder-DS-6.7B	Q16	file_4	v1	3285.0	16384.0	59.39	5318.0	56.0	Good	0.02	3.1	1.8	385.4	54.3		False	False	"Undefined variable 'parametri'
+"
+32	Artigenz-Coder-DS-6.7B	Q16	file_5	v1	3826.0	16384.0	18.11	4529.0	19.0	Good	0.31	14.7	5.3	0.0	100.0		False	True	
+33	Artigenz-Coder-DS-6.7B	Q16	file_6	v1	4744.0	16384.0	102.35	8331.0	78.0	Good	0.01	1.7	1.3	418.9	48.1		False	False	
+34	Artigenz-Coder-DS-6.7B	Q16	file_7	v1	7890.0	16384.0	150.42	12161.0	129.0	Good	0.01	1.1	0.8	714.4	40.2		False	False	"Undefined variable 'geog'
+"
+35	Artigenz-Coder-DS-6.7B	Q16	file_1	v2	623.0	16384.0	13.75	1172.0	17.0	Good	0.16	29.6	5.9	15.5	93.2		False	False	
+36	Artigenz-Coder-DS-6.7B	Q16	file_2	v2	826.0	16384.0	22.45	1707.0	25.0	Mediocre	0.1	35.4	4.0	68.5	85.7		False	False	"Undefined variable 'np'
+Undefined variable 'pd'
+"
+37	Artigenz-Coder-DS-6.7B	Q16	file_3	v2	999.0	16384.0	521.62	16384.0	31.0	Good	0.05	29.6	12.9	98.1	81.5		False	False	
+38	Artigenz-Coder-DS-6.7B	Q16	file_4	v2	3375.0	16384.0	48.62	5050.0	53.0	Good	0.01	4.0	5.7	378.9	56.0		False	False	
+39	Artigenz-Coder-DS-6.7B	Q16	file_5	v2	3916.0	16384.0	60.58	6228.0	49.0	Good	0.02	20.6	6.1	279.2	71.1		False	False	"Undefined variable 'quadrato_ok2'
+"
+40	Artigenz-Coder-DS-6.7B	Q16	file_6	v2	4834.0	16384.0	93.76	8138.0	55.0	Good	0.0	0.8	1.8	402.1	49.1		False	False	
+41	Artigenz-Coder-DS-6.7B	Q16	file_7	v2	7980.0	16384.0	2.46	8057.0									False	False	
+42	Magicoder-S-DS-6.7B	Q16	file_1	v1	533.0	16384.0	10.01	924.0									False	False	
+43	Magicoder-S-DS-6.7B	Q16	file_2	v1	736.0	16384.0	23.21	1625.0	30.0	Good	0.18	26.1	13.3	82.0	81.4		False	False	
+44	Magicoder-S-DS-6.7B	Q16	file_3	v1	909.0	16384.0	30.47	2095.0	29.0	Good	0.05	24.1	13.8	98.1	80.5		False	False	
+45	Magicoder-S-DS-6.7B	Q16	file_4	v1	3285.0	16384.0	12.95	3728.0	4.0	Good	0.25	0.0	25.0	0.0	100.0		False	True	
+46	Magicoder-S-DS-6.7B	Q16	file_5	v1	3826.0	16384.0	14.77	4413.0	20.0	Good	0.03	3.2	5.0	0.0	100.0		False	True	
+47	Magicoder-S-DS-6.7B	Q16	file_6	v1	4744.0	16384.0	39.6	6239.0	23.0	Good	0.01	3.7	4.3	185.4	65.8		False	True	
+48	Magicoder-S-DS-6.7B	Q16	file_7	v1	7890.0	16384.0	124.34	11493.0	91.0	Good	0.01	18.9	1.1	361.9	63.8		False	False	"Undefined variable 'regionale_precedente'
+Undefined variable 'geog'
+"
+49	Magicoder-S-DS-6.7B	Q16	file_1	v2	623.0	16384.0	13.57	1170.0	15.0	Good	0.18	26.1	6.7	15.5	93.4		False	False	"Undefined variable 'pd'
+"
+50	Magicoder-S-DS-6.7B	Q16	file_2	v2	826.0	16384.0	21.05	1659.0	22.0	Good	0.07	22.2	4.5	153.2	81.4		False	False	"Undefined variable 'np'
+Undefined variable 'pd'
+"
+51	Magicoder-S-DS-6.7B	Q16	file_3	v2	999.0	16384.0	24.14	1951.0	27.0	Mediocre	0.05	15.6	3.7	174.9	75.6		False	False	"Undefined variable 'np'
+"
+52	Magicoder-S-DS-6.7B	Q16	file_4	v2	3375.0	16384.0	11.41	3764.0	2.0	Good	0.25	33.3	50.0	0.0	100.0		False	True	
+53	Magicoder-S-DS-6.7B	Q16	file_5	v2	3916.0	16384.0	57.36	6112.0	56.0	Good	0.02	1.6	60.7	1073.7	43.7		False	False	
+54	Magicoder-S-DS-6.7B	Q16	file_6	v2	4834.0	16384.0	71.11	7401.0	50.0	Good	0.01	13.3	2.0	167.2	68.5		False	False	"Undefined variable 'rapporto_nascita'
+Undefined variable 'Base_sezione_eta_riquadrata'
+Undefined variable 'nati_eta_madre_rapporto'
+"
+55	Magicoder-S-DS-6.7B	Q16	file_7	v2	7980.0	16384.0	331.58	16384.0									True	False	
+56	deepseek-coder-33b-instruct	Q4	file_1	v1	533.0	16384.0	14.95	218.0									False	True	
+57	deepseek-coder-33b-instruct	Q4	file_2	v1	736.0	16384.0	22.72	752.0	19.0	Good	0.16	27.3	15.8	100.1	85.6		False	False	
+58	deepseek-coder-33b-instruct	Q4	file_3	v1	909.0	16384.0	30.73	1007.0	31.0	Good	0.12	33.3	12.9	158.3	80.3		False	False	
+59	deepseek-coder-33b-instruct	Q4	file_4	v1	3285.0	16384.0	31.8	771.0	8.0	Good	0.25	33.3	12.5	0.0	100.0		False	True	"Undefined variable 'y'
+Undefined variable 'x'
+"
+60	deepseek-coder-33b-instruct	Q4	file_5	v1	3826.0	16384.0	28.81	620.0	13.0	Good	0.11	21.7	7.7	0.0	100.0		False	True	
+61	deepseek-coder-33b-instruct	Q4	file_6	v1	4744.0	16384.0	33.19	647.0	14.0	Good	0.07	11.8	7.1	75.3	81.8		False	True	
+62	deepseek-coder-33b-instruct	Q4	file_7	v1	7890.0	16384.0	61.4	1152.0	28.0	Good	0.04	15.4	3.6	133.8	75.1		False	True	
+63	deepseek-coder-33b-instruct	Q4	file_1	v2	623.0	16384.0	26.78	880.0	15.0	Good	0.08	17.8	6.7	144.9	86.3		False	False	
+64	deepseek-coder-33b-instruct	Q4	file_2	v2	826.0	16384.0	23.67	759.0	26.0	Good	0.11	5.3	11.5	100.1	68.4		False	False	
+65	deepseek-coder-33b-instruct	Q4	file_3	v2	999.0	16384.0	26.17	826.0	24.0	Good	0.02	25.5	4.2	195.0	79.6		False	False	
+66	deepseek-coder-33b-instruct	Q4	file_4	v2	3375.0	16384.0	39.9	1011.0	31.0	Good	0.02	28.0	3.2	70.3	81.2		False	True	
+67	deepseek-coder-33b-instruct	Q4	file_5	v2	3916.0	16384.0	28.19	590.0	15.0	Good	0.1	16.0	6.7	47.5	85.4		False	True	
+68	deepseek-coder-33b-instruct	Q4	file_6	v2	4834.0	16384.0	181.72	4667.0								"  File ""<unknown>"", line 87
+    age_labels = ['Y_UN17', 'Y'+str(i) for i in range(18, 50)] + ['Y_GE50']
+                  ^^^^^^^^^^^^^^^^^^^^
+SyntaxError: did you forget parentheses around the comprehension target?
+"	False	False	
+69	deepseek-coder-33b-instruct	Q4	file_7	v2	7980.0	16384.0	89.47	1875.0	52.0	Mediocre	0.02	8.5	1.9	70.3	66.7		False	True	"'reddito' does not support item assignment
+Sequence index is not an int, slice, or instance with __index__
+Sequence index is not an int, slice, or instance with __index__
+Undefined variable 'np'
+"
+70	OpenCodeInterpreter-DS-33B	Q4	file_1	v1	533.0	16384.0	21.91	459.0	7.0	Good	0.11	21.7	14.3	15.5	99.0		False	False	"Undefined variable 'pd'
+Undefined variable 'daquad'
+"
+71	OpenCodeInterpreter-DS-33B	Q4	file_2	v1	736.0	16384.0	31.32	1038.0	19.0	Good	0.11	29.4	5.3	66.6	87.7		False	False	"Undefined variable 'np'
+"
+72	OpenCodeInterpreter-DS-33B	Q4	file_3	v1	909.0	16384.0	22.58	715.0	26.0	Good	0.05	6.7	15.4	149.3	68.8		False	False	
+73	OpenCodeInterpreter-DS-33B	Q4	file_4	v1	3285.0	16384.0	57.95	1588.0	51.0	Very poor	0.01	15.3	7.8	169.2	69.2		False	False	"Undefined variable 'plt'
+Undefined variable 'np'
+"
+74	OpenCodeInterpreter-DS-33B	Q4	file_5	v1	3826.0	16384.0	42.9	1037.0	38.0	Good	0.04	17.2	18.4	139.0	73.3		False	True	
+75	OpenCodeInterpreter-DS-33B	Q4	file_6	v1	4744.0	16384.0	12.43	32.0									False	False	
+76	OpenCodeInterpreter-DS-33B	Q4	file_7	v1	7890.0	16384.0	20.11	47.0									False	False	
+77	OpenCodeInterpreter-DS-33B	Q4	file_1	v2	623.0	16384.0	18.64	600.0	14.0	Good	0.22	28.0	7.1	15.5	94.6		False	False	
+78	OpenCodeInterpreter-DS-33B	Q4	file_2	v2	826.0	16384.0	19.44	615.0	14.0	Good	0.11	37.9	14.3	53.8	91.8		False	False	
+79	OpenCodeInterpreter-DS-33B	Q4	file_3	v2	999.0	16384.0	23.07	722.0	28.0	Good	0.05	17.8	14.3	160.5	76.2		False	False	
+80	OpenCodeInterpreter-DS-33B	Q4	file_4	v2	3375.0	16384.0	18.77	350.0									False	False	
+81	OpenCodeInterpreter-DS-33B	Q4	file_5	v2	3916.0	16384.0	30.85	671.0	20.0	Good	0.06	13.9	5.0	77.7	79.9		False	True	
+82	OpenCodeInterpreter-DS-33B	Q4	file_6	v2	4834.0	16384.0	70.41	1698.0	56.0	Good	0.05	15.3	28.6	490.0	63.4		False	True	
+83	OpenCodeInterpreter-DS-33B	Q4	file_7	v2	7980.0	16384.0	19.58	32.0									False	False	

@@ -1,0 +1,144 @@
+Below is the PySpark code that performs similar operations as your SQL statement. Please note that this script assumes that all tables and columns exist in your Spark environment, and that you have defined `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` variables somewhere else in your PySpark code or session:
+
+```python
+from pyspark.sql import functions as F
+from datetime import datetime
+
+# Define all tables
+sa = spark.table("ddwh00_sa.TS_MAKT0001_WW_GPP") \
+    .select(F.lit('MAKT').alias('DESC_CD_TABLE'), 
+            F.lit('Material').alias('DESC_CD_TABLE_DESC'), 
+            'MATNR', 
+            'SPRAS', 
+            F.lit(1).alias('DESC_CD_POSITION'), 
+            'MAKTX', 
+            'MAKTG', 
+            F.lit(None).cast("string").alias('DESC_CD_DETAIL1'), 
+            F.lit(None).cast("string").alias('DESC_CD_DETAIL2'), 
+            F.lit(None).cast("string").alias('DESC_CD_DETAIL3'), 
+            F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM')) \
+    .unionByName(spark.table("ddwh00_sa.TS_EQKT0001_WW_GPP") \
+        .select(F.lit('EQKT').alias('DESC_CD_TABLE'), 
+                F.lit('Equipment').alias('DESC_CD_TABLE_DESC'), 
+                'EQUNR', 
+                'SPRAS', 
+                F.lit(1).alias('DESC_CD_POSITION'), 
+                'EQKTX', 
+                'EQKTU', 
+                'KZLTX', 
+                'TXASP', 
+                F.to_date('TEXTCHANGEDDATETIME').cast("string").alias('DESC_CD_DETAIL3'), 
+                F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(spark.table("ddwh00_sa.TS_T0050002_WW_GPP") \
+        .select(F.lit('T005T').alias('DESC_CD_TABLE'), 
+                F.lit('Country').alias('DESC_CD_TABLE_DESC'), 
+                'LAND1', 
+                'SPRAS', 
+                F.lit(1).alias('DESC_CD_POSITION'), 
+                'LANDX', 
+                'LANDX50', 
+                'PRQ_SPREGT', 
+                'NATIO', 
+                'NATIO50', 
+                F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(spark.table("ddwh00_sa.TS_T0230002_WW_GPP") \
+        .select(F.lit('T023T').alias('DESC_CD_TABLE'), 
+                F.lit('Commodity').alias('DESC_CD_TABLE_DESC'), 
+                'MATKL', 
+                'SPRAS', 
+                F.lit(1).alias('DESC_CD_POSITION'), 
+                'WGBEZ', 
+                'WGBEZ60', 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL1'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL2'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL3'), 
+                F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(spark.table("ddwh00_sa.TS_T0520002_WW_GPP") \
+        .select(F.lit('T052U').alias('DESC_CD_TABLE'), 
+                F.lit('Payment Condition').alias('DESC_CD_TABLE_DESC'), 
+                (F.concat(F.col("ZTERM"), F.coalesce(F.col("ZTAGG"), F.lit(-1)))).alias('DESC_CD_CODE'), 
+                'SPRAS', 
+                F.lit(1).alias('DESC_CD_POSITION'), 
+                'TEXT1', 
+                F.lit(None).cast("string").alias('DESC_CD_DESCRIPTION2'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL1'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL2'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL3'), 
+                F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(spark.table("ddwh00_sa.TS_TINC0002_WW_GPP") \
+        .select(F.lit('TINCT').alias('DESC_CD_TABLE'), 
+                F.lit('Incoterms').alias('DESC_CD_TABLE_DESC'), 
+                'INCO1', 
+                'SPRAS', 
+                F.lit(1).alias('DESC_CD_POSITION'), 
+                'BEZEI', 
+                F.lit(None).cast("string").alias('DESC_CD_DESCRIPTION2'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL1'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL2'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL3'), 
+                F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .unionByName(spark.table("ddwh00_sa.TS_SWOR00001_WW_GPP") \
+        .select(F.lit('SWOR').alias('DESC_CD_TABLE'), 
+                F.lit('Hierarchy Material Group').alias('DESC_CD_TABLE_DESC'), 
+                F.to_date('CLINT').cast("string").alias('DESC_CD_CODE'), 
+                'SPRAS', 
+                'KLPOS', 
+                'KSCHL', 
+                'KSCHG', 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL1'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL2'), 
+                F.lit(None).cast("string").alias('DESC_CD_DETAIL3'), 
+                F.lit('WW GPP').alias('DESC_CD_SOURCE_SYSTEM'))) \
+    .exceptAll(spark.table("ddwh01_dw.TM_DESC_DESCRIPTION"))
+
+# Define target table
+target = spark.table("ddwh01_dw.TM_DESC_DESCRIPTION")
+
+# Perform join operation and update/insert based on match status
+joinCondition = [target["DESC_CD_TABLE"] == sa["DESC_CD_TABLE"], 
+                target["DESC_CD_CODE"] == sa["DESC_CD_CODE"], 
+                target["DESC_CD_LANGUAGE"] == sa["DESC_CD_LANGUAGE"], 
+                (target["DESC_CD_POSITION"].cast("int").isNull() | sa["DESC_CD_POSITION"].cast("int").isNull())]
+
+# Update matched rows
+matchedRows = target.alias('TARGET').join(sa.alias('SA'), joinCondition, 'leftsemi') \
+    .select('TARGET.*', 
+            sa['DESC_CD_DESCRIPTION1'].alias('NEW_DESC_CD_DESCRIPTION1'), 
+            sa['DESC_CD_DESCRIPTION2'].alias('NEW_DESC_CD_DESCRIPTION2'), 
+            sa['DESC_CD_DETAIL1'].alias('NEW_DESC_CD_DETAIL1'), 
+            sa['DESC_CD_DETAIL2'].alias('NEW_DESC_CD_DETAIL2'), 
+            sa['DESC_CD_DETAIL3'].alias('NEW_DESC_CD_DETAIL3')) \
+    .withColumnRenamed('TARGET.DESC_DT_LAST_MODIFY', 'OLD_DESC_DT_LAST_MODIFY') \
+    .withColumnRenamed('TARGET.DESC_ID_BATCH_LAST_MODIFY', 'OLD_DESC_ID_BATCH_LAST_MODIFY') \
+    .drop(target["DESC_CD_DESCRIPTION1"], 
+          target["DESC_CD_DESCRIPTION2"], 
+          target["DESC_CD_DETAIL1"], 
+          target["DESC_CD_DETAIL2"], 
+          target["DESC_CD_DETAIL3"]) \
+    .withColumn("NEW_DESC_DT_LAST_MODIFY", F.current_timestamp()) \
+    .withColumn("NEW_DESC_ID_BATCH_LAST_MODIFY", F.coalesce(F.lit(p_ELT_ID_BATCH), F.lit(n_ELT_ID_JOB_LOG))) \
+    .select('*', 
+            F.when((target["DESC_CD_POSITION"].isNull()) & (sa["DESC_CD_POSITION"].isNotNull()), sa['DESC_CD_POSITION']) \
+                .otherwise(target["DESC_CD_POSITION"]).alias('DESC_CD_POSITION'), 
+            F.when((target["DESC_DT_LAST_MODIFY"].isNull()) & (sa["NEW_DESC_DT_LAST_MODIFY"].isNotNull()), sa['NEW_DESC_DT_LAST_MODIFY']) \
+                .otherwise(target["OLD_DESC_DT_LAST_MODIFY"]).alias('DESC_DT_LAST_MODIFY'), 
+            F.when((target["DESC_ID_BATCH_LAST_MODIFY"].isNull()) & (sa["NEW_DESC_ID_BATCH_LAST_MODIFY"].isNotNull()), sa['NEW_DESC_ID_BATCH_LAST_MODIFY']) \
+                .otherwise(target["OLD_DESC_ID_BATCH_LAST_MODIFY"]).alias('DESC_ID_BATCH_LAST_MODIFY')) 
+
+# Insert non-matched rows
+nonMatchedRows = sa.subtract(target) \
+    .withColumn("DESC_DT_START_VALIDITY", F.to_date(F.lit('01/01/1900'), 'dd/MM/yyyy')) \
+    .withColumn("DESC_DT_END_VALIDITY", F.to_date(F.lit('31/12/9999'), 'dd/MM/yyyy')) \
+    .select(F.expr("nextval('DDWH01_DW.SEQ_TM_DESC')").alias('DESC_ID_TABLE'), 
+            '*', 
+            F.current_timestamp().alias('DESC_DT_INSERT'), 
+            F.coalesce(F.lit(p_ELT_ID_BATCH), F.lit(n_ELT_ID_JOB_LOG)).alias('DESC_ID_BATCH_LAST_MODIFY'))
+
+# Combine matched and non-matched rows
+result = matchedRows.unionByName(nonMatchedRows) \
+    .drop("OLD_DESC_DT_LAST_MODIFY", "OLD_DESC_ID_BATCH_LAST_MODIFY")
+
+# Overwrite target table with result dataframe
+result.write.mode('overwrite').insertInto("ddwh01_dw.TM_DESC_DESCRIPTION")
+```
+This script will create a new DataFrame `sa` that contains the same operations as your SQL statement, and then perform an update/insert operation on the target table based on whether the rows in `sa` match with any row in the target table. The matched rows are updated with new values from `sa`, while non-matched rows are inserted into the target table.

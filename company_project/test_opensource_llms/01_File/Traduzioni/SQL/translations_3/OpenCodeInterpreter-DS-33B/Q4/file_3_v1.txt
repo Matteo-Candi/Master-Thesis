@@ -1,0 +1,27 @@
+
+In PySpark, you would define the view by selecting from an existing table. You do not need to create a view with `CREATE OR REPLACE` command in PySpark. Here's how you might translate your SQL code into PySpark:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import to_number, coalesce
+
+# Create spark session
+spark = SparkSession.builder \
+    .appName('PySpark SQL to PySpark') \
+    .getOrCreate()
+
+df = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")  # Equivalent to FROM clause in SQL
+
+agce_df = df.select('EKPO_CD_PO_NBR').distinct()
+
+suppm_df = spark.table("ddwh01_dw.TM_SUPM_SUPPLIER_GPP")
+
+result = df.join(agce_df, 'EKKO_CD_PURCH_DOC_NBR' == 'EKPO_CD_PO_NBR', 'inner') \  # Equivalent to INNER JOIN in SQL
+    .leftJoin(suppm_df, 'EKKO_CD_VENDOR_ACCOUNT_NBR' == 'SUPM_CD_ACCOUNT_NBR') \  # Equivalent to LEFT JOIN in SQL
+    .withColumn('Supplier_Type', when(length(col('SUPM_CD_COMP_TRADING_PARTNER')) > 1, 'Intercompany').otherwise('Third Party'))  # Equivalent to CASE WHEN THEN statement in SQL
+
+result.select('EKKO_DT_LAST_MODIFY', 'EKKO_ID_PURCH_DOC_HEADER_GPP', ...).write \  # Select the columns as per your SQL query and create a view
+    .mode('overwrite') \
+    .saveAsTable('DDWH02_SM.VW_EKKO_PURCH_DOC_HEADER_AGCE')
+```
+Note: You'll need to replace `...` with the remaining column names and adjust the table and column names according to your Spark environment and database schema.

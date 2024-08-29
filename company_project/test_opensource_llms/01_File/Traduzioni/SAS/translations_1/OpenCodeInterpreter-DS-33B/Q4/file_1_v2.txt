@@ -1,0 +1,31 @@
+
+Sure, here is the SAS code translated to Python. Please note that this translation might not be perfect due to differences in syntax between languages and the fact that some procedures used in SAS might not have equivalent ones in Python. In addition, I've added comments for better understanding of the code.
+
+```python
+import pandas as pd
+
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    # Sorting data by group variable
+    sorted_data = daquadrare.sort_values(by=vargruppo)
+    
+    # Calculating the sum of 'daquad' for each 'vargruppo', and storing in a new DataFrame named 'somma'
+    somma = sorted_data.groupby(vargruppo)[daquad].sum().reset_index()
+    
+    # Sorting data by group variable
+    sorted_totpergru = totpergru.sort_values(by=vargruppo)
+    
+    # Merging 'somma' and 'sorted_totpergru', keeping only rows where both DataFrames have the same 'vargruppo' value
+    merged_data = pd.merge(somma, sorted_totpergru, how='inner', on=vargruppo)
+    
+    # Merging original data and 'merged_data', keeping only rows where both DataFrames have the same 'vargruppo' value
+    quadrare = pd.merge(daquadrare, merged_data, how='inner', on=vargruppo)
+    
+    # Calculating 'giaquad' as 'daquad' * 'perquad' / 'datot' (sum of 'daquad') for each row in the DataFrame
+    quadrare[giaquad] = quadrare[daquad] * quadrare[perquad] / quadrare['datot']
+    
+    # Storing final data in a new DataFrame named 'quadrato' and dropping unnecessary columns
+    quadrato = quadrare.drop(columns=[daquad, 'datot', perquad])
+    
+    return quadrato
+```
+This function can be used to perform the same operation as the SAS macro: it calculates the sum of a certain variable ('daquad') for each group defined by another variable ('vargruppo'), and then assigns new values to another variable ('giaquad') based on these sums. The result is stored in a new DataFrame, which is returned at the end of the function.

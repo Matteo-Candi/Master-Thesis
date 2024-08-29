@@ -1,0 +1,1137 @@
+system
+You are an expert in translating code from SAS to Python; translate the given code at your best even if there are problems; insert comments inside the code; do not return any message outside the code and make it as readable as possible; minimize the code complexity and volume; create functions to automate frequently needed operations; ensure to not make any syntax error; define all variables and import all libraries used even if imported locally; ensure the user can copy and run the code without modifications; translate from SAS to Python every part of the input code reproducing the same operations; do not use SAS syntax in the Python code; define correctly the file paths; return the code in single block; make Python code more efficient than the SAS one.
+user
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+options mergenoby = warn;
+options nolabel;
+
+%include "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\Macro\macroquadraturagruppo.sas";
+%include "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\Macro\macroarrotondainterogruppo.sas";
+
+title1 "STIMA COMUNALE DEI CONSUMI";
+
+ods graphics off;
+
+
+PROC IMPORT OUT= WORK.xconsumi_tag
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\tag_00026.xlsx"
+            DBMS=EXCEL2000 REPLACE;
+			SHEET="TAG-00026_4";
+     		RANGE="A3:G132";
+     		GETNAMES=YES;
+			*MIXED = YES;	
+RUN;
+PROC IMPORT OUT= WORK.xreddito_tag
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\tag_00027.xlsx"
+            DBMS=EXCEL2000 REPLACE;
+			SHEET="TAG-00027_2";
+     		RANGE="A3:G132";
+     		GETNAMES=YES;
+			*MIXED = YES;	
+RUN;
+data consumi_tag;
+	set xconsumi_tag;
+	if province_e_regioni ~= upcase(province_e_regioni)
+	or province_e_regioni = "VALLE D'AOSTA/VALL�E D'AOSTE";
+	consumi = _017/1000;
+	keep province_e_regioni consumi;
+run;
+proc sort data = consumi_tag;
+	by province_e_regioni;
+run;
+data reddito_tag;
+	set xreddito_tag;
+	if province_e_regioni ~= upcase(province_e_regioni)
+	or province_e_regioni = "VALLE D'AOSTA/VALL�E D'AOSTE";
+	reddito = _017/1000;
+	keep province_e_regioni reddito;
+run;
+proc sort data = reddito_tag;
+	by province_e_regioni;
+run;
+data base_tag;
+	merge reddito_tag consumi_tag;
+	by province_e_regioni;
+	propensione = consumi/reddito;
+	inverso = (1/reddito);
+run;
+
+
+proc univariate data = base_tag;
+	var propensione;
+	histogram propensione;
+run;
+proc gplot data = base_tag;
+	symbol1 i = none  v = dot c = black;
+	plot propensione * reddito = 1;
+run;
+quit;
+proc gplot data = base_tag;
+	symbol1 i = none  v = dot c = black;
+	plot propensione * inverso = 1;
+run;
+quit;
+proc corr data = base_tag;
+	var propensione reddito inverso;
+run;
+proc reg data = base_tag;
+	model propensione = reddito;
+run;
+quit;
+proc reg data = base_tag;
+	model propensione = inverso;
+run;
+quit;
+
+
+PROC IMPORT OUT= WORK.provincia
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\provincia_110.xlsx"
+            DBMS=EXCEL2000 REPLACE;
+			SHEET="Sheet1";
+     		GETNAMES=YES;
+RUN;
+data provincia;
+	set provincia;
+	Denominazione_Provincia_Citt__me = upcase(Denominazione_Provincia_Citt__me);
+	if Denominazione_Provincia_Citt__me = "REGGIO DI CALABRIA"
+		then Denominazione_Provincia_Citt__me = "REGGIO CALABRIA";
+run;
+data base_tag;
+	set base_tag;
+	province_e_regioni = upcase(province_e_regioni);
+run;
+proc sort data = provincia;
+	by Denominazione_Provincia_Citt__me;
+run;
+data base_tag;
+	merge base_tag provincia (rename=(Denominazione_Provincia_Citt__me=province_e_regioni));
+	by province_e_regioni;
+run;
+
+
+PROC IMPORT OUT= WORK.corrispo
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\Codici-statistici-e-denominazioni-al-31_12_2020.xls"
+            DBMS=EXCEL2000 REPLACE;
+			SHEET="CODICI al 31_12_2020";
+     		GETNAMES=YES;
+			*MIXED = YES;	
+RUN;
+data corrispo;
+	set corrispo;
+	length codice_provincia $ 3;
+	codice_provincia = substr(put(Codice_Comune_numerico_con_110_p,z6.),1,3);
+	keep Codice_Comune_formato_alfanumeri codice_provincia;
+	rename Codice_Comune_formato_alfanumeri = codice_comune__str;
+run;
+proc sort data = corrispo;
+	by codice_comune__str;
+run;
+data xcod;
+	set ter_out.geografica_comune;
+	keep codice_comune__str codice_area_nielsen codice_ripartizione;
+run;
+proc sort data = xcod;
+	by codice_comune__str;
+run;
+proc means data = ter_out.Popolazione_eta_sesso_comune noprint;
+	class codice_comune__str;
+	types codice_comune__str;
+	output out = popnew (drop = _type_ _freq_)
+		   sum(popolazione) = pop_ult;
+run;
+data xcod;
+	merge xcod corrispo popnew;
+	by codice_comune__str;
+run;
+proc means data = xcod noprint;
+	class codice_provincia;
+	types codice_provincia;
+	id codice_area_nielsen codice_ripartizione;
+	output out = xcods (drop = _type_ _freq_)
+		   sum(pop_ult) = ;
+run;
+proc sort data = base_tag;
+	by codice_provincia;
+run;
+data base_tag;
+	merge base_tag xcods;
+	by codice_provincia;
+run;
+
+
+proc sort data = base_tag;
+	by codice_ripartizione;
+run;
+proc corr data = base_tag;
+	by codice_ripartizione;
+	var propensione reddito inverso;
+run;
+proc gplot data = base_tag;
+	by codice_ripartizione;
+	symbol1 i = none  v = dot c = black;
+	plot propensione * reddito = 1;
+run;
+quit;
+proc gplot data = base_tag;
+	by codice_ripartizione;
+	symbol1 i = none  v = dot c = black;
+	plot propensione * inverso = 1;
+run;
+quit;
+data base_tag;
+	set base_tag;
+	array ripart{4};
+	do i = 1 to 4;
+		ripart{i} = (codice_ripartizione = i);
+	end;
+	drop i;
+run;
+proc reg data = base_tag;
+	weight pop_ult;
+	model propensione = reddito ripart1 ripart2 ripart3 ripart4;
+run;
+quit;
+proc reg data = base_tag;
+	weight pop_ult;
+	model propensione = inverso ripart1 ripart2 ripart3 ripart4;
+run;
+quit;
+proc reg data = base_tag;
+	weight pop_ult;
+	by codice_ripartizione;
+	model propensione = inverso;
+run;
+quit;
+
+
+proc reg data = base_tag;
+	weight pop_ult;
+	model propensione = inverso ripart1 ripart2 ripart3 ripart4;
+	output out = esitoreg
+		   p = yteorica
+		   rstudent = rstud;
+run;
+quit;
+data base_dep;
+	set esitoreg;
+	if abs(rstud) < 2;
+	drop yteorica;
+run;
+proc reg data = base_dep outest = parametri;
+	weight pop_ult;
+	model propensione = inverso ripart1 ripart2 ripart3 ripart4;
+	output out = esitoregnew
+		   p = yteorica;
+run;
+quit;
+proc gplot data = esitoregnew;
+	symbol1 i = none  v = dot c = black;
+	plot yteorica * propensione = 1;
+run;
+quit;
+proc corr data = esitoregnew;
+	var yteorica propensione;
+run;
+proc univariate data = esitoregnew;
+	var yteorica;
+	histogram yteorica;
+run;
+
+
+data geog;
+	set ter_out.geografica_comune;
+	length territorio $ 40;
+	if nome_regione = "TRENTINO-ALTO ADIGE"
+		then territorio = nome_provincia;
+		else territorio = nome_regione;
+	array ripart{4};
+	do i = 1 to 4;
+		ripart{i} = (codice_ripartizione = i);
+	end;
+	keep codice_comune__str nome_comune sigla_provincia
+		 territorio nome_regione codice_ripartizione ripart1 ripart2 ripart3 ripart4;
+run;
+proc sort data = geog;
+	 by codice_comune__str;
+run;
+data red;
+	set ter_out.economica_comune;
+	keep codice_comune__str reddito;
+	rename reddito = red_ult;
+run;
+proc sort data = red;
+	 by codice_comune__str;
+run;
+proc sort data = xcod;
+	 by codice_comune__str;
+run;
+data base_com;
+	merge geog xcod (keep = codice_comune__str codice_provincia) popnew red;
+	by codice_comune__str;
+	red_pop_ult = red_ult/pop_ult;
+	inverso = 1/red_pop_ult;
+run;
+
+
+proc score data = base_com
+		   score = parametri
+		   type = parms
+		   out = espay;
+		   var inverso ripart1 ripart2 ripart3 ripart4;
+run;
+proc univariate data = espay nextrobs = 20;
+	var model1;
+	histogram model1;
+	id nome_comune sigla_provincia red_pop_ult;
+run;
+
+
+proc freq data = geog;
+	tables territorio*nome_regione /list;
+run;
+proc sort data = geog;
+	by codice_comune__str;
+run;
+data eco;
+	set ter.econom20b;
+	keep codc620b red19 con19;
+	rename codc620b = codice_comune__str
+		   red19 = red_pre
+		   con19 = con_pre;
+run;
+proc sort data = eco;
+	by codice_comune__str;
+run;
+data eco_g;
+	merge geog eco red popnew;
+	by codice_comune__str;
+run;
+proc means data = eco_g noprint;
+	class territorio;
+	types territorio;
+	output out = regionale_precedente (drop = _type_ _freq_)
+		   sum(red_pre con_pre red_ult pop_ult) = 
+			   reddito_stima_preced consumi_stima_preced reddito_stima_ult pop_ult;
+run;
+
+
+PROC IMPORT OUT= WORK.consumi_istat 
+            DATAFILE= "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\quadratura_consumi.csv" 
+            DBMS=CSV REPLACE;
+     GETNAMES=YES;
+     DATAROW=2; 
+RUN;
+data consumi_istat;
+	attrib territorio length=$40 format=$40. informat=$40.;
+	set consumi_istat;
+	territorio = upcase(territorio);
+	if territorio = "PROVINCIA AUTONOMA BOLZANO / BOZEN"
+		then territorio = "BOLZANO";
+	if territorio = "PROVINCIA AUTONOMA TRENTO"
+		then territorio = "TRENTO";
+	if territorio = "VALLE D'AOSTA / VALLéE D'AOSTE"
+		then territorio = "VALLE D'AOSTA";
+	consumi_2019 = round(consumi_2019*1000);
+	consumi_2020 = round(consumi_2020*1000);
+	rename consumi_2019 = consumi_istat_preced
+		   consumi_2020 = consumi_istat_ultimo;
+run;
+proc sort data = consumi_istat;
+	by territorio;
+run;
+data confronto;
+	merge regionale_precedente (in = sele) consumi_istat;
+	by territorio;
+	if sele;
+	red_pop_ult = reddito_stima_ult/pop_ult;
+	difperc = 100*(consumi_stima_preced - consumi_istat_preced)/consumi_istat_preced;
+	mediaistat = consumi_istat_ultimo/reddito_stima_ult;
+	drop _ itter107;
+run;
+proc sort data = confronto;
+	by difperc;
+run;
+proc print data = confronto;
+	format reddito_stima_preced consumi_stima_preced reddito_stima_ult pop_ult
+		   consumi_istat_preced consumi_istat_ultimo comma18.;
+	sum reddito_stima_preced consumi_stima_preced reddito_stima_ult consumi_istat_preced consumi_istat_ultimo;
+run;
+proc gplot data = confronto;
+	symbol1 i = none  v = dot c = black;
+	plot mediaistat * red_pop_ult = 1;
+run;
+quit;
+
+
+proc sort data = espay;
+	by territorio;
+run; 
+proc means data = espay noprint;
+	weight red_ult;
+	class territorio;
+	types territorio;
+	output out = mediat (drop = _type_ _freq_)
+		   mean(model1) = mediat;
+run;
+data mediaistat;
+	set confronto;
+	keep territorio mediaistat;
+run;
+proc sort data = mediaistat;
+	by territorio;
+run;
+data medie;
+	merge mediat mediaistat;
+	by territorio;
+	correttivo = mediaistat/mediat;
+run;
+data baseprop;
+	merge espay medie;
+	by territorio;
+run;
+data baseprop;
+	set baseprop;
+	propensione = model1*correttivo;
+run;
+proc univariate data = baseprop;
+	var propensione;
+	histogram propensione;
+run;
+
+
+proc univariate data = baseprop noprint;
+	var propensione;
+	output out = estremi_p
+		   pctlpre = prop
+		   pctlname = p95 pctlpts = 95
+		   pctlname = p5 pctlpts = 5;
+run;
+data norma;
+	if _N_ = 1 then set estremi_p;
+	set baseprop;
+run;
+data norma;
+	set norma;
+	pronorma = propensione;
+	if propensione < propp5
+		then pronorma = sum(.1*propensione,.9*propp5);
+	if propensione > propp95
+		then pronorma = sum(.1*propensione,.9*propp95);
+	drop propp5 propp95;
+run;
+proc gplot data = norma;
+	symbol1 i = none  v = dot c = black;
+	plot pronorma * propensione = 1;
+run;
+quit;
+proc univariate data = norma nextrobs = 20;
+	var pronorma;
+	histogram pronorma;
+	id nome_comune sigla_provincia;
+run;
+
+
+proc sort data = norma;
+	by territorio;
+run; 
+proc means data = norma noprint;
+	weight red_ult;
+	class territorio;
+	types territorio;
+	output out = mediat (drop = _type_ _freq_)
+		   mean(pronorma) = mediat;
+run;
+data norma;
+	merge norma (drop = mediat propensione) mediat;
+	by territorio;
+run;
+data norma;
+	set norma;
+	propensione = pronorma*mediaistat/mediat;
+	drop correttivo;
+run;
+proc univariate data = norma;
+	var propensione;
+	histogram propensione;
+run;
+proc means data = norma noprint;
+	weight red_ult;
+	class territorio;
+	types territorio;
+	output out = verifica (drop = _type_ _freq_)
+		   mean(propensione) = mediastima;
+run;
+data verifica;
+	merge verifica mediaistat;
+	by territorio;
+	d = mediastima - mediaistat;
+run;
+proc print data = verifica;
+run;
+
+
+data stima1;
+	set norma;
+	stima_grezza = red_ult*propensione;
+run;
+proc tabulate data = stima1;
+	var red_ult stima_grezza;
+	table red_ult stima_grezza,sum*f=comma18.;
+run;
+
+
+data quadra;
+	set confronto;
+	keep territorio consumi_istat_ultimo;
+run;
+%quadraturagruppo(stima1,		
+				  stima_grezza,	
+				  quadra,		
+				  consumi_istat_ultimo,	
+				  stima_qua,	
+				  territorio,	
+				  qua1);		
+data qua2;
+	set qua1;
+	stima_qua = round(stima_qua);
+run;
+%arrotondainterogruppo(qua2,		
+					   stima_qua,	
+					   quadra,		
+					   consumi_istat_ultimo,	
+					   territorio,	
+					   qua3);		
+proc tabulate data = qua3;
+	class territorio;
+	var stima_qua;
+	table territorio all, stima_qua*sum*f = comma18.3;
+run;
+
+
+data pop_pre;
+	set ter.demo20b;
+	keep codc620b pop19;
+	rename codc620b = codice_comune__str
+		   pop19 = pop_pre;
+run;
+proc sort data = pop_pre;
+	by codice_comune__str;
+run;
+proc sort data = qua3;
+	by codice_comune__str;
+run;
+data base_controllo;
+	merge qua3 eco pop_pre;
+	by codice_comune__str;
+	prop_pre = con_pre/red_pre;
+	prop_ult = stima_qua/red_ult;
+	prop_dif = prop_ult - prop_pre;
+	con_pop_pre = con_pre/pop_pre;
+	con_pop_ult = stima_qua/pop_ult;
+	red_pop_pre = red_pre/pop_pre;
+	convar = 100*(con_pop_ult - con_pop_pre)/con_pop_pre;
+	redvar = 100*(red_pop_ult - red_pop_pre)/red_pop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_ult;
+	id nome_comune sigla_provincia prop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_pre;
+	id nome_comune sigla_provincia prop_ult;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_dif;
+	id nome_comune sigla_provincia prop_ult prop_pre;
+	histogram prop_dif;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var con_pop_ult;
+	id nome_comune sigla_provincia con_pop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var con_pop_pre;
+	id nome_comune sigla_provincia con_pop_ult;
+run;
+proc freq data = base_controllo;
+	where prop_ult > 1;
+	tables territorio;
+run;
+proc corr data = base_controllo;
+	var con_pop_ult red_pop_ult;
+run;
+proc sort data = base_controllo;
+	by territorio;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	by territorio;
+	var convar;
+	id nome_comune sigla_provincia redvar con_pop_ult red_pop_ult;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var convar;
+	id nome_comune sigla_provincia redvar con_pop_ult red_pop_ult;
+	histogram convar;
+run;
+proc univariate data = base_controllo;
+	var redvar;
+run;
+data grande;
+	set base_controllo;
+	if pop_ult >= 100000;
+run;
+proc sort data = grande;
+	by descending convar;
+run;
+proc print data = grande;
+	var nome_comune sigla_provincia convar redvar
+		con_pop_ult red_pop_ult con_pop_pre red_pop_pre;
+	format convar redvar con_pop_ult red_pop_ult con_pop_pre red_pop_pre 12.1;
+run;
+data noncoerente;
+	set base_controllo;
+	if convar*redvar < 0 and min(abs(convar),abs(redvar)) > 1;
+run; *1560; 
+
+proc univariate data = base_controllo noprint;
+	var convar;
+	output out = estremi_v
+		   pctlpre = varia
+		   pctlname = p95 pctlpts = 95
+		   pctlname = p5 pctlpts = 5;
+run;
+data base_n;
+	if _N_ = 1 then set estremi_v;
+	set base_controllo;
+run;
+data base_n;
+	set base_n;
+	varnorma = convar;
+	if convar < variap5
+		then varnorma = sum(.3*convar,.7*variap5);
+	if convar > variap95
+		then varnorma = sum(.3*convar,.7*variap95);
+	drop variap5 variap95 ripart1 ripart2 ripart3 ripart4
+		 inverso model1 stima_qua con_pop_ult prop_ult prop_dif;
+run;
+proc gplot data = base_n;
+	symbol1 i = none  v = dot c = black;
+	plot varnorma * convar = 1;
+run;
+quit;
+proc univariate data = base_n;
+	var varnorma;
+	histogram varnorma;
+run;
+
+
+data ristima;
+	set base_n;
+	stima_n = pop_ult*con_pop_pre*(1 + varnorma/100);
+run;
+proc tabulate data = ristima;
+	var red_ult stima_n red_pre con_pre;
+	table red_ult stima_n red_pre con_pre,sum*f=comma18.;
+run;
+
+
+%quadraturagruppo(ristima,		
+				  stima_n,		
+				  quadra,		
+				  consumi_istat_ultimo,	
+				  stima_nq,		
+				  territorio,	
+				  quan1);		
+data quan2;
+	set quan1;
+	stima_nq = round(stima_nq);
+run;
+%arrotondainterogruppo(quan2,		
+					   stima_nq,	
+					   quadra,		
+					   consumi_istat_ultimo,	
+					   territorio,		
+					   quan3);		
+proc tabulate data = quan3;
+	var red_ult stima_nq red_pre con_pre;
+	table red_ult stima_nq red_pre con_pre,sum*f=comma18.;
+run;
+
+
+proc means data = quan3 noprint;
+	class territorio;
+	types territorio;
+	output out = verqua
+		   sum(stima_nq) = ;
+run;
+proc sort data = quadra;
+	by territorio;
+run;
+data verqua;
+	merge verqua quadra;
+	by territorio;
+	controllo = (consumi_istat_ultimo ~= stima_nq);
+run;
+proc means data = verqua sum;
+	var controllo;
+run;
+
+
+data base_controllo;
+	set quan3;
+	prop_ult = stima_nq/red_ult;
+	con_pop_ult = stima_nq/pop_ult;
+	convar = 100*(con_pop_ult - con_pop_pre)/con_pop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_ult;
+	id nome_comune sigla_provincia prop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var prop_pre;
+	id nome_comune sigla_provincia prop_ult;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var con_pop_ult;
+	id nome_comune sigla_provincia con_pop_pre;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var con_pop_pre;
+	id nome_comune sigla_provincia con_pop_ult;
+run;
+proc freq data = base_controllo;
+	where prop_ult > 1;
+	tables territorio;
+run;
+proc corr data = base_controllo;
+	var con_pop_ult red_pop_ult;
+run;
+proc univariate data = base_controllo nextrobs = 20;
+	var convar;
+	id  nome_comune sigla_provincia redvar con_pop_ult red_pop_ult;
+	histogram convar;
+run;
+data grande;
+	set base_controllo;
+	if pop_ult >= 100000;
+run;
+proc sort data = grande;
+	by descending convar;
+run;
+proc print data = grande;
+	var nome_comune sigla_provincia convar redvar
+		con_pop_ult red_pop_ult con_pop_pre red_pop_pre;
+	format convar redvar con_pop_ult red_pop_ult con_pop_pre red_pop_pre 12.1;
+run;
+proc gplot data = base_controllo;
+	symbol1 i = none  v = dot c = black;
+	plot con_pop_ult * red_pop_ult = 1;
+run;
+quit;
+data noncoerente;
+	set base_controllo;
+	if convar*redvar < 0 and min(abs(convar),abs(redvar)) > 1;
+run; *1653; 
+
+data attuale;
+	set ter_out.economica_comune;
+	drop consumi_totali;
+run;
+proc sort data = attuale;
+	by codice_comune__str;
+run;
+proc sort data = base_controllo;
+	by codice_comune__str;
+run;
+data nuova;
+	merge attuale base_controllo (keep = codice_comune__str stima_nq);
+	by codice_comune__str;
+	rename stima_nq = consumi_totali;
+run;
+%let tracciato = 
+codice_comune__str
+reddito
+consumi_totali
+anno_riferimento
+release;
+data ordinata;
+	retain &tracciato;
+	set nuova;
+run;
+
+
+assistant
+Here's your code translated to Python:
+
+```python
+import pandas as pd
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Setting the file paths
+sas_input_dir = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+ter_out_dir = sas_input_dir
+sez_out_dir = sas_input_dir
+appo_dir = sas_input_dir
+output_dir = sas_input_dir
+
+# Loading the macros
+os.chdir(sas_input_dir)
+execfile("macroquadraturagruppo.sas")
+execfile("macroarrotondainterogruppo.sas")
+
+# Setting options
+pd.set_option('mode.chained_assignment', None)
+pd.set_option('display.max_columns', None)
+
+# Reading excel files
+xconsumi_tag = pd.read_excel(os.path.join(sas_input_dir, "tag_00026.xlsx"), 
+                            sheet_name="TAG-00026_4", 
+                            usecols="A:G", 
+                            header=2)
+xreddito_tag = pd.read_excel(os.path.join(sas_input_dir, "tag_00027.xlsx"), 
+                             sheet_name="TAG-00027_2", 
+                             usecols="A:G", 
+                             header=2)
+
+# Cleaning the data
+xconsumi_tag["province_e_regioni"] = xconsumi_tag["province_e_regioni"].str.upper()
+xconsumi_tag.loc[xconsumi_tag["province_e_regioni"].isin(["VALLE D'AOSTA/VALL�E D'AOSTE"]), "province_e_regioni"] = "VALLE D'AOSTA"
+xconsumi_tag["consumi"] = xconsumi_tag["_017"] / 1000
+xconsumi_tag = xconsumi_tag[["province_e_regioni", "consumi"]]
+
+xreddito_tag["province_e_regioni"] = xreddito_tag["province_e_regioni"].str.upper()
+xreddito_tag.loc[xreddito_tag["province_e_regioni"].isin(["VALLE D'AOSTA/VALL�E D'AOSTE"]), "province_e_regioni"] = "VALLE D'AOSTA"
+xreddito_tag["reddito"] = xreddito_tag["_017"] / 1000
+xreddito_tag = xreddito_tag[["province_e_regioni", "reddito"]]
+
+# Merging the data
+base_tag = pd.merge(xreddito_tag, xconsumi_tag, on="province_e_regioni")
+base_tag["propensione"] = base_tag["consumi"] / base_tag["reddito"]
+base_tag["inverso"] = 1 / base_tag["reddito"]
+
+# Descriptive statistics
+plt.hist(base_tag["propensione"])
+plt.show()
+
+plt.scatter(base_tag["reddito"], base_tag["propensione"])
+plt.show()
+
+plt.scatter(base_tag["inverso"], base_tag["propensione"])
+plt.show()
+
+# Correlation analysis
+base_tag.corr()
+
+# Linear regression
+model = smf.ols(formula='propensione ~ reddito', data=base_tag).fit()
+print(model.summary())
+
+model = smf.ols(formula='propensione ~ inverso', data=base_tag).fit()
+print(model.summary())
+
+# Reading excel files
+provincia = pd.read_excel(os.path.join(sas_input_dir, "provincia_110.xlsx"), 
+                         sheet_name="Sheet1", 
+                         usecols="A:F", 
+                         header=0)
+provincia["Denominazione_Provincia_Citt__me"] = provincia["Denominazione_Provincia_Citt__me"].str.upper()
+provincia.loc[provincia["Denominazione_Provincia_Citt__me"] == "REGGIO DI CALABRIA", "Denominazione_Provincia_Citt__me"] = "REGGIO CALABRIA"
+
+base_tag["province_e_regioni"] = base_tag["province_e_regioni"].str.upper()
+provincia = pd.merge(base_tag, provincia, on="province_e_regioni")
+
+# Reading excel files
+corrispo = pd.read_excel(os.path.join(sas_input_dir, "Codici-statistici-e-denominazioni-al-31_12_2020.xls"), 
+                         sheet_name="CODICI al 31_12_2020", 
+                         usecols="A:E", 
+                         header=0)
+corrispo["codice_provincia"] = corrispo["Codice_Comune_numerico_con_110_p"].apply(lambda x: str(x).zfill(6)[:3])
+corrispo = corrispo[["Codice_Comune_formato_alfanumeri", "codice_provincia"]]
+corrispo.rename(columns={"Codice_Comune_formato_alfanumeri": "codice_comune__str"}, inplace=True)
+
+# Reading excel files
+xcod = pd.read_sas(os.path.join(ter_out_dir, "geografica_comune.sas7bdat"))
+xcod = xcod[["codice_comune__str", "codice_area_nielsen", "codice_ripartizione"]]
+
+# Reading excel files
+popnew = pd.read_sas(os.path.join(ter_out_dir, "Popolazione_eta_sesso_comune.sas7bdat"))
+popnew = popnew.groupby("codice_comune__str").sum().reset_index()
+popnew.rename(columns={"popolazione": "pop_ult"}, inplace=True)
+
+# Merging the data
+xcod = pd.merge(xcod, corrispo, on="codice_comune__str")
+xcod = pd.merge(xcod, popnew, on="codice_comune__str")
+
+# Reading excel files
+xcods = xcod.groupby("codice_provincia").sum().reset_index()
+
+# Merging the data
+base_tag = pd.merge(base_tag, xcods, on="codice_provincia")
+
+# Creating binary variables
+base_tag["ripart1"] = (base_tag["codice_ripartizione"] == 1)
+base_tag["ripart2"] = (base_tag["codice_ripartizione"] == 2)
+base_tag["ripart3"] = (base_tag["codice_ripartizione"] == 3)
+base_tag["ripart4"] = (base_tag["codice_ripartizione"] == 4)
+
+# Logistic regression
+model = smf.logit(formula='propensione ~ reddito + ripart1 + ripart2 + ripart3 + ripart4', data=base_tag).fit()
+print(model.summary())
+
+model = smf.logit(formula='propensione ~ inverso + ripart1 + ripart2 + ripart3 + ripart4', data=base_tag).fit()
+print(model.summary())
+
+model = smf.logit(formula='propensione ~ inverso', data=base_tag).fit()
+print(model.summary())
+
+# Getting residuals
+residuals = model.resid_generalized
+
+# Merging the data
+base_dep = pd.DataFrame({'residuals': residuals})
+base_dep = pd.merge(base_dep, model.model.data.orig_data, on='index')
+
+# Logistic regression with weights
+model = smf.logit(formula='propensione ~ inverso + ripart1 + ripart2 + ripart3 + ripart4', data=base_dep, weights='pop_ult').fit()
+print(model.summary())
+
+# Getting residuals
+residuals = model.resid_generalized
+
+# Merging the data
+base_dep = pd.DataFrame({'residuals': residuals})
+base_dep = pd.merge(base_dep, model.model.data.orig_data, on='index')
+
+# Scatter plot
+plt.scatter(base_dep['inverso'], base_dep['residuals'])
+plt.show()
+
+# Correlation analysis
+base_dep.corr()
+
+# Reading excel files
+geog = pd.read_sas(os.path.join(ter_out_dir, "geografica_comune.sas7bdat"))
+geog.rename(columns={"nome_regione": "territory", 
+                     "nome_provincia": "territory", 
+                     "sigla_provincia": "sigla_provincia"}, inplace=True)
+geog["territory"] = geog["territory"].str.upper()
+geog["territory"].replace({"PROVINCIA AUTONOMA BOLZANO / BOZEN": "BOLZANO",
+                           "PROVINCIA AUTONOMA TRENTO": "TRENTO"}, inplace=True)
+
+# Reading excel files
+eco = pd.read_sas(os.path.join(ter_out_dir, "economica_comune.sas7bdat"))
+eco.rename(columns={"codc620b": "codice_comune__str", 
+                     "red19": "red_pre", 
+                     "con19": "con_pre"}, inplace=True)
+
+# Merging the data
+eco_g = pd.merge(geog, eco, on="codice_comune__str")
+
+# Reading excel files
+consumi_istat = pd.read_csv(os.path.join(sas_input_dir, "quadratura_consumi.csv"))
+consumi_istat["territory"] = consumi_istat["territory"].str.upper()
+consumi_istat.replace({"PROVINCIA AUTONOMA BOLZANO / BOZEN": "BOLZANO",
+                       "PROVINCIA AUTONOMA TRENTO": "TRENTO"}, inplace=True)
+consumi_istat["consumi_istat_preced"] = consumi_istat["consumi_2019"] * 1000
+consumi_istat["consumi_istat_ultimo"] = consumi_istat["consumi_2020"] * 1000
+
+# Merging the data
+confronto = pd.merge(eco_g, consumi_istat, on="territory")
+
+# Calculating differences
+confronto["difperc"] = (confronto["consumi_stima_preced"] - confronto["consumi_istat_preced"]) / confronto["consumi_istat_preced"]
+confronto["mediaistat"] = confronto["consumi_istat_ultimo"] / confronto["reddito_stima_ult"]
+
+# Sorting the data
+confronto.sort_values("difperc", inplace=True)
+
+# Printing the data
+confronto.head(20)[["reddito_stima_preced", 
+                    "consumi_stima_preced", 
+                    "reddito_stima_ult", 
+                    "consumi_istat_preced", 
+                    "consumi_istat_ultimo"]]
+
+# Scatter plot
+plt.scatter(confronto["mediaistat"], confronto["reddito_stima_ult"])
+plt.show()
+
+# Calculating mean and standard deviation
+mediat = confronto.groupby("territory").mean()["reddito_stima_ult"]
+
+# Merging the data
+confronto["mediat"] = mediat
+
+# Calculating standard deviation
+confronto["difmedia"] = confronto["mediaistat"] - confronto["mediat"]
+
+# Scatter plot
+plt.scatter(confronto["difmedia"], confronto["reddito_stima_ult"])
+plt.show()
+
+# Calculating standard deviation
+confronto["convar"] = 100 * (confronto["consumi_stima_ult"] - confronto["consumi_istat_ultimo"]) / confronto["consumi_istat_ultimo"]
+
+# Calculating standard deviation
+confronto["redvar"] = 100 * (confronto["reddito_stima_ult"] - confronto["reddito_stima_preced"]) / confronto["reddito_stima_preced"]
+
+# Sorting the data
+confronto.sort_values("convar", ascending=False, inplace=True)
+
+# Printing the data
+confronto.head(20)[["nome_comune", 
+                    "sigla_provincia", 
+                    "redvar", 
+                    "con_pop_ult", 
+                    "red_pop_ult", 
+                    "con_pop_pre", 
+                    "red_pop_pre"]]
+
+# Histogram
+plt.hist(confronto["convar"])
+plt.show()
+
+# Calculating standard deviation
+confronto["varnorma"] = confronto["convar"]
+
+# Setting lower and upper bounds
+varnorma_lower = confronto["varnorma"].quantile(0.05)
+varnorma_upper = confronto["varnorma"].quantile(0.95)
+
+# Adjusting values
+confronto.loc[confronto["varnorma"] < varnorma_lower, "varnorma"] = 0.3 * confronto["varnorma"] + 0.7 * varnorma_lower
+confronto.loc[confronto["varnorma"] > varnorma_upper, "varnorma"] = 0.3 * confronto["varnorma"] + 0.7 * varnorma_upper
+
+# Scatter plot
+plt.scatter(confronto["con_pop_ult"], confronto["red_pop_ult"])
+plt.show()
+
+# Calculating standard deviation
+confronto["convar"] = 100 * (confronte["con_pop_pre"] * (1 + confronto["varnorma"] / 100))
+
+# Calculating mean and standard deviation
+mediat = confronto.groupby("territory").mean()["convar"]
+
+# Merging the data
+confronto["mediat"] = mediat
+
+# Calculating standard deviation
+confronto["difmedia"] = confronto["convar"] - confronto["mediat"]
+
+# Scatter plot
+plt.scatter(confronto["difmedia"], confronto["reddito_stima_ult"])
+plt.show()
+
+# Calculating mean and standard deviation
+verqua = confronto.groupby("territory").sum()["stima_nq"]
+
+# Merging the data
+confronto["verqua"] = verqua
+
+# Calculating standard deviation
+confronto["controllo"] = (confronto["consumi_istat_ultimo"] != confronto["stima_nq"])
+
+# Calculating mean and standard deviation
+verqua = confronto.groupby("territory").sum()["controllo"]
+
+# Merging the data
+confronto["verqua"] = verqua
+
+# Calculating mean and standard deviation
+verqua = confronto.groupby("territory").sum()["controllo"]
+
+# Printing the data
+print(verqua.sum())
+
+# Calculating mean and standard deviation
+base_controllo = pd.merge(confronto, eco, on="codice_comune__str")
+
+# Calculating standard deviation
+base_controllo["prop_pre"] = base_controllo["con_pre"] / base_controllo["red_pre"]
+base_controllo["prop_ult"] = base_controllo["stima_nq"] / base_controllo["red_ult"]
+base_controllo["prop_dif"] = base_controllo["prop_ult"] - base_controllo["prop_pre"]
+base_controllo["con_pop_pre"] = base_controllo["con_pre"] / base_controllo["pop_pre"]
+base_controllo["con_pop_ult"] = base_controllo["stima_nq"] / base_controllo["pop_ult"]
+base_controllo["red_pop_pre"] = base_controllo["red_pre"] / base_controllo["pop_pre"]
+base_controllo["convar"] = 100 * (base_controllo["con_pop_ult"] - base_controllo["con_pop_pre"]) / base_controllo["con_pop_pre"]
+
+# Sorting the data
+base_controllo.sort_values("convar", ascending=False, inplace=True)
+
+# Printing the data
+base_controllo.head(20)[["nome_comune", 
+                         "sigla_provincia", 
+                         "convar", 
+                         "redvar", 
+                         "con_pop_ult", 
+                         "red_pop_ult", 
+                         "con_pop_pre", 
+                         "red_pop_pre"]]
+
+# Scatter plot
+plt.scatter(base_controllo["con_pop_ult"], base_controllo["red_pop_ult"])
+plt.show()
+
+# Scatter plot
+plt.scatter(base_controllo["convar"], base_controllo["redvar"])
+plt.show()
+
+# Calculating mean and standard deviation
+convar = base_controllo.groupby("territory").mean()["convar"]
+
+# Merging the data
+base_controllo["convar"] = convar
+
+# Calculating standard deviation
+convar = base_controllo.groupby("territory").mean()["convar"]
+
+# Printing the data
+print(convar)
+
+# Calculating mean and standard deviation
+base_controllo["convar"] = 100 * (base_controllo["con_pop_pre"] * (1 + base_controllo["convar"] / 100))
+
+# Calculating mean and standard deviation
+verqua = base_controllo.groupby("territory").sum()["stima_nq"]
+
+# Merging the data
+base_controllo["verqua"] = verqua
+
+# Calculating mean and standard deviation
+verqua = base_controllo.groupby("territory").sum()["controllo"]
+
+# Printing the data
+print(verqua.sum())
+
+# Reading excel files
+attuale = pd.read_sas(os.path.join(ter_out_dir, "economica_comune.sas7bdat"))
+
+# Merging the data
+nuova = pd.merge(attuale, base_controllo, on="codice_comune__str")
+
+# Reading excel files
+tracciato = """
+codice_comune__str
+reddito
+consumi_totali
+anno_riferimento
+release
+"""
+
+# Reading excel files
+ordinata = pd.read_csv(os.path.join(sas_input_dir, "quadratura_consumi.csv"), sep=',', delim_whitespace=True, names=tracciato.split())
+
+# Printing the data
+print(ordinata)
+```
+
+Please note that this Python code assumes that you have the necessary libraries installed (pandas, numpy, matplotlib, and statsmodels), and the necessary SAS macros are present in the specified directories. Also, the file names and paths might need to be adjusted based on your environment.

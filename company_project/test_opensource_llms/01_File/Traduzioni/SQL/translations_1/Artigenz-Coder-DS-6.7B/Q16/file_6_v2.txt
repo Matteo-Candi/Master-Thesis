@@ -1,0 +1,413 @@
+You are an expert in translating code from SQL to PySpark; translate the given SQL code to PySpark as best as you can, even if there are problems; insert comments inside the code; do not add any other documentation or explanation outside the code; make the code as readable as possible; minimize its complexity and volume by reducing the number of independent paths, operators, and operands; do not make any mistakes; all the variables have to be defined; ensure the user can copy and run the code without modifications; translate from SQL to PySpark every file provided. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+CREATE OR REPLACE
+FORCE EDITIONABLE VIEW "DDWH02_SM"."VW_EKPO_PURCH_DOC_ITEM_AGCE" ("EKPO_ID_PURCH_DOC_ITEM_GPP",
+                                                                  "EKPO_DT_LAST_MODIFY",
+                                                                  "EKPO_ID_EKKO_PURCH_DOC_HEADER",
+                                                                  "EKPO_CD_CONCAT_EBELN_EBELP",
+                                                                  "EKPO_CD_PLANT",
+                                                                  "EKPO_CD_PO_NBR",
+                                                                  "EKPO_NR_ITEM_NBR_PO",
+                                                                  "EKPO_NR_TARGET_QUANTITY",
+                                                                  "EKPO_NR_FIRST_LEAD_TIME",
+                                                                  "EKPO_NR_MIN_FABR_QTY",
+                                                                  "EKPO_NR_MIN_FABR_QTY_UNIT",
+                                                                  "EKPO_NR_STAND_PO_QUANTITY",
+                                                                  "EKPO_NR_STAND_PO_QTY_UNIT",
+                                                                  "EKPO_NR_TCE_AMOUNT",
+                                                                  "EKPO_NR_TCE_AMOUNT_CUR",
+                                                                  "EKPO_NR_TOOLING_ESTIMATE",
+                                                                  "EKPO_NR_TOOLING_ESTIMATE_CUR",
+                                                                  "EKPO_NR_NET_PRICE_PO",
+                                                                  "EKPO_NR_NET_ORDER_VALUE",
+                                                                  "EKPO_CD_MATERIAL_GRP",
+                                                                  "EKPO_CD_MATERIAL_NBR",
+                                                                  "EKPO_CD_PO_UNIT_OF_MEASURE",
+                                                                  "EKPO_CD_REVISION_LVL",
+                                                                  "EKPO_CD_QUOTA_ARRANGEMENT",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_1",
+                                                                  "EKPO_CD_PROGRAM_ID",
+                                                                  "EKPO_FL_DELETION_PO",
+                                                                  "EKPO_CD_PRINC_PURCH_AGREEMT",
+                                                                  "EKPO_NR_ITEM_PURCH_AGREEMENT",
+                                                                  "EKPO_CD_MATERIAL_NBR_VENDOR",
+                                                                  "EKPO_NR_PRICE_UNIT",
+                                                                  "EKPO_CD_SHORT_TEXT",
+                                                                  "EKPO_DT_STARTING_DT",
+                                                                  "EKPO_NR_DEPTH_MM",
+                                                                  "EKPO_DT_END_DT",
+                                                                  "EKPO_NR_HEIGHT_MM",
+                                                                  "EKPO_CD_INDICE_CONTO_LAVORO",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_1",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_2",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_3",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_4",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_5",
+                                                                  "EKPO_CD_IN_PAIR_MATERIAL_6",
+                                                                  "EKPO_FL_IN_PAIR_WITH",
+                                                                  "EKPO_NR_MIN_ORDER_QTY",
+                                                                  "EKPO_FL_OVERSEAS",
+                                                                  "EKPO_FL_WMF_FLAG",
+                                                                  "EKPO_NR_PACKAGING_UNIT_MOQ",
+                                                                  "EKPO_NR_PACK_WEIGHT_KG",
+                                                                  "EKPO_CD_PACK_TYPE",
+                                                                  "EKPO_CD_PPAP_STATUS",
+                                                                  "EKPO_NR_PROCUR_MULTI",
+                                                                  "EKPO_NR_PROCUR_MULTI_UNIT",
+                                                                  "EKPO_CD_REVISION_LVL_2",
+                                                                  "EKPO_NR_SAMPLE_LEAD_TIME",
+                                                                  "EKPO_FL_STACKABLE",
+                                                                  "EKPO_CD_TIPO_CONTO_LAVORO",
+                                                                  "EKPO_CD_TYRE_BRAND",
+                                                                  "EKPO_CD_TYRE_SIZE",
+                                                                  "EKPO_FL_VPI_INDICATOR",
+                                                                  "EKPO_NR_WIDTH_MM",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_2",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_3",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_4",
+                                                                  "EKPO_CD_MADE_IN_COUNTRY_5",
+                                                                  "EKPO_CD_TYRE_SPECIFICATION",
+                                                                  "EKPO_CD_TYRE_TYPE",
+                                                                  "EKPO_NR_PO_QUANTITY",
+                                                                  "EKPO_CD_REASON_CODE",
+                                                                  "EKPO_CD_COMPANY_CODE",
+                                                                  "EKPO_CD_ITEM_CATEG_PO",
+                                                                  "EKPO_NR_PURCH_DOC_YEAR",
+                                                                  "EKPO_CD_PURCH_DOCTYPE",
+                                                                  "EKPO_CD_WPS_PREFIX",
+                                                                  "EKPO_CD_PURCH_DOC_NBR_R3_GPP",
+                                                                  "EKPO_CD_MATERIAL_MFG",
+                                                                  "EKPO_DS_PLANT_SEGMENT",
+                                                                  "PLBR_DS_PLANT_SEGMENT",
+                                                                  "ODAG_PARTNUMBER",
+                                                                  "ODAG_PROGRAM",
+                                                                  "EKPO_DT_RETENTION_YEAR",
+                                                                  "ODAG_PODOCUMENT",
+                                                                  "EKPO_NR_NET_WEIGHT",
+                                                                  "EKPO_NR_GROSS_WEIGHT",
+                                                                  "EKPO_CD_UNIT_OF_WEIGHT",
+                                                                  "EKPO_CD_PLANT_R3_STC",
+                                                                  "EKPO_CD_PO_NBR10",
+                                                                  "EKPO_NR_ITEM_NBR_PO5",
+                                                                  "EKPO_CD_MATERIAL_NBR_TRIM",
+                                                                  "EKPO_CD_MATERIAL_MFG_TRIM",
+                                                                  "EKPO_CD_PURCH_DOC_NBR_R3_GPP10",
+                                                                  "EKPO_KEY_STC") AS
+SELECT EKPO_ID_PURCH_DOC_ITEM_GPP,
+       EKPO_DT_LAST_MODIFY,
+       EKPO_ID_EKKO_PURCH_DOC_HEADER,
+       EKPO_CD_CONCAT_EBELN_EBELP,
+       EKPO_CD_PLANT,
+       EKPO_CD_PO_NBR,
+       EKPO_NR_ITEM_NBR_PO,
+       EKPO_NR_TARGET_QUANTITY,
+       EKPO_NR_FIRST_LEAD_TIME,
+       EKPO_NR_MIN_FABR_QTY,
+       EKPO_NR_MIN_FABR_QTY_UNIT,
+       EKPO_NR_STAND_PO_QUANTITY,
+       EKPO_NR_STAND_PO_QTY_UNIT,
+       EKPO_NR_TCE_AMOUNT,
+       EKPO_NR_TCE_AMOUNT_CUR,
+       EKPO_NR_TOOLING_ESTIMATE,
+       EKPO_NR_TOOLING_ESTIMATE_CUR,
+       EKPO_NR_NET_PRICE_PO,
+       EKPO_NR_NET_ORDER_VALUE,
+       EKPO_CD_MATERIAL_GRP,
+       EKPO_CD_MATERIAL_NBR,
+       EKPO_CD_PO_UNIT_OF_MEASURE,
+       EKPO_CD_REVISION_LVL,
+       EKPO_CD_QUOTA_ARRANGEMENT,
+       EKPO_CD_MADE_IN_COUNTRY_1,
+       EKPO_CD_PROGRAM_ID,
+       EKPO_FL_DELETION_PO,
+       EKPO_CD_PRINC_PURCH_AGREEMT,
+       EKPO_NR_ITEM_PURCH_AGREEMENT,
+       EKPO_CD_MATERIAL_NBR_VENDOR,
+       EKPO_NR_PRICE_UNIT,
+       EKPO_CD_SHORT_TEXT,
+       EKPO_DT_STARTING_DT,
+       EKPO_NR_DEPTH_MM,
+       EKPO_DT_END_DT,
+       EKPO_NR_HEIGHT_MM,
+       EKPO_CD_INDICE_CONTO_LAVORO,
+       EKPO_CD_IN_PAIR_MATERIAL_1,
+       EKPO_CD_IN_PAIR_MATERIAL_2,
+       EKPO_CD_IN_PAIR_MATERIAL_3,
+       EKPO_CD_IN_PAIR_MATERIAL_4,
+       EKPO_CD_IN_PAIR_MATERIAL_5,
+       EKPO_CD_IN_PAIR_MATERIAL_6,
+       EKPO_FL_IN_PAIR_WITH,
+       EKPO_NR_MIN_ORDER_QTY,
+       EKPO_FL_OVERSEAS,
+       EKPO_FL_WMF_FLAG,
+       EKPO_NR_PACKAGING_UNIT_MOQ,
+       EKPO_NR_PACK_WEIGHT_KG,
+       EKPO_CD_PACK_TYPE,
+       EKPO_CD_PPAP_STATUS,
+       EKPO_NR_PROCUR_MULTI,
+       EKPO_NR_PROCUR_MULTI_UNIT,
+       EKPO_CD_REVISION_LVL_2,
+       EKPO_NR_SAMPLE_LEAD_TIME,
+       EKPO_FL_STACKABLE,
+       EKPO_CD_TIPO_CONTO_LAVORO,
+       EKPO_CD_TYRE_BRAND,
+       EKPO_CD_TYRE_SIZE,
+       EKPO_FL_VPI_INDICATOR,
+       EKPO_NR_WIDTH_MM,
+       EKPO_CD_MADE_IN_COUNTRY_2,
+       EKPO_CD_MADE_IN_COUNTRY_3,
+       EKPO_CD_MADE_IN_COUNTRY_4,
+       EKPO_CD_MADE_IN_COUNTRY_5,
+       EKPO_CD_TYRE_SPECIFICATION,
+       EKPO_CD_TYRE_TYPE,
+       EKPO_NR_PO_QUANTITY,
+       EKPO_CD_REASON_CODE,
+       EKPO_CD_COMPANY_CODE,
+       EKPO_CD_ITEM_CATEG_PO,
+       TO_NUMBER(TO_CHAR(EKKO_DT_PURCH_DOC_DATE, 'YYYY')) AS EKPO_NR_PURCH_DOC_YEAR,
+       EKPO_CD_PURCH_DOCTYPE,
+       EKPO_CD_WPS_PREFIX,
+       CASE
+           WHEN EKPO_CD_PURCH_DOC_NBR_R3_GPP = '-1' THEN EKPO_CD_PO_NBR
+           ELSE EKPO_CD_PURCH_DOC_NBR_R3_GPP
+       END AS EKPO_CD_PURCH_DOC_NBR_R3_GPP,
+       CASE
+           WHEN EKPO_CD_PLANT IN ('CR01',
+                                  'TY01',
+                                  'CX01') THEN EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG
+           WHEN EKPO_CD_PLANT IN ('AU01',
+                                  'LP01',
+                                  'LP02',
+                                  'AU05') THEN 'SO' || EKPO_CD_MATERIAL_MFG
+           ELSE EKPO_CD_MATERIAL_MFG
+       END AS EKPO_CD_MATERIAL_MFG,
+       EKPO_DS_PLANT_SEGMENT,
+       PLBR_DS_PLANT_SEGMENT,
+       EKPO_CD_MATERIAL_NBR AS ODAG_PARTNUMBER,
+       EKPO_CD_PROGRAM_ID AS ODAG_PROGRAM,
+       TO_CHAR(COALESCE(EKKO_DT_CONTRACT_END_DATE, EKKO_DT_RECORD_CREATED_ON), 'YYYY') AS EKPO_DT_RETENTION_YEAR,
+       EKPO_CD_PO_NBR || '-' || EKPO_NR_ITEM_NBR_PO AS ODAG_PODOCUMENT,
+       EKPO_NR_NET_WEIGHT / 1000 AS EKPO_NR_NET_WEIGHT,
+       EKPO_NR_GROSS_WEIGHT / 1000 AS EKPO_NR_GROSS_WEIGHT,
+       EKPO_CD_UNIT_OF_WEIGHT,
+       COALESCE(PF.TRGE_CD_DESTINATION_DATA, EKPO_CD_PLANT) AS EKPO_CD_PLANT_R3_STC,
+       to_Char(substr('0000000000' || EKPO_CD_PO_NBR, -10)) AS EKPO_CD_PO_NBR10,
+       to_Char(substr('00000' || EKPO_NR_ITEM_NBR_PO, -5)) AS EKPO_NR_ITEM_NBR_PO5,
+       TO_CHAR
+  (REPLACE (LTRIM(REPLACE(EKPO_CD_MATERIAL_NBR, '0', ' ')),
+            ' ',
+            0)) AS EKPO_CD_MATERIAL_NBR_TRIM,
+               TO_CHAR
+  (REPLACE (LTRIM(REPLACE(CASE
+                              WHEN EKPO_CD_PLANT IN ('CR01', 'TY01', 'CX01') THEN EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG
+                              WHEN EKPO_CD_PLANT IN ('AU01', 'LP01', 'LP02', 'AU05') THEN 'SO' || EKPO_CD_MATERIAL_MFG
+                              ELSE EKPO_CD_MATERIAL_MFG
+                          END, '0', ' ')),
+            ' ',
+            0)) AS EKPO_CD_MATERIAL_MFG_TRIM,
+                       to_Char(substr('0000000000' || CASE
+                                                          WHEN EKPO_CD_PURCH_DOC_NBR_R3_GPP = '-1' THEN EKPO_CD_PO_NBR
+                                                          ELSE EKPO_CD_PURCH_DOC_NBR_R3_GPP
+                                                      END, -10)) AS EKPO_CD_PURCH_DOC_NBR_R3_GPP10,
+                       TO_CHAR(CASE
+                                   WHEN EKPO_CD_PLANT = 'CX01' THEN
+                                        REPLACE (LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0)
+                                   WHEN EKPO_CD_PLANT IN ('AU01', 'LP01', 'LP02', 'AU05') THEN NVL
+                                          (SUBSTR
+                                             (REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0),0, INSTR
+                                                (REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE (LTRIM(REPLACE('SO' || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0))
+                                   WHEN EKPO_CD_PLANT IN ('CR01', 'TY01') THEN NVL(substr(REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), 0, INSTR(REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE(LTRIM(REPLACE(EKPO_CD_WPS_PREFIX || EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0))
+                                   WHEN EKPO_CD_PLANT IN ('AW01', 'JE01', 'MO01', 'PL01') THEN
+                                        REPLACE (LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0)
+                                   WHEN EKPO_CD_PLANT IN ('CU01', 'SA01') THEN
+                                        REPLACE
+                                          (REPLACE (LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0),'+SC', 'P')
+                                   ELSE NVL(substr(REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), 0, INSTR(REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0), '+SC')-1), REPLACE(LTRIM(REPLACE(EKPO_CD_MATERIAL_MFG, '0', ' ')), ' ', 0))
+                               END) || '|' || COALESCE(PF.TRGE_CD_DESTINATION_DATA, EKPO_CD_PLANT) AS EKPO_KEY_STC
+FROM ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP
+INNER JOIN ddwh01_dw.TD_PLBR_PLANT_BRANCHES ON EKPO_CD_PLANT = PLBR_CD_PLANT
+AND PLBR_DS_PLANT_SEGMENT IN ('AG',
+                              'CE',
+                              '-1',
+                              'AM',
+                              'AS')
+AND (EKPO_CD_PLANT NOT IN ('FA01',
+                           'FB01',
+                           'IA01')
+     OR EKPO_CD_PLANT NOt like '00%')
+INNER JOIN ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP ON EKPO_CD_PO_NBR = EKKO_CD_PURCH_DOC_NBR
+LEFT JOIN
+  (SELECT DISTINCT TRGE_CD_SOURCE_DATA_1,
+                   TRGE_CD_DESTINATION_DATA
+   FROM DDWH01_DW.TD_TRGE_TRANSCODING_GENERAL
+   WHERE TRGE_CD_DEFAULT_NAME = 'WERKS'
+     AND TRGE_CD_LOGICAL_SYSTEM IN ('ERP',
+                                    'URP',
+                                    'NH3',
+                                    'DWH')) PF ON EKPO_CD_PLANT = PF.TRGE_CD_SOURCE_DATA_1; 
+@@Response
+Here is the PySpark translation of the SQL code:
+
+```python
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+# Read data from TT_EKPO_PURCH_DOC_ITEM_GPP
+ekpo = spark.table('DDWH01_DW.TT_EKPO_PURCH_DOC_ITEM_GPP')
+
+# Read data from TD_PLBR_PLANT_BRANCHES
+plbr = spark.table('DDWH01_DW.TD_PLBR_PLANT_BRANCHES')
+
+# Read data from TT_EKKO_PURCH_DOC_HEADER_GPP
+ekko = spark.table('DDWH01_DW.TT_EKKO_PURCH_DOC_HEADER_GPP')
+
+# Read data from TD_TRGE_TRANSCODING_GENERAL
+trge = spark.table('DDWH01_DW.TD_TRGE_TRANSCODING_GENERAL')
+
+# Filter data from PLBR_DS_PLANT_SEGMENT
+plbr = plbr.filter((plbr.PLBR_DS_PLANT_SEGMENT.isin(['AG', 'CE', '-1', 'AM', 'AS'])) & 
+                   (~plbr.PLBR_CD_PLANT.rlike('^00')) & 
+                   ~plbr.PLBR_CD_PLANT.isin(['FA01', 'FB01', 'IA01']))
+
+# Join data from EKPO and PLBR
+ekpo = ekpo.join(plbr, ekpo.EKPO_CD_PLANT == plbr.PLBR_CD_PLANT, 'inner')
+
+# Join data from EKPO and EKKO
+ekpo = ekpo.join(ekko, ekpo.EKPO_CD_PO_NBR == ekko.EKKO_CD_PURCH_DOC_NBR, 'inner')
+
+# Filter data from TRGE_CD_DEFAULT_NAME and TRGE_CD_LOGICAL_SYSTEM
+trge = trge.filter((trge.TRGE_CD_DEFAULT_NAME == 'WERKS') & 
+                   (trge.TRGE_CD_LOGICAL_SYSTEM.isin(['ERP', 'URP', 'NH3', 'DWH'])))
+
+# Join data from EKPO and TRGE
+ekpo = ekpo.join(trge, ekpo.EKPO_CD_PLANT == trge.TRGE_CD_SOURCE_DATA_1, 'left')
+
+# Perform transformations and calculations
+ekpo = ekpo.select(
+    ekpo.EKPO_ID_PURCH_DOC_ITEM_GPP,
+    ekpo.EKPO_DT_LAST_MODIFY,
+    ekpo.EKPO_ID_EKKO_PURCH_DOC_HEADER,
+    ekpo.EKPO_CD_CONCAT_EBELN_EBELP,
+    ekpo.EKPO_CD_PLANT,
+    ekpo.EKPO_CD_PO_NBR,
+    ekpo.EKPO_NR_ITEM_NBR_PO,
+    ekpo.EKPO_NR_TARGET_QUANTITY,
+    ekpo.EKPO_NR_FIRST_LEAD_TIME,
+    ekpo.EKPO_NR_MIN_FABR_QTY,
+    ekpo.EKPO_NR_MIN_FABR_QTY_UNIT,
+    ekpo.EKPO_NR_STAND_PO_QUANTITY,
+    ekpo.EKPO_NR_STAND_PO_QTY_UNIT,
+    ekpo.EKPO_NR_TCE_AMOUNT,
+    ekpo.EKPO_NR_TCE_AMOUNT_CUR,
+    ekpo.EKPO_NR_TOOLING_ESTIMATE,
+    ekpo.EKPO_NR_TOOLING_ESTIMATE_CUR,
+    ekpo.EKPO_NR_NET_PRICE_PO,
+    ekpo.EKPO_NR_NET_ORDER_VALUE,
+    ekpo.EKPO_CD_MATERIAL_GRP,
+    ekpo.EKPO_CD_MATERIAL_NBR,
+    ekpo.EKPO_CD_PO_UNIT_OF_MEASURE,
+    ekpo.EKPO_CD_REVISION_LVL,
+    ekpo.EKPO_CD_QUOTA_ARRANGEMENT,
+    ekpo.EKPO_CD_MADE_IN_COUNTRY_1,
+    ekpo.EKPO_CD_PROGRAM_ID,
+    ekpo.EKPO_FL_DELETION_PO,
+    ekpo.EKPO_CD_PRINC_PURCH_AGREEMT,
+    ekpo.EKPO_NR_ITEM_PURCH_AGREEMENT,
+    ekpo.EKPO_CD_MATERIAL_NBR_VENDOR,
+    ekpo.EKPO_NR_PRICE_UNIT,
+    ekpo.EKPO_CD_SHORT_TEXT,
+    ekpo.EKPO_DT_STARTING_DT,
+    ekpo.EKPO_NR_DEPTH_MM,
+    ekpo.EKPO_DT_END_DT,
+    ekpo.EKPO_NR_HEIGHT_MM,
+    ekpo.EKPO_CD_INDICE_CONTO_LAVORO,
+    ekpo.EKPO_CD_IN_PAIR_MATERIAL_1,
+    ekpo.EKPO_CD_IN_PAIR_MATERIAL_2,
+    ekpo.EKPO_CD_IN_PAIR_MATERIAL_3,
+    ekpo.EKPO_CD_IN_PAIR_MATERIAL_4,
+    ekpo.EKPO_CD_IN_PAIR_MATERIAL_5,
+    ekpo.EKPO_CD_IN_PAIR_MATERIAL_6,
+    ekpo.EKPO_FL_IN_PAIR_WITH,
+    ekpo.EKPO_NR_MIN_ORDER_QTY,
+    ekpo.EKPO_FL_OVERSEAS,
+    ekpo.EKPO_FL_WMF_FLAG,
+    ekpo.EKPO_NR_PACKAGING_UNIT_MOQ,
+    ekpo.EKPO_NR_PACK_WEIGHT_KG,
+    ekpo.EKPO_CD_PACK_TYPE,
+    ekpo.EKPO_CD_PPAP_STATUS,
+    ekpo.EKPO_NR_PROCUR_MULTI,
+    ekpo.EKPO_NR_PROCUR_MULTI_UNIT,
+    ekpo.EKPO_CD_REVISION_LVL_2,
+    ekpo.EKPO_NR_SAMPLE_LEAD_TIME,
+    ekpo.EKPO_FL_STACKABLE,
+    ekpo.EKPO_CD_TIPO_CONTO_LAVORO,
+    ekpo.EKPO_CD_TYRE_BRAND,
+    ekpo.EKPO_CD_TYRE_SIZE,
+    ekpo.EKPO_FL_VPI_INDICATOR,
+    ekpo.EKPO_NR_WIDTH_MM,
+    ekpo.EKPO_CD_MADE_IN_COUNTRY_2,
+    ekpo.EKPO_CD_MADE_IN_COUNTRY_3,
+    ekpo.EKPO_CD_MADE_IN_COUNTRY_4,
+    ekpo.EKPO_CD_MADE_IN_COUNTRY_5,
+    ekpo.EKPO_CD_TYRE_SPECIFICATION,
+    ekpo.EKPO_CD_TYRE_TYPE,
+    ekpo.EKPO_NR_PO_QUANTITY,
+    ekpo.EKPO_CD_REASON_CODE,
+    ekpo.EKPO_CD_COMPANY_CODE,
+    ekpo.EKPO_CD_ITEM_CATEG_PO,
+    year(to_date(ekpo.EKKO_DT_PURCH_DOC_DATE)).alias('EKPO_NR_PURCH_DOC_YEAR'),
+    ekpo.EKPO_CD_PURCH_DOCTYPE,
+    ekpo.EKPO_CD_WPS_PREFIX,
+    when(ekpo.EKPO_CD_PURCH_DOC_NBR_R3_GPP == '-1', ekpo.EKPO_CD_PO_NBR).otherwise(ekpo.EKPO_CD_PURCH_DOC_NBR_R3_GPP).alias('EKPO_CD_PURCH_DOC_NBR_R3_GPP'),
+    when(ekpo.EKPO_CD_PLANT.isin(['CR01', 'TY01', 'CX01']), ekpo.EKPO_CD_WPS_PREFIX + ekpo.EKPO_CD_MATERIAL_MFG).
+    when(ekpo.EKPO_CD_PLANT.isin(['AU01', 'LP01', 'LP02', 'AU05']), 'SO' + ekpo.EKPO_CD_MATERIAL_MFG).
+    otherwise(ekpo.EKPO_CD_MATERIAL_MFG).alias('EKPO_CD_MATERIAL_MFG'),
+    ekpo.EKPO_DS_PLANT_SEGMENT,
+    ekpo.PLBR_DS_PLANT_SEGMENT,
+    ekpo.EKPO_CD_MATERIAL_NBR.alias('ODAG_PARTNUMBER'),
+    ekpo.EKPO_CD_PROGRAM_ID.alias('ODAG_PROGRAM'),
+    year(to_date(coalesce(ekpo.EKKO_DT_CONTRACT_END_DATE, ekpo.EKKO_DT_RECORD_CREATED_ON))).alias('EKPO_DT_RETENTION_YEAR'),
+    (ekpo.EKPO_CD_PO_NBR + '-' + ekpo.EKPO_NR_ITEM_NBR_PO).alias('ODAG_PODOCUMENT'),
+    (ekpo.EKPO_NR_NET_WEIGHT / 1000).alias('EKPO_NR_NET_WEIGHT'),
+    (ekpo.EKPO_NR_GROSS_WEIGHT / 1000).alias('EKPO_NR_GROSS_WEIGHT'),
+    ekpo.EKPO_CD_UNIT_OF_WEIGHT,
+    coalesce(ekpo.TRGE_CD_DESTINATION_DATA, ekpo.EKPO_CD_PLANT).alias('EKPO_CD_PLANT_R3_STC'),
+    lpad(ekpo.EKPO_CD_PO_NBR, 10, '0').alias('EKPO_CD_PO_NBR10'),
+    lpad(ekpo.EKPO_NR_ITEM_NBR_PO, 5, '0').alias('EKPO_NR_ITEM_NBR_PO5'),
+    lpad(regexp_replace(ekpo.EKPO_CD_MATERIAL_NBR, '0', ' '), 18, '0').alias('EKPO_CD_MATERIAL_NBR_TRIM'),
+    lpad(regexp_replace(
+        when(ekpo.EKPO_CD_PLANT.isin(['CR01', 'TY01', 'CX01']), ekpo.EKPO_CD_WPS_PREFIX + ekpo.EKPO_CD_MATERIAL_MFG).
+        when(ekpo.EKPO_CD_PLANT.isin(['AU01', 'LP01', 'LP02', 'AU05']), 'SO' + ekpo.EKPO_CD_MATERIAL_MFG).
+        otherwise(ekpo.EKPO_CD_MATERIAL_MFG), '0', ' '), 18, '0').alias('EKPO_CD_MATERIAL_MFG_TRIM'),
+    lpad(regexp_replace(
+        when(ekpo.EKPO_CD_PURCH_DOC_NBR_R3_GPP == '-1', ekpo.EKPO_CD_PO_NBR).otherwise(ekpo.EKPO_CD_PURCH_DOC_NBR_R3_GPP), 10, '0'), 10, '0').alias('EKPO_CD_PURCH_DOC_NBR_R3_GPP10'),
+    concat(
+        regexp_replace(
+            when(ekpo.EKPO_CD_PLANT == 'CX01',
+                 regexp_replace(ekpo.EKPO_CD_WPS_PREFIX + ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '))
+            .when(ekpo.EKPO_CD_PLANT.isin(['AU01', 'LP01', 'LP02', 'AU05']),
+                  regexp_replace(
+                      substr(regexp_replace(ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '), 0, instr(regexp_replace(ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '), '+SC')-1),
+                      regexp_replace(ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '))
+            ).when(ekpo.EKPO_CD_PLANT.isin(['CR01', 'TY01']),
+                   regexp_replace(
+                       substr(regexp_replace(ekpo.EKPO_CD_WPS_PREFIX + ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '), 0, instr(regexp_replace(ekpo.EKPO_CD_WPS_PREFIX + ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '), '+SC')-1),
+                       regexp_replace(ekpo.EKPO_CD_WPS_PREFIX + ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '))
+            ).when(ekpo.EKPO_CD_PLANT.isin(['AW01', 'JE01', 'MO01', 'PL01']),
+                   regexp_replace(ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '))
+            .when(ekpo.EKPO_CD_PLANT.isin(['CU01', 'SA01']),
+                  regexp_replace(
+                      regexp_replace(ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '), '+SC', 'P'))
+            .otherwise(
+                substr(regexp_replace(ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '), 0, instr(regexp_replace(ekpo.EKPO_CD_MATERIAL_MFG, '0', ' '), '+SC')-1)),
+            regexp_replace(ekpo.EKPO_CD_MATERIAL_MFG, '0', ' ')) + '|' + coalesce(ekpo.TRGE_CD_DESTINATION_DATA, ekpo.EKPO_CD_PLANT),
+        'EKPO_KEY_STC')
+)
+
+# Write the data to a view
+ekpo.createOrReplaceTempView('DDWH02_SM.VW_EKPO_PURCH_DOC_ITEM_AGCE')
+```
+
+Please note that the SQL code is quite complex and might require some adjustments based on the actual database schema and requirements.

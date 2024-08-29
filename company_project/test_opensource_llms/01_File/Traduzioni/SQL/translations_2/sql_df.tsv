@@ -1,0 +1,228 @@
+	model	quantization	file	version	input_tokens	max_length	time	output_tokens	lloc	primary_errors_rank	secondary_errors_index	commented_lines	cyclomatic_complexity_index	halstead_volume	maintainability_index	syntax_error	loop	partial_code	primary_error_text
+0	CodeQwen1.5-7B-Chat	Q16	file_1	v1	909.0	65536.0	30.04	2070.0	12.0	Good	0.03	11.8	8.3	76.1	83.2		False	False	"No name 'sysdate' in module 'pyspark.sql.functions'
+Undefined variable 'DDWH01_DW'
+Undefined variable 'n_ELT_ID_JOB_LOG'
+Undefined variable 'p_ELT_ID_BATCH'
+"
+1	CodeQwen1.5-7B-Chat	Q16	file_2	v1	1247.0	65536.0	37.17	2701.0	31.0	Good	0.02	6.1	3.2	84.0	68.5		False	False	"Undefined variable 'spark'
+Undefined variable 'seq_aemr_td00001'
+"
+2	CodeQwen1.5-7B-Chat	Q16	file_3	v1	1992.0	65536.0	40.69	3581.0	15.0	Good	0.01	7.8	6.7	111.5	76.5		False	False	"No value for argument 'format' in function call
+No value for argument 'format' in function call
+Undefined variable 'concat'
+Undefined variable 'lit'
+Undefined variable 'when'
+Undefined variable 'length'
+"
+3	CodeQwen1.5-7B-Chat	Q16	file_4	v1	2607.0	65536.0	50.67	4576.0	10.0	Very poor	0.02	5.2	20.0	144.4	76.4		False	False	"No name 'sys_date' in module 'pyspark.sql.functions'
+Instance of 'str' has no 'alias' member
+Undefined variable 'lit'
+"
+4	CodeQwen1.5-7B-Chat	Q16	file_5	v1	4384.0	65536.0	88.61	7784.0								"  File ""<unknown>"", line 42
+    -2.alias('fbil_id_cuty_customer_type'),
+      ^
+SyntaxError: invalid decimal literal
+"	False	False	
+5	CodeQwen1.5-7B-Chat	Q16	file_6	v1	5810.0	65536.0	89.68	9156.0								"  File ""<unknown>"", line 11
+    df = (ekpo_purch_doc_item_gpp
+         ^
+SyntaxError: '(' was never closed
+"	False	False	
+6	CodeQwen1.5-7B-Chat	Q16	file_1	v2	999.0	65536.0	25.51	2006.0	12.0	Good	0.08	17.8	8.3	27.0	90.3		False	False	"Undefined variable 'DDWH01_DW'
+"
+7	CodeQwen1.5-7B-Chat	Q16	file_2	v2	1337.0	65536.0	30.02	2521.0	6.0	Good	0.05	8.5	16.7	13.9	92.2		False	False	
+8	CodeQwen1.5-7B-Chat	Q16	file_3	v2	2082.0	65536.0	39.58	3629.0	12.0	Good	0.04	7.1	8.3	93.5	78.3		False	False	
+9	CodeQwen1.5-7B-Chat	Q16	file_4	v2	2697.0	65536.0	73.69	5568.0	23.0	Extremely poor	0.01	3.9	17.4	371.6	63.6		False	False	"Module 'pyspark.sql.functions' has no 'nextval' member
+Undefined variable 'spark'
+Undefined variable 'p_ELT_ID_BATCH'
+Undefined variable 'sa'
+Undefined variable 'n_ELT_ID_JOB_LOG'
+"
+10	CodeQwen1.5-7B-Chat	Q16	file_5	v2	4474.0	65536.0	118.29	8961.0								"  File ""<unknown>"", line 31
+    inol_df = inol_df.join(slor_df, on='sops_id_slor_sales_order', 'left_outer')
+                                                                               ^
+SyntaxError: positional argument follows keyword argument
+"	False	False	
+11	CodeQwen1.5-7B-Chat	Q16	file_6	v2	5900.0	65536.0	73.54	8669.0	12.0	Poor	0.01	2.5	8.3	337.5	68.1		False	False	"No value for argument 'format' in function call
+No value for argument 'len' in function call
+No value for argument 'len' in function call
+No value for argument 'len' in function call
+No value for argument 'len' in function call
+"
+12	OpenCodeInterpreter-DS-6.7B	Q16	file_1	v1	904.0	16384.0	37.15	2398.0	14.0	Good	0.05	7.3	7.1	27.0	80.9		False	False	"Undefined variable 'spark'
+"
+13	OpenCodeInterpreter-DS-6.7B	Q16	file_2	v1	1166.0	16384.0	28.86	2343.0	33.0	Good	0.02	2.4	3.0	53.8	63.9		False	False	"Undefined variable 'spark'
+Undefined variable 'seq_aemr_td00001'
+"
+14	OpenCodeInterpreter-DS-6.7B	Q16	file_3	v1	1890.0	16384.0	54.29	4040.0								"  File ""<unknown>"", line 15
+    .select(""EKPO_CD_PO_NBR""), on=[df.EKKO_CD_PURCH_DOC_NBR == col(""TT_EKPO_PURCH_DOC_ITEM_GPP.EKPO_CD_PO_NBR"")], how=""inner""), on=[df.EKKO_CD_PURCH_DOC_NBR == col(""TT_EKPO_PURCH_DOC_ITEM_GPP.EKPO_CD_PO_NBR"")], how=""inner"")
+                                                                                                                                                                                                                              ^
+SyntaxError: unmatched ')'
+"	False	False	
+15	OpenCodeInterpreter-DS-6.7B	Q16	file_4	v1	2434.0	16384.0	36.34	3896.0	13.0	Good	0.03	11.6	7.7	0.0	100.0		False	False	
+16	OpenCodeInterpreter-DS-6.7B	Q16	file_5	v1	4078.0	16384.0	68.9	6703.0	17.0	Good	0.01	4.1	5.9	0.0	100.0		False	False	"Undefined variable 'sc'
+"
+17	OpenCodeInterpreter-DS-6.7B	Q16	file_6	v1	5186.0	16384.0	96.79	8554.0	7.0	Good	0.01	2.9	14.3	50.2	79.8		False	False	
+18	OpenCodeInterpreter-DS-6.7B	Q16	file_1	v2	994.0	16384.0	22.15	1925.0	8.0	Good	0.03	11.4	12.5	13.9	91.9		False	False	"Undefined variable 'spark'
+"
+19	OpenCodeInterpreter-DS-6.7B	Q16	file_2	v2	1256.0	16384.0	27.21	2377.0	7.0	Good	0.02	12.5	14.3	53.8	89.9		False	False	"Undefined variable 'when'
+"
+20	OpenCodeInterpreter-DS-6.7B	Q16	file_3	v2	1980.0	16384.0	35.93	3438.0	17.0	Mediocre	0.02	13.5	5.9	34.9	83.6		False	False	"Undefined variable 'F'
+"
+21	OpenCodeInterpreter-DS-6.7B	Q16	file_4	v2	2524.0	16384.0	28.68	3700.0	12.0	Good	0.07	11.5	8.3	4.8	91.5		False	False	"Undefined variable 'next_id'
+"
+22	OpenCodeInterpreter-DS-6.7B	Q16	file_5	v2	4168.0	16384.0	77.74	7093.0								"  File ""<unknown>"", line 16
+    -1.cast(""int"").alias(""fbil_id_comp_company""),
+      ^
+SyntaxError: invalid decimal literal
+"	False	False	
+23	OpenCodeInterpreter-DS-6.7B	Q16	file_6	v2	5276.0	16384.0	21.92	6148.0	7.0	Very poor	0.03	21.1	14.3	78.1	93.8		False	False	"Undefined variable 'spark'
+"
+24	Artigenz-Coder-DS-6.7B	Q16	file_1	v1	904.0	16384.0	23.54	1836.0	13.0	Good	0.03	12.5	7.7	23.3	86.6		False	False	"Undefined variable 'DDWH01_DW'
+Undefined variable 'spark'
+Undefined variable 'p_ELT_ID_BATCH'
+"
+25	Artigenz-Coder-DS-6.7B	Q16	file_2	v1	1166.0	16384.0	26.89	2228.0	13.0	Good	0.02	8.2	7.7	314.9	75.0		False	False	"Undefined variable 'spark'
+"
+26	Artigenz-Coder-DS-6.7B	Q16	file_3	v1	1890.0	16384.0	41.64	3519.0	12.0	Mediocre	0.02	7.2	8.3	59.2	79.9		False	False	"Undefined variable 'spark'
+"
+27	Artigenz-Coder-DS-6.7B	Q16	file_4	v1	2434.0	16384.0	25.01	3417.0	9.0	Mediocre	0.02	6.0	11.1	206.1	77.5		False	False	"Undefined variable 'spark'
+"
+28	Artigenz-Coder-DS-6.7B	Q16	file_5	v1	4078.0	16384.0	70.87	6731.0	12.0	Poor	0.01	2.5	8.3	562.3	66.6		False	False	"Undefined variable 'spark'
+"
+29	Artigenz-Coder-DS-6.7B	Q16	file_6	v1	5186.0	16384.0	106.45	8815.0								"  File ""<unknown>"", line 7
+    .join(spark.table('ddwh01_dw.TD_PLBR_PLANT_BRANCHES'),
+         ^
+SyntaxError: '(' was never closed
+"	False	False	
+30	Artigenz-Coder-DS-6.7B	Q16	file_1	v2	994.0	16384.0	19.4	1761.0	15.0	Good	0.08	27.8	6.7	0.0	100.0		False	False	
+31	Artigenz-Coder-DS-6.7B	Q16	file_2	v2	1256.0	16384.0	31.86	2510.0	7.0	Good	0.06	10.5	28.6	201.2	84.2		False	False	"Undefined variable 'nextval'
+"
+32	Artigenz-Coder-DS-6.7B	Q16	file_3	v2	1980.0	16384.0	34.64	3298.0	6.0	Mediocre	0.02	0.0	16.7	64.7	70.2		False	False	"Undefined variable 'spark'
+"
+33	Artigenz-Coder-DS-6.7B	Q16	file_4	v2	2524.0	16384.0	42.25	4177.0	7.0	Good	0.06	5.3	14.3	118.6	80.6		False	False	"Undefined variable 'spark'
+Undefined variable 'df5'
+Undefined variable 'df6'
+Undefined variable 'df1'
+Undefined variable 'df7'
+Undefined variable 'next_sequence'
+Undefined variable 'p_ELT_ID_BATCH'
+Undefined variable 'df4'
+Undefined variable 'df3'
+Undefined variable 'df2'
+"
+34	Artigenz-Coder-DS-6.7B	Q16	file_5	v2	4168.0	16384.0	15.56	4779.0	8.0	Good	0.2	33.3	12.5	9.5	100.0		False	False	
+35	Artigenz-Coder-DS-6.7B	Q16	file_6	v2	5276.0	16384.0	236.33	12446.0	24.0	Good	0.04	8.0	4.2	149.3	71.3		False	False	
+36	Magicoder-S-DS-6.7B	Q16	file_1	v1	904.0	16384.0	32.21	2174.0	12.0	Mediocre	0.01	8.3	8.3	6.0	88.0		False	False	"Undefined variable 'spark'
+Undefined variable 'datetime'
+"
+37	Magicoder-S-DS-6.7B	Q16	file_2	v1	1166.0	16384.0	36.65	2614.0	5.0	Good	0.01	5.0	20.0	84.0	84.5		False	False	"Undefined variable 'main1'
+"
+38	Magicoder-S-DS-6.7B	Q16	file_3	v1	1890.0	16384.0	35.89	3305.0									False	False	
+39	Magicoder-S-DS-6.7B	Q16	file_4	v1	2434.0	16384.0	28.84	3571.0								"  File ""<unknown>"", line 8
+    sa_df = # your SA dataframe
+            ^^^^^^^^^^^^^^^^^^^^
+SyntaxError: invalid syntax
+"	False	False	
+40	Magicoder-S-DS-6.7B	Q16	file_5	v1	4078.0	16384.0	82.89	7152.0	13.0	Poor	0.01	4.8	7.7	321.5	71.1		False	False	"Undefined variable 'slor'
+Undefined variable 'sops'
+Undefined variable 'inoh'
+Undefined variable 'tdim_pvan'
+"
+41	Magicoder-S-DS-6.7B	Q16	file_6	v1	5186.0	16384.0	100.05	8620.0	7.0	Poor	0.01	2.1	14.3	400.7	72.0		False	False	"Instance of 'str' has no 'alias' member
+Instance of 'str' has no 'alias' member
+Undefined variable 'spark'
+"
+42	Magicoder-S-DS-6.7B	Q16	file_1	v2	994.0	16384.0	25.91	2021.0	6.0	Extremely poor	0.02	9.2	16.7	18.6	92.0		False	False	"Undefined variable 'spark'
+Undefined variable 'F'
+Undefined variable 'p_ELT_ID_BATCH'
+"
+43	Magicoder-S-DS-6.7B	Q16	file_2	v2	1256.0	16384.0	15.8	1891.0	14.0	Good	0.12	22.6	14.3	131.2	86.2		False	False	
+44	Magicoder-S-DS-6.7B	Q16	file_3	v2	1980.0	16384.0	45.34	3756.0	8.0	Mediocre	0.05	0.0	12.5	109.8	65.9		False	False	"No value for argument 'format' in function call
+Undefined variable 'lit'
+"
+45	Magicoder-S-DS-6.7B	Q16	file_4	v2	2524.0	16384.0	33.39	3833.0								"  File ""<unknown>"", line 8
+    sa1 = spark.table(""ddwh00_sa.TS_MAKT0001_WW_GPP"").select(""MAKT"" as ""DESC_CD_TABLE"", ""Material"" as ""DESC_CD_TABLE_DESC"", ""MATNR"" as ""DESC_CD_CODE"", ""SPRAS"" as ""DESC_CD_LANGUAGE"", F.lit(1).cast(""int"").alias(""DESC_CD_POSITION""), ""MAKTX"" as ""DESC_CD_DESCRIPTION1"", ""MAKTG"" as ""DESC_CD_DESCRIPTION2"", F.lit(None).alias(""DESC_CD_DETAIL1""), F.lit(None).alias(""DESC_CD_DETAIL2""), F.lit(None).alias(""DESC_CD_DETAIL3""), F.lit(""WW GPP"").alias(""DESC_CD_SOURCE_SYSTEM""))
+                                                                    ^^
+SyntaxError: invalid syntax
+"	False	False	
+46	Magicoder-S-DS-6.7B	Q16	file_5	v2	4168.0	16384.0	107.78	8039.0	14.0	Mediocre	0.02	2.4	7.1	666.0	64.5		False	False	"Undefined variable 'Window'
+Undefined variable 'tdim_pvan'
+"
+47	Magicoder-S-DS-6.7B	Q16	file_6	v2	5276.0	16384.0	92.44	8455.0	28.0	Mediocre	0.04	9.3	3.6	151.3	71.0		False	False	"No value for argument 'format' in function call
+No value for argument 'len' in function call
+No value for argument 'len' in function call
+"
+48	deepseek-coder-33b-instruct	Q4	file_1	v1	904.0	16384.0	40.47	1318.0	9.0	Mediocre	0.07	11.3	33.3	53.8	85.8		False	False	"Undefined variable 'n_ELT_ID_JOB_LOG'
+Undefined variable 'p_ELT_ID_BATCH'
+"
+49	deepseek-coder-33b-instruct	Q4	file_2	v1	1166.0	16384.0	35.85	1126.0	5.0	Good	0.02	3.3	20.0	68.5	82.6		False	False	"Undefined variable 'spark'
+"
+50	deepseek-coder-33b-instruct	Q4	file_3	v1	1890.0	16384.0	39.43	1166.0	13.0	Good	0.24	12.8	7.7	0.0	100.0		False	False	
+51	deepseek-coder-33b-instruct	Q4	file_4	v1	2434.0	16384.0	58.58	1685.0	13.0	Good	0.01	14.6	23.1	472.5	78.6		False	False	"Using variable 'df1' before assignment
+Undefined variable 'df5'
+Undefined variable 'spark'
+Undefined variable 'seq_tm_desc'
+Undefined variable 'df6'
+Undefined variable 'df7'
+Undefined variable 'p_ELT_ID_BATCH'
+Undefined variable 'df4'
+Undefined variable 'df3'
+Undefined variable 'df2'
+Undefined variable 'n_ELT_ID_JOB_LOG'
+"
+52	deepseek-coder-33b-instruct	Q4	file_5	v1	4078.0	16384.0	54.56	1373.0	16.0	Good	0.03	11.6	6.2	258.5	76.5		False	False	
+53	deepseek-coder-33b-instruct	Q4	file_6	v1	5186.0	16384.0	75.83	1831.0								"  File ""<unknown>"", line 30
+    df = df.withColumn(""EKPO_CD_MATERIAL_NBR_TRIM"", regexp_replace(ltrim(rtrim(regexp_replace(col(""EKPO_CD_MATERIAL_NBR""), ""0"", "" ""), "" ""), 0))
+                                                    
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+"	False	False	
+54	deepseek-coder-33b-instruct	Q4	file_1	v2	994.0	16384.0	40.26	1301.0	17.0	Good	0.04	11.3	17.6	4.8	87.7		False	False	
+55	deepseek-coder-33b-instruct	Q4	file_2	v2	1256.0	16384.0	35.16	1099.0	8.0	Good	0.02	10.6	12.5	68.5	86.3		False	False	
+56	deepseek-coder-33b-instruct	Q4	file_3	v2	1980.0	16384.0	47.12	1406.0	12.0	Good	0.03	7.8	8.3	152.2	77.6		False	False	"No value for argument 'len' in function call
+Undefined variable 'coalesce'
+"
+57	deepseek-coder-33b-instruct	Q4	file_4	v2	2524.0	16384.0	105.79	3092.0	9.0	Very poor	0.02	3.6	11.1	97.7	76.4		False	False	"Undefined variable 'spark'
+Undefined variable 'n_ELT_ID_JOB_LOG'
+Undefined variable 'p_ELT_ID_BATCH'
+"
+58	deepseek-coder-33b-instruct	Q4	file_5	v2	4168.0	16384.0	62.81	1609.0	15.0	Good	0.07	10.3	6.7	237.8	76.2		False	False	
+59	deepseek-coder-33b-instruct	Q4	file_6	v2	5276.0	16384.0	49.7	1091.0	11.0	Good	0.11	7.6	18.2	177.9	77.6		False	False	
+60	OpenCodeInterpreter-DS-33B	Q4	file_1	v1	904.0	16384.0	33.49	1083.0								"  File ""<unknown>"", line 16
+    merged = merged.withColumn('VENL_DT_START_VALIDITY', to_date(lit(""01/01/1900""), ""dd/MM/yyyy"")))
+                                                                                                  ^
+SyntaxError: unmatched ')'
+"	False	False	
+61	OpenCodeInterpreter-DS-33B	Q4	file_2	v1	1166.0	16384.0	47.64	1515.0	6.0	Good	0.01	6.7	16.7	51.9	86.2		False	False	
+62	OpenCodeInterpreter-DS-33B	Q4	file_3	v1	1890.0	16384.0	45.24	1352.0	6.0	Mediocre	0.02	6.2	16.7	171.2	82.0		False	False	"Using variable 'df2' before assignment
+"
+63	OpenCodeInterpreter-DS-33B	Q4	file_4	v1	2434.0	16384.0	9.74	137.0									False	False	
+64	OpenCodeInterpreter-DS-33B	Q4	file_5	v1	4078.0	16384.0	117.9	3184.0	6.0	Poor	0.0	1.9	16.7	111.2	76.9		False	False	"No value for argument 'format' in function call
+No value for argument 'format' in function call
+No value for argument 'format' in function call
+No value for argument 'format' in function call
+No value for argument 'format' in function call
+"
+65	OpenCodeInterpreter-DS-33B	Q4	file_6	v1	5186.0	16384.0	98.19	2451.0	4.0	Extremely poor	0.01	2.8	25.0	0.0	100.0		False	False	"Undefined variable 'IntegerType'
+Undefined variable 'StructType'
+Undefined variable 'BooleanType'
+Undefined variable 'StructField'
+Undefined variable 'DoubleType'
+Undefined variable 'StringType'
+Undefined variable 'TimestampType'
+"
+66	OpenCodeInterpreter-DS-33B	Q4	file_1	v2	994.0	16384.0	41.4	1339.0	9.0	Very poor	0.02	12.7	11.1	116.7	85.4		False	False	"Undefined variable 'DDWH01_DW'
+Undefined variable 'NVL'
+Undefined variable 'F'
+Undefined variable 'p_ELT_ID_BATCH'
+Undefined variable 'n_ELT_ID_JOB_LOG'
+"
+67	OpenCodeInterpreter-DS-33B	Q4	file_2	v2	1256.0	16384.0	37.79	1186.0	7.0	Good	0.04	7.4	14.3	100.0	83.6		False	False	
+68	OpenCodeInterpreter-DS-33B	Q4	file_3	v2	1980.0	16384.0	45.66	1360.0	14.0	Good	0.12	10.5	14.3	4.8	89.1		False	False	
+69	OpenCodeInterpreter-DS-33B	Q4	file_4	v2	2524.0	16384.0	31.61	838.0	11.0	Good	0.07	41.7	9.1	0.0	100.0		False	False	
+70	OpenCodeInterpreter-DS-33B	Q4	file_5	v2	4168.0	16384.0	118.74	3199.0								"  File ""<unknown>"", line 26
+    df = df.select(-1 AS fbil_id_comp_company,
+                   ^^^^^
+SyntaxError: invalid syntax. Perhaps you forgot a comma?
+"	False	False	
+71	OpenCodeInterpreter-DS-33B	Q4	file_6	v2	5276.0	16384.0	37.45	740.0	10.0	Good	0.03	20.0	10.0	223.8	86.5		False	False	

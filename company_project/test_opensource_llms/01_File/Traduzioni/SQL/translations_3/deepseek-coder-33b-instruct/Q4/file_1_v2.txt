@@ -1,0 +1,48 @@
+Here is the PySpark code equivalent to your SQL MERGE statement. This PySpark code does not use MERGE, but instead uses join and union operations to achieve the same result. 
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
+
+# create Spark session
+spark = SparkSession.builder.getOrCreate()
+
+# read source data from SQL
+source_data = spark.read.format("jdbc").option("url", "<JDBC URL>").option("dbtable", "ddwh00_sa.TS_VENL0001_WW_GPP").load()
+
+# read target data from SQL
+target_data = spark.read.format("jdbc").option("url", "<JDBC URL>").option("dbtable", "ddwh01_dw.TM_VENL_MASTER_LINK").load()
+
+# perform minus operation to get matched and unmatched data
+joined_data = source_data.join(target_data, ["CLIENT", "PARTNER_GUID"], how='leftanti')
+unmatched_data = source_data.join(target_data, ["CLIENT", "PARTNER_GUID"], how='leftsemi')
+
+# update matched data and add new columns
+updated_data = unmatched_data.withColumn("VENL_CD_VENDOR", F.col("VENDOR")).withColumn("VENL_CD_USER", F.col("CRUSER")) \
+    .withColumn("VENL_DT_DATE", F.col("CRDAT")).withColumn("VENL_DT_TIME", F.col("CRTIM")) \
+    .withColumn("VENL_DT_LAST_MODIFY", F.current_timestamp()).withColumn("VENL_ID_BATCH_LAST_MODIFY", 
+                                                                            F.when(F.col("p_ELT_ID_BATCH").isNull(), F.lit(n_ELT_ID_JOB_LOG)) \
+                                                                           .otherwise(F.col("p_ELT_ID_BATCH")))
+
+# add new rows for unmatched data
+new_data = joined_data.withColumn("VENL_ID_LINK", F.expr("NEXTVAL('DDWH01_DW.SEQ_TM_VENL')")).withColumn("VENL_CD_CLIENT", F.col("CLIENT")) \
+    .withColumn("VENL_CD_PARTNER_GUID", F.col("PARTNER_GUID")).withColumn("VENL_DT_START_VALIDITY", 
+                                                                           F.to_date(F.lit("01/01/1900"), "dd/MM/yyyy")) \
+    .withColumn("VENL_DT_END_VALIDITY", F.to_date(F.lit("31/12/9999"), "dd/MM/yyyy")).withColumn("VENL_DT_INSERT", 
+                                                                           F.current_timestamp()) \
+    .withColumn("VENL_ID_BATCH_LAST_MODIFY", F.when(F.col("p_ELT_ID_BATCH").isNull(), F.lit(n_ELT_ID_JOB_LOG)) \
+                                                                           .otherwise(F.col("p_ELT_ID_BATCH"))) \
+    .withColumn("VENL_DT_LAST_MODIFY", F.current_timestamp())
+
+# union updated data and new data 
+final_data = updated_data.unionByName(new_data)
+
+# write final data back to SQL
+final_data.write.format("jdbc").option("url", "<JDBC URL>").option("dbtable", "ddwh01_dw.TM_VENL_MASTER_LINK").mode('overwrite').save()
+```
+
+Please replace `<JDBC URL>` with your actual JDBC URL and replace `n_ELT_ID_JOB_LOG` with the actual value or function you want to use. 
+
+This PySpark code does not directly translate SQL syntax to PySpark, but uses PySpark's API and functions to achieve similar results. The MERGE statement is replaced by join operations and union operation for unmatched data. Note that the performance of this code may be affected if the source_data or target_data tables are large, as PySpark does not have native support for MERGE operation. 
+
+Also note that PySpark does not provide a direct equivalent for SQL's NVL function. In Spark, you can use `when` and `otherwise` functions to achieve similar results. This code assumes the existence of a variable `p_ELT_ID_BATCH` and a function `n_ELT_ID_JOB_LOG()`, which should be replaced with actual values or functions.

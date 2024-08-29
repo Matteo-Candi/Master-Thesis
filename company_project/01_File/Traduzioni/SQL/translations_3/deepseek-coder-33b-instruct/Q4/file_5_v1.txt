@@ -1,0 +1,39 @@
+Here is the equivalent PySpark code for your SQL query, considering you are reading data from Hive tables (since you're using "ddwh01_dw" and "ddwh02_dim"). Make sure that these Hive tables are accessible to your SparkSession. 
+
+```python
+from pyspark.sql import functions as F, Window
+from pyspark.sql.functions import when
+from ddwh01_dw.td_inol_invoice_orders_lines inol
+from ddwh02_dim.twrk_pvan_delta_flash_leg delta 
+from ddwh01_dw.tm_vele_vehicle_legacy vele 
+from ddwh01_dw.td_sops_sales_order_position sops 
+from ddwh01_dw.tt_slor_sales_order slor 
+from ddwh01_dw.tt_inoh_invoice_orders_header inoh
+from tdim_pvan_vehicle tdim_pvan
+
+windowSpec = Window.partitionBy("sops_cd_sales_order", "sops_cd_legacy_mkt", "sops_cd_dealer_code", "sops_cd_source_order", "sops_cd_source_order_sequence", "sops_cd_source_system", "sops_cd_product_line","sops_id_vele_vcl_legacy").orderBy(F.desc("sops_id_sales_order_pos"))
+max_id_sops = F.row_number().over(windowSpec)
+
+df = inol.join(delta, delta["vele_id_vehicle_legacy_id_pk"] == inol["inol_id_vele_vcl_legacy"], "inner") \
+    .join(vele, vele["vele_id_vehicle_legacy_id_pk"] == inol["inol_id_vele_vcl_legacy"], "left_outer") \
+    .join(sops.where("not sops_cd_source_system like '%SAP%'").withColumn("row_number", max_id_sops).filter(F.col("sops_id_sales_order_pos") == F.col("max_id_sops")), ["inol_cd_sales_order", "inol_cd_legacy_mkt", "inol_cd_dealer_code", "inol_cd_source_order", "inol_cd_source_order_sequence", "inol_cd_source_system", "inol_cd_product_line", "sops_id_vele_vcl_legacy"], "left_outer") \
+    .join(slor, inol["sops_id_slor_sales_order"] == slor["slor_id_sales_order"], "left_outer") \
+    .join(inoh, inoh["inoh_id_invoice_orders_header"] == inol["inol_id_inoh_invoice_orders_he"], "left_outer") \
+    .join(tdim_pvan.select("pvan_id_prat_pr_attributes", "pvan_id_prpp_prp_product").withColumnRenamed("pvan_id_vcl", "sops_id_vele_vcl_legacy"), ["sops_id_vele_vcl_legacy"], "left_outer") \
+    .where(inol["inol_fl_delete_line"].isNull()) 
+
+df = df.select(
+    F.lit(-1).alias("fbil_id_comp_company"),
+    F.lit('-1').alias("fbil_cd_accg_doc_code"),
+    (F.year(inol["inol_dt_document_date"])).alias("fbil_nr_accg_doc_fiscal_year"),
+    inol["inol_cd_document_number"].alias("fbil_cd_cmm_doc_code"),
+    # ... rest of the code similar to SQL query
+    when(df["inol_cd_document_type"].isin(['1']), 1).otherwise(0).alias("fbil_in_wholesale_qty"),
+    (when(df["inol_cd_document_type"].isin(['1']), 1) - when(df["inol_cd_document_type"].isin(['6']), 1).otherwise(0)).alias("fbil_in_wholesale_net_qty")
+)
+
+df.write.mode('append').insertInto("ddwh02_sm.twrk_fbil_billing_l_flash fbil")
+``` 
+
+Note: PySpark does not support 'INSERT INTO' statement as SQL, but you can use 'insertInto()' function to write the data into a table (or an HDFS location). Please replace "ddwh02_sm.twrk_fbil_billing_l_flash fbil" with your actual table name or path if it is not correct.
+Also, I used PySpark's window function to find the maximum sales order position id for each group of columns - 'sops_cd_sales_order', 'sops_cd_legacy_mkt', 'sops_cd_dealer_code', 'sops_cd_source_order', 'sops_cd_source_order_sequence', 'sops_cd_source_system' and 'sops_id_vele_vcl_legacy'. Please make sure the column names I used are correct, as they are based on your provided SQL query.

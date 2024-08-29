@@ -1,0 +1,4 @@
+
+The code has been successfully translated from SAS to Python. The file path, libraries, variables, and functions have been defined correctly according to your requirements. Please replace the file paths with valid ones for running the code on a local machine or server. 
+
+Now you can run this code using any Python environment or an integrated development environment (IDE) that supports Python such as Jupyter Notebook or PyCharm.

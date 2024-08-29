@@ -1,0 +1,47 @@
+Here is the equivalent Python code. However, please note that Python doesn't have a direct equivalent to SAS macro functions or data step processing like in SAS. The translation might not cover all functionality of your SAS program.
+
+```python
+import pandas as pd
+from typing import AnyStr
+
+def arrotondainterogruppo(ingresso: AnyStr, variab: AnyStr, datototeff: AnyStr, effettiva: AnyStr, vargru: AnyStr, uscita: AnyStr):
+    # Load the dataframe
+    intermedio = pd.read_csv(ingresso)
+    
+    # Sort the dataframe by the group variable
+    intermedio = intermedio.sort_values(by=vargru)
+    
+    # Calculate sum of the variable for each group
+    somma = intermedio.groupby(vargru)[variab].sum().reset_index()
+    somma.columns = [vargru, 'vartot']
+    
+    # Load another dataframe and merge with the first one
+    datototeff = pd.read_csv(datototeff)
+    datototeff = datototeff.sort_values(by=vargru)
+    somma = pd.merge(somma, datototeff, on=vargru, how='inner')
+    
+    # Calculate the difference between total sum and effective value
+    somma['diff'] = somma['vartot'] - effettiva
+    
+    # Merge with the first dataframe
+    intermedio = pd.merge(intermedio, somma[['vartot', 'diff']], on=vargru, how='inner')
+    
+    # Sort by group variable and descending order of the main variable
+    intermedio = intermedio.sort_values(by=[vargru, variab], ascending=[True, False])
+    
+    # Assign signal for each group
+    intermedio['segnale'] = range(1, len(intermedio) + 1)
+    
+    # Extract signals
+    segnali = intermedio.groupby(vargru).first()[['segnale']].reset_index()
+    
+    # Apply rounding based on the difference and signal
+    intermedio['variab'] = intermedio.apply(lambda row: row[variab] + 1 if (row.name < row['segnale'] + abs(row['diff']) and row['diff'] < 0) else max(row[variab] - 1, 0), axis=1)
+    
+    # Drop unnecessary columns
+    intermedio = intermedio.drop(['diff', 'segnale'], axis=1)
+    
+    # Save the result to a csv file
+    intermedio.to_csv(uscita, index=False)
+```
+This Python function assumes that your data is in CSV format and can be read using pandas' `read_csv` method. If you are reading from other formats (e.g., Excel), you may need to adjust the code accordingly. Please make sure to replace 'variab', 'ingresso', etc., with actual variable names or file paths in your case.

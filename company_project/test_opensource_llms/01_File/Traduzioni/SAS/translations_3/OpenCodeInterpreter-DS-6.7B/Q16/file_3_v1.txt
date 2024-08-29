@@ -1,0 +1,117 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+### Instruction:
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise.
+Translate the following code from SAS to Python:
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+options mergenoby = warn;
+
+data xclasse;
+	set ter.etapop20b;
+	time = 2019;
+	length eta1_a $ 6;
+	if 15 <= eta <= 17
+		then eta1_a = "Y_UN17";
+	else if 18 <= eta <= 49
+		then eta1_a = "Y"||trim(left(eta));
+	else if 50 <= eta <= 54
+		then eta1_a = "Y_GE50";
+	else delete;
+	keep codc620b eta1_a eta time tot_fem;
+	rename codc620b = codice_comune__str
+		   tot_fem = femmine;
+run;
+proc tabulate data = xclasse;
+	class eta1_a;
+	var eta;
+	table eta1_a, eta*(min max) * f = 6. /nocellmerge;
+run;
+proc sort data = xclasse;
+	by codice_comune__str;
+run;
+data xgeog;
+	set ter_out.geografica_comune;
+	keep codice_comune__str codice_provincia;
+run;
+proc sort data = xgeog;
+	by codice_comune__str;
+run;
+data xclageo;
+	merge xgeog xclasse;
+	by codice_comune__str;
+run;
+proc means data = xclageo noprint;
+	class codice_provincia eta1_a;
+	types codice_provincia * eta1_a;
+	id time;
+	output out = provinciale_donne (drop = _type_ _freq_)
+		sum(femmine) = donne_classe_eta;
+run;
+
+data nati;
+	set appo.nati_eta_madre_provincia_istat;
+	rename valore = nati;
+run;
+proc sort data = nati;
+	by codice_provincia eta1_a;
+run;
+proc sort data = provinciale_donne;
+	by codice_provincia eta1_a;
+run;
+data nati_donne;
+	merge nati provinciale_donne (drop = time);
+	by codice_provincia eta1_a;
+run; 
+
+data nati_donne_rapp;
+	set nati_donne;
+	nati_1000_donne_classe_eta = 1000 * nati / donne_classe_eta;
+run;
+
+options nolabel;
+
+
+
+### Response:
+As an AI, I can't create a physical file in Python. Therefore, all file-related operations have to be mocked. Here's a Python equivalent of your SAS code:
+
+```python
+# Assuming dataframes df_ter, df_sez, df_ter_out, df_sez_out, df_appo, df_nati and df_prov exist.
+
+# Import libraries
+import pandas as pd 
+import numpy as np
+
+# Merge operations
+df_xclasse = df_ter['etapop20b'].copy().rename('eta')  
+df_xclasse['time'] = 2019
+df_xclasse['eta1_a'] = np.where((df_xclasse['eta']>=15) & (df_xclasse['eta']<=17), "Y_UN17", np.where((df_xclasse['eta']>=18) & (df_xclasse['eta']<=49), "Y"+df_xclasse['eta'].astype(str), np.where(df_xclasse['eta']>=50 & df_xclasse['eta']<=54, "Y_GE50","NaN")))
+df_xclasse = df_xclasse.dropna()
+df_xclasse = df_xclasse[['codc620b', 'eta1_a', 'eta', 'tot_fem']].copy()
+df_xclasse.columns = ['codice_comune__str', 'eta1_a', 'eta', 'femmine']
+
+# Merging dataframes
+df_xclageo = pd.merge(df_xgeog, df_xclasse, left_on = 'codice_comune__str', right_on = 'codice_comune__str')
+
+df_nati_donne = pd.merge(df_nati, df_prov, left_on = ['codice_provincia', 'eta1_a'], right_on = ['codice_provincia', 'eta1_a'])
+
+# Calculation
+df_nati_donne_rapp = df_nati_donne.copy()
+df_nati_donne_rapp['nati_1000_donne_classe_eta'] = df_nati_donne_rapp['valore'] * 1000 / df_nati_donne_rapp['donne_classe_eta']
+
+# Print first entries to observe output
+print(df_xclasse.head())
+print(df_xclageo.head())
+print(df_nati_donne.head())
+print(df_nati_donne_rapp.head())
+```
+
+Note: This is a basic translation of your SAS code and assumes you've appropriate pandas dataframes in python with columns named as per your SAS code. It's always a good practice to import libraries and understand what code exactly does. You might have to modify this Python code according to your data or dataset structure and requirement.
+
+In a real-life scenario, the data would be read from a .csv or .xlsx file using `pandas.read_csv()` or `pandas.read_excel()` respectively. For writing data, `.to_csv()` or `.to_excel()` would be used. Be aware that file operations are dependent on the file path and hence the current code assumes the files are in the path provided in the SAS code. To translate to python, we've assumed corresponding dataframes exist in your python environment.

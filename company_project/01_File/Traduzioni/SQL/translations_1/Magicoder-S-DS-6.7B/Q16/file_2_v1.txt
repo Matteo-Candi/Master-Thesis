@@ -1,0 +1,114 @@
+You are an expert in translating code from SQL to PySpark. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+INSERT INTO ddwh01_dw.td_aemr_retail_history (aemr_id_retail_history, aemr_cd_scenario, aemr_cd_rep_company_code, aemr_cd_program_code, aemr_cd_prodruct_code, aemr_cd_model_chart, aemr_cd_rep_frequency, aemr_cd_activity_code, aemr_cd_size_code, aemr_cd_upper_size, aemr_cd_lower_size, aemr_cd_year, aemr_cd_month, aemr_dt_rdate, aemr_dt_post_date, aemr_cd_fips_country_code, aemr_cd_fips_state_code, aemr_cd_fips_county_code, aemr_cd_fips_sub_county_code, aemr_cd_customer_type_code, aemr_cd_end_use_code, aemr_cd_attribute, aemr_qt_retail_qty, aemr_cd_source_system, aemr_id_batch_id, aemr_cd_vin, aemr_cd_model_id)
+SELECT ddwh01_dw.seq_aemr_td00001.nextval,
+       CASE
+           WHEN TO_CHAR (main1.postdate,
+                         'YYYYMM') = TO_CHAR (main1.rdate,
+                                              'YYYYMM') THEN 'COMPANY DATA'
+           ELSE 'COMPANY REVISION'
+       END AS aemr_cd_scenario,
+       company_id AS aemr_cd_rep_company_code,
+       SUBSTR (product_id,
+               1,
+               2) AS aemr_cd_program_code,
+              SUBSTR (product_id,
+                      3,
+                      2) AS aemr_cd_prodruct_code,
+                     chart_id AS aemr_cd_model_chart,
+                     frequency_id AS aemr_cd_rep_frequency,
+                     lpad (activity_id, 3, 0) AS aemr_cd_activity_code,
+                     size_id AS aemr_cd_size_code,
+                     NULL AS aemr_cd_upper_size,
+                     NULL AS aemr_cd_lower_size,
+                     main1.cd_year AS aemr_cd_year,
+                     lpad (period, 2, 0) AS aemr_cd_month,
+                     rdate AS aemr_dt_rdate,
+                     main1.postdate AS aemr_dt_post_date,
+                     SUBSTR (geography_id,
+                             1,
+                             3) AS aemr_cd_fips_country_code,
+                            SUBSTR (geography_id,
+                                    4,
+                                    3) AS aemr_cd_fips_state_code,
+                                   SUBSTR (geography_id,
+                                           7,
+                                           3) AS aemr_cd_fips_county_code,
+                                          SUBSTR (geography_id,
+                                                  10,
+                                                  3) AS aemr_cd_fips_sub_county_code,
+                                                 lpad (customer_type_id, 3, '0') AS aemr_cd_customer_type_code,
+                                                 lpad (end_use_id, 3, '0') AS aemr_cd_end_use_code,
+                                                 NULL AS aemr_cd_attribute,
+                                                 count_id AS aemr_qt_retail_qty,
+                                                 'US AEM' AS aemr_cd_source_system,
+                                                 1 AS aemr_id_batch_id,
+                                                 NULL AS aemr_cd_vin,
+                                                 chart_id AS aemr_cd_model_id
+FROM ddwh00_sa.ts_aemi0004_us_aem main1
+WHERE company_id IN ('JIC',
+                     'FOR')
+  AND frequency_id = 'M'
+  AND CASE
+          WHEN product_id IN ('CEB0',
+                              'CEE2',
+                              'CEE3',
+                              'CEF0',
+                              'CEG0') THEN '010'
+          ELSE '011'
+      END = lpad (activity_id, 3, '0')
+  AND attribute_id = '99' ; 
+@@Response
+The PySpark equivalent to the SQL query would look like this:
+
+```python
+from pyspark.sql import functions as F
+
+# Assuming that `main1` is a DataFrame
+main1 = spark.table("ddwh00_sa.ts_aemi0004_us_aem")
+
+# Filtering the data
+main1 = main1.filter((main1.company_id.isin('JIC', 'FOR')) & (main1.frequency_id == 'M') & ((main1.product_id.isin('CEB0', 'CEE2', 'CEE3', 'CEF0', 'CEG0')) | (main1.activity_id.rlike('^010$'))))
+
+# Transforming the data
+main1 = main1.select(
+    F.expr("nextval('ddwh01_dw.seq_aemr_td00001')").alias("aemr_id_retail_history"),
+    F.when(F.expr("TO_CHAR(main1.postdate, 'YYYYMM') = TO_CHAR(main1.rdate, 'YYYYMM')"), "COMPANY DATA").otherwise("COMPANY REVISION").alias("aemr_cd_scenario"),
+    main1.company_id.alias("aemr_cd_rep_company_code"),
+    F.expr("SUBSTR(product_id, 1, 2)").alias("aemr_cd_program_code"),
+    F.expr("SUBSTR(product_id, 3, 2)").alias("aemr_cd_prodruct_code"),
+    main1.chart_id.alias("aemr_cd_model_chart"),
+    main1.frequency_id.alias("aemr_cd_rep_frequency"),
+    F.expr("lpad(activity_id, 3, '0')").alias("aemr_cd_activity_code"),
+    main1.size_id.alias("aemr_cd_size_code"),
+    F.lit(None).alias("aemr_cd_upper_size"),
+    F.lit(None).alias("aemr_cd_lower_size"),
+    main1.cd_year.alias("aemr_cd_year"),
+    F.expr("lpad(period, 2, '0')").alias("aemr_cd_month"),
+    main1.rdate.alias("aemr_dt_rdate"),
+    main1.postdate.alias("aemr_dt_post_date"),
+    F.expr("SUBSTR(geography_id, 1, 3)").alias("aemr_cd_fips_country_code"),
+    F.expr("SUBSTR(geography_id, 4, 3)").alias("aemr_cd_fips_state_code"),
+    F.expr("SUBSTR(geography_id, 7, 3)").alias("aemr_cd_fips_county_code"),
+    F.expr("SUBSTR(geography_id, 10, 3)").alias("aemr_cd_fips_sub_county_code"),
+    F.expr("lpad(customer_type_id, 3, '0')").alias("aemr_cd_customer_type_code"),
+    F.expr("lpad(end_use_id, 3, '0')").alias("aemr_cd_end_use_code"),
+    F.lit(None).alias("aemr_cd_attribute"),
+    main1.count_id.alias("aemr_qt_retail_qty"),
+    F.lit('US AEM').alias("aemr_cd_source_system"),
+    F.lit(1).alias("aemr_id_batch_id"),
+    F.lit(None).alias("aemr_cd_vin"),
+    main1.chart_id.alias("aemr_cd_model_id")
+)
+
+# Inserting the transformed data into the destination table
+main1.write.format("jdbc").option("url", "jdbc:oracle:thin:@localhost:1521:xe").option("dbtable", "ddwh01_dw.td_aemr_retail_history").option("user", "username").option("password", "password").save()
+```
+
+Please replace `"jdbc:oracle:thin:@localhost:1521:xe"`, `"username"`, and `"password"` with your actual database connection details.
+
+This code will filter the data in `main1` DataFrame, transform it and then write it to the `td_aemr_retail_history` table in the `ddwh01_dw` schema.
+
+Please note that this code assumes that `main1` is a DataFrame and that the Spark session is correctly configured. If the DataFrame `main1` does not exist or its schema does not match the SQL query, the transformation will fail.

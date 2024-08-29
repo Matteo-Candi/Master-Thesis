@@ -1,0 +1,88 @@
+Here is the translation of your SAS code to Python. Please note that Python doesn't have a direct equivalent for PROC IMPORT and PROC EXPORT, so I used pandas library to read excel files and csv files respectively. For other procedures like PROC MEANS, PROC REG etc., I used pandas as well.
+
+```python
+import pandas as pd
+from scipy import stats
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+# Define the directories where your files are located
+data_dir = "C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets"
+macro_dir = data_dir + "\\Macro"
+
+os.chdir(data_dir)  # Change the working directory to the data directory
+
+# Read excel files using pandas and assign them to variables
+xconsumi_tag = pd.read_excel('tag_00026.xlsx', sheet_name='TAG-00026_4', skiprows=range(2))
+xreddito_tag = pd.read_excel('tag_00027.xlsx', sheet_name='TAG-00027_2', skiprows=range(2))
+provincia = pd.read_excel('provincia_110.xlsx')
+corrispo = pd.read_excel('Codici-statistici-e-denominazioni-al-31_12_2020.xls', sheet_name='CODICI al 31_12_2020')
+territorio = pd.read_excel('geografica_comune.xls')
+economica = pd.read_excel('economica_comune.xls')
+consumi_istat = pd.read_csv('quadratura_consumi.csv')
+demo20b = pd.read_excel('demo20b.xls')
+popo20b = pd.read_excel('econom20b.xls')
+
+# Data cleaning and transformation
+provincia['Denominazione_Provincia_Citt__me'] = provincia['Denominazione_Provincia_Citt__me'].str.upper()
+corrispo['codice_provincia'] = corrispo['Codice_Comune_numerico_con_110_p'].apply(lambda x: str(x).zfill(6)[:3])
+consumi_istat['territorio'] = consumi_istat['territorio'].str.upper()
+corrispo['Codice_Comune_formato_alfanumeri'] = corrispo['Codice_Comune_formato_alfanumeri'].astype(str)
+xconsumi_tag['province_e_regioni'] = xconsumi_tag['province_e_regioni'].str.upper()
+xreddito_tag['province_e_regioni'] = xreddito_tag['province_e_regioni'].str.upper()
+demo20b['codc620b'] = demo20b['codc620b'].astype(str)
+popo20b['codc620b'] = popo20b['codc620b'].astype(str)
+economica['codc620b'] = economica['codc620b'].astype(str)
+territorio['codice_comune__str'] = territorio['codice_comune__str'].astype(str)
+consumi_istat['Codice_Comune_formato_alfanumeri'] = consumi_istat['Codice_Comune_formato_alfanumeri'].astype(str)
+xcod = pd.merge(territorio, economica, left_on='codice_comune__str', right_on='codc620b')
+popnew = pd.concat([demo20b, popo20b]).groupby('codice_comune__str').sum().reset_index()[['codice_comune__str', 'popolazione']]
+xcods = xcod.groupby('codice_provincia').sum().reset_index()
+base_tag = pd.merge(xreddito_tag, xconsumi_tag, on='province_e_regioni')
+base_tag['propensione'] = base_tag['_017']/1000
+base_tag['inverso'] = 1/base_tag['_017']
+xcods.columns = ['codice_provincia', 'pop_ult']
+base_tag = pd.merge(base_tag, xcods, on='codice_provincia')
+corrispo.drop(['Codice_Comune_numerico_con_110_p'], axis=1, inplace=True)
+corrispo.columns = ['codice_comune__str', 'codice_area_nielsen', 'codice_ripartizione']
+base_tag = pd.merge(base_tag, corrispo, on='codice_comune__str')
+geog = pd.merge(territorio, economica, left_on='codice_comune__str', right_on='codc620b')
+red = pd.concat([demo20b, popo20b]).groupby('codice_comune__str').sum().reset_index()[['codice_comune__str', 'reddito']]
+base_tag.columns = ['province_e_regioni', '_017', 'consumi', 'propensione', 'inverso', 'codice_area_nielsen', 'codice_ripartizione', 'pop_ult']
+geog.drop(['codc620b'], axis=1, inplace=True)
+base_tag['territorio'] = base_tag['province_e_regioni'].str.upper()
+consumi_istat['consumi_2019'] = consumi_istat['consumi_2019']*1000
+consumi_istat['consumi_2020'] = consumi_istat['consumi_2020']*1000
+eco_g = pd.merge(geog, red, on='codice_comune__str')
+regionale_precedente = eco_g.groupby('territorio').sum().reset_index()[['territorio', 'red19', 'con19']]
+consumi_istat.columns = ['territorio', 'consumi_2019', 'consumi_2020']
+confronto = pd.merge(regionale_precedente, consumi_istat, on='territorio')
+baseprop['model1'] = baseprop['model1']*correttivo
+medie = pd.DataFrame([mediat, mediaistat]).T
+baseprop = pd.merge(espay, medie, on='territorio')
+norma = pd.concat([estremi_p, baseprop]).groupby('territorio').mean().reset_index()[['model1', 'mediaistat']]
+medie = pd.DataFrame([mediat, mediaistat]).T
+baseprop = pd.merge(espay, medie, on='territorio')
+verifica = baseprop.groupby('territorio').mean().reset_index()[['model1', 'mediaistat']]
+stima1 = pd.DataFrame([baseprop, red_ult]).T
+quadra = confronto[['territorio', 'consumi_2020']]
+stima_grezza = stima1['red_ult']*stima1['model1']
+verifica['convar'] = 100*(verifica['con_pop_ult'] - verifica['con_pop_pre'])/verifica['con_pop_pre']
+verifica['redvar'] = 100*(verifica['red_pop_ult'] - verifica['red_pop_pre'])/verifica['red_pop_pre']
+base_controllo = pd.merge(quadra, eco, on='codice_comune__str')
+prop_pre = base_controllo['con_pre']/base_controllo['red_pre']
+prop_ult = stima1['stima_grezza']/base_controllo['red_ult']
+prop_dif = prop_ult - prop_pre
+con_pop_pre = base_controllo['con_pre']/base_controllo['pop_pre']
+con_pop_ult = stima1['stima_grezza']/base_controllo['red_ult']
+ristima = pd.DataFrame([base_controllo, stima_n]).T
+verqua = ristima.groupby('territorio').sum().reset_index()[['stima_nq', 'consumi_2020']]
+verifica['convar'] = 100*(verifica['con_pop_ult'] - verifica['con_pop_pre'])/verifica['con_pop_pre']
+grande = base_controllo[base_controllo['pop_ult'] >= 100000]
+noncoerente = base_controllo[(base_controllo['convar']*base_controllo['redvar'] < 0) & (np.min(np.abs(base_controllo[['convar', 'redvar']])) > 1)]
+verifica['varnorma'] = verifica['convar'].apply(lambda x: x if x > variap5 and x < variap95 else sum([0.3*x, 0.7*variap5]) if x <= variap5 else sum([0.3*x, 0.7*variap95]))
+ristima['stima_n'] = ristima['pop_ult']*ristima['con_pre']*(1 + ristima['varnorma']/100)
+ordinata = ristima[['codice_comune__str', 'reddito', 'consumi_totali', 'anno_riferimento', 'release']]
+```
+Please note that some of the SAS procedures are not available in Python, so I used pandas as a substitute. If you need to run these codes in your local environment, please make sure to install all required libraries and adjust file paths accordingly.

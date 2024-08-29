@@ -1,0 +1,95 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+### Instruction:
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise.
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE);
+### Response:
+In PySpark, this operation can be performed using a combination of select, where, and merge functions. Here is the equivalent PySpark code:
+
+```python
+from pyspark.sql.functions import *
+
+# Create a view of the source data.
+df = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+df2 = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Define select statements to compare with the data in TM_VENL_MASTER_LINK.
+source_diff = df.alias('SA').select("CLIENT")\
+                .subtract(df2.select("VENL_CD_CLIENT"))\
+                .join(df, on="CLIENT")
+
+# Use select statements defined earlier to add new records to TM_VENL_MASTER_LINK.
+df2.join(source_diff, on=["VENL_CD_CLIENT","VENL_CD_PARTNER_GUID"], how='left_anti').select(
+  next_sequence_value("DDWH01_DW","SEQ_TM_VENL").alias("VENL_ID_LINK"),
+  "SA.CLIENT".alias("VENL_CD_CLIENT"), 
+  "SA.PARTNER_GUID".alias("VENL_CD_PARTNER_GUID"),
+  "SA.VENDOR".alias("VENL_CD_VENDOR"), 
+  "SA.CRUSER".alias("VENL_CD_USER"), 
+  "SA.CRDAT".alias("VENL_DT_DATE"),
+  "SA.CRTIM".alias("VENL_DT_TIME"), 
+  lit(None).alias("VENL_ID_BATCH_ID"),                              
+  lit('1900-01-01').alias("VENL_DT_START_VALIDITY"),          
+  lit('9999-12-31').alias("VENL_DT_END_VALIDITY"), 
+  current_date().alias("VENL_DT_INSERT"), 
+  lit(None).alias("VENL_ID_BATCH_LAST_MODIFY"),                        
+  current_date().alias("VENL_DT_LAST_MODIFY")
+).write.mode('append').save()
+
+# Use merge function to update existing records in TM_VENL_MASTER_LINK.
+df2.alias('TARGET').merge(source_diff.alias('SA'), 
+ ["VENL_CD_CLIENT","VENL_CD_PARTNER_GUID"],
+ "leftsemi"
+).select(
+ "VENL_CD_CLIENT", 
+ "VENL_CD_PARTNER_GUID", 
+ "SA.VENDOR".alias("VENL_CD_VENDOR"), 
+ "SA.CRUSER".alias("VENL_CD_USER"), 
+ "SA.CRDAT".alias("VENL_DT_DATE"),
+ "SA.CRTIM".alias("VENL_DT_TIME"),
+ current_date().alias("VENL_DT_LAST_MODIFY"),
+ lit(None).alias("VENL_ID_BATCH_LAST_MODIFY")
+).write.mode('overwrite').save()
+```
+
+This script breaks down the original SQL command into multiple operations: select, join, and merge, to achieve the same functionality as the original SQL command. Please note that PySpark does not directly support the merge operation that SQL does. Instead, you need to leverage the leftsemi operation which acts similarly to perform an update operation. You may need to adjust it based on your specific use case.
+
+Note: PySpark dataframe functions and operations on this dataframe are generally more efficient and perform better than SQL operations.
+
+Also, you would need to ensure that there are sequences created in spark session named "DDWH01_DW" with sequence name as "SEQ_TM_VENL" to generate the next value. In this translation, I assumed that a sequence named "SEQ_TM_VENL" in "DDWH01_DW" already exists. If such does not exists, you would need to create one in your runtime environment.
+
+You should also replace the placeholder names "SA", "TARGET" with appropriate dataframe names and handle "p_ELT_ID_BATCH", and "n_ELT_ID_JOB_LOG" as in your dataflow.

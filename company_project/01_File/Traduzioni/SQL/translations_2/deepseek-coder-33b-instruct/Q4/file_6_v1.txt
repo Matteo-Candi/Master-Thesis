@@ -1,0 +1,41 @@
+Here is the PySpark code that performs the same operation as your SQL query:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, to_date, year, expr, when, concat, lit, length, regexp_replace, trim, coalesce, ltrim, rtrim, instr, substring
+from pyspark.sql.window import Window
+
+# Initialize SparkSession
+spark = SparkSession.builder.getOrCreate()
+
+df = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+plbr = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+ekko = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+trge = spark.table("ddwh01_dw.TD_TRGE_TRANSCODING_GENERAL")
+
+# Join tables
+df = df.join(plbr, (df["EKPO_CD_PLANT"] == plbr["PLBR_CD_PLANT"]) & plbr["PLBR_DS_PLANT_SEGMENT"].isin(["AG", "CE", "-1", "AM", "AS"]) & ~df["EKPO_CD_PLANT"].isin(["FA01", "FB01", "IA01", "00%"]))
+df = df.join(ekko, df["EKPO_CD_PO_NBR"] == ekko["EKKO_CD_PURCH_DOC_NBR"])
+trge = trge.filter((col("TRGE_CD_DEFAULT_NAME") == "WERKS") & col("TRGE_CD_LOGICAL_SYSTEM").isin(["ERP", "URP", "NH3", "DWH"]))
+df = df.join(trge, df["EKPO_CD_PLANT"] == trge["TRGE_CD_SOURCE_DATA_1"], how='left')
+
+# Define transformations on columns
+df = df.withColumn("EKPO_NR_PURCH_DOC_YEAR", year(to_date(ekko["EKKO_DT_PURCH_DOC_DATE"])))
+df = df.withColumn("ODAG_PARTNUMBER", df["EKPO_CD_MATERIAL_NBR"])
+df = df.withColumn("ODAG_PROGRAM", df["EKPO_CD_PROGRAM_ID"])
+df = df.withColumn("EKPO_DT_RETENTION_YEAR", year(coalesce(ekko["EKKO_DT_CONTRACT_END_DATE"], ekko["EKKO_DT_RECORD_CREATED_ON"])))
+df = df.withColumn("ODAG_PODOCUMENT", concat(col("EKPO_CD_PO_NBR"), lit("-"), col("EKPO_NR_ITEM_NBR_PO")))
+df = df.withColumn("EKPO_NR_NET_WEIGHT", df["EKPO_NR_NET_WEIGHT"] / 1000)
+df = df.withColumn("EKPO_NR_GROSS_WEIGHT", df["EKPO_NR_GROSS_WEIGHT"] / 1000)
+df = df.withColumn("EKPO_CD_PLANT_R3_STC", coalesce(trge["TRGE_CD_DESTINATION_DATA"], df["EKPO_CD_PLANT"]))
+df = df.withColumn("EKPO_CD_PO_NBR10", substring('0000000000' + df["EKPO_CD_PO_NBR"], -10))
+df = df.withColumn("EKPO_NR_ITEM_NBR_PO5", substring('00000' + df["EKPO_NR_ITEM_NBR_PO"], -5))
+df = df.withColumn("EKPO_CD_MATERIAL_NBR_TRIM", regexp_replace(ltrim(rtrim(regexp_replace(col("EKPO_CD_MATERIAL_NBR"), "0", " "), " "), 0))
+df = df.withColumn("EKPO_CD_PURCH_DOC_NBR_R3_GPP10", substring('0000000000' + when(col("EKPO_CD_PURCH_DOC_NBR_R3_GPP") == "-1", col("EKPO_CD_PO_NBR")).otherwise(col("EKPO_CD_PURCH_DOC_NBR_R3_GPP")), -10))
+df = df.withColumn("EKPO_KEY_STC", concat(when((col("EKPO_CD_PLANT") == "CX01"), regexp_replace(ltrim(rtrim(regexp_replace(concat(col("EKPO_CD_WPS_PREFIX"), col("EKPO_CD_MATERIAL_MFG")), "0", " "), " "), 0))).otherwise(when((col("EKPO_CD_PLANT").isin(["AU01", "LP01", "LP02", "AU05"])), substring(regexp_replace(ltrim(rtrim(regexp_replace(concat('SO', col("EKPO_CD_MATERIAL_MFG")), "0", " "), " "), 0), 0, instr(regexp_replace(ltrim(rtrim(regexp_replace(concat('SO', col("EKPO_CD_MATERIAL_MFG")), "0", " "), " "), 0), '+SC')-1)).otherwise(substring(regexp_replace(ltrim(rtrim(regexp_replace(col("EKPO_CD_MATERIAL_MFG"), "0", " "), " "), 0), 0, instr(regexp_replace(ltrim(rtrim(regexp_replace(col("EKPO_CD_MATERIAL_MFG"), "0", " "), " "), 0), '+SC')-1)))).otherwise(substring(regexp_replace(ltrim(rtrim(regexp_replace(col("EKPO_CD_MATERIAL_MFG"), "0", " "), " "), 0), 0, instr(regexp_replace(ltrim(rtrim(regexp_replace(col("EKPO_CD_MATERIAL_MFG"), "0", " "), " "), 0), '+SC')-1)))), lit('|'), coalesce(trge["TRGE_CD_DESTINATION_DATA"], df["EKPO_CD_PLANT"])))
+
+# Create view
+df.createOrReplaceTempView("VW_EKPO_PURCH_DOC_ITEM_AGCE")
+```
+
+Please note that the code above assumes that all tables and columns used in your SQL query exist in PySpark dataframes, and that they have the same names as in your SQL query. If this is not the case, you will need to adjust the code accordingly. Also, make sure to replace `"ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP"` etc with actual table paths and names that are accessible in your PySpark environment.

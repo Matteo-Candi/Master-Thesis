@@ -1,0 +1,120 @@
+system
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise.
+user
+Translate the following code from SQL to PySpark:
+INSERT INTO ddwh01_dw.td_aemr_retail_history (aemr_id_retail_history, aemr_cd_scenario, aemr_cd_rep_company_code, aemr_cd_program_code, aemr_cd_prodruct_code, aemr_cd_model_chart, aemr_cd_rep_frequency, aemr_cd_activity_code, aemr_cd_size_code, aemr_cd_upper_size, aemr_cd_lower_size, aemr_cd_year, aemr_cd_month, aemr_dt_rdate, aemr_dt_post_date, aemr_cd_fips_country_code, aemr_cd_fips_state_code, aemr_cd_fips_county_code, aemr_cd_fips_sub_county_code, aemr_cd_customer_type_code, aemr_cd_end_use_code, aemr_cd_attribute, aemr_qt_retail_qty, aemr_cd_source_system, aemr_id_batch_id, aemr_cd_vin, aemr_cd_model_id)
+SELECT ddwh01_dw.seq_aemr_td00001.nextval,
+       CASE
+           WHEN TO_CHAR (main1.postdate,
+                         'YYYYMM') = TO_CHAR (main1.rdate,
+                                              'YYYYMM') THEN 'COMPANY DATA'
+           ELSE 'COMPANY REVISION'
+       END AS aemr_cd_scenario,
+       company_id AS aemr_cd_rep_company_code,
+       SUBSTR (product_id,
+               1,
+               2) AS aemr_cd_program_code,
+              SUBSTR (product_id,
+                      3,
+                      2) AS aemr_cd_prodruct_code,
+                     chart_id AS aemr_cd_model_chart,
+                     frequency_id AS aemr_cd_rep_frequency,
+                     lpad (activity_id, 3, 0) AS aemr_cd_activity_code,
+                     size_id AS aemr_cd_size_code,
+                     NULL AS aemr_cd_upper_size,
+                     NULL AS aemr_cd_lower_size,
+                     main1.cd_year AS aemr_cd_year,
+                     lpad (period, 2, 0) AS aemr_cd_month,
+                     rdate AS aemr_dt_rdate,
+                     main1.postdate AS aemr_dt_post_date,
+                     SUBSTR (geography_id,
+                             1,
+                             3) AS aemr_cd_fips_country_code,
+                            SUBSTR (geography_id,
+                                    4,
+                                    3) AS aemr_cd_fips_state_code,
+                                   SUBSTR (geography_id,
+                                           7,
+                                           3) AS aemr_cd_fips_county_code,
+                                          SUBSTR (geography_id,
+                                                  10,
+                                                  3) AS aemr_cd_fips_sub_county_code,
+                                                 lpad (customer_type_id, 3, '0') AS aemr_cd_customer_type_code,
+                                                 lpad (end_use_id, 3, '0') AS aemr_cd_end_use_code,
+                                                 NULL AS aemr_cd_attribute,
+                                                 count_id AS aemr_qt_retail_qty,
+                                                 'US AEM' AS aemr_cd_source_system,
+                                                 1 AS aemr_id_batch_id,
+                                                 NULL AS aemr_cd_vin,
+                                                 chart_id AS aemr_cd_model_id
+FROM ddwh00_sa.ts_aemi0004_us_aem main1
+WHERE company_id IN ('JIC',
+                     'FOR')
+  AND frequency_id = 'M'
+  AND CASE
+          WHEN product_id IN ('CEB0',
+                              'CEE2',
+                              'CEE3',
+                              'CEF0',
+                              'CEG0') THEN '010'
+          ELSE '011'
+      END = lpad (activity_id, 3, '0')
+  AND attribute_id = '99' ;
+assistant
+Here is the equivalent PySpark code:
+
+```python
+from pyspark.sql.functions import col, lpad, when, concat
+
+# Assuming that the dataframes are already created and loaded in spark
+# df_main1 is the dataframe from ts_aemi0004_us_aem table
+# seq_aemr_td00001 is a sequence generator function
+
+df_main1 = spark.table('ddwh00_sa.ts_aemi0004_us_aem')
+
+df_main1 = df_main1.filter((df_main1.company_id.isin(['JIC', 'FOR'])) & 
+                           (df_main1.frequency_id == 'M') & 
+                           (lpad(df_main1.activity_id, 3, '0') == 
+                            lpad(df_main1.product_id.substr(3, 2), 3, '0')) & 
+                           (df_main1.attribute_id == '99'))
+
+df_main1 = df_main1.withColumn('aemr_cd_scenario', 
+                              when(concat(df_main1.postdate.cast('string'), 
+                                        df_main1.rdate.cast('string')) == 
+                                   concat(df_main1.postdate.cast('string'), 
+                                        df_main1.rdate.cast('string')), 
+                                        'COMPANY DATA').otherwise('COMPANY REVISION'))
+
+df_main1 = df_main1.withColumn('aemr_cd_rep_company_code', df_main1.company_id)
+df_main1 = df_main1.withColumn('aemr_cd_program_code', df_main1.product_id.substr(1, 2))
+df_main1 = df_main1.withColumn('aemr_cd_prodruct_code', df_main1.product_id.substr(3, 2))
+df_main1 = df_main1.withColumn('aemr_cd_model_chart', df_main1.chart_id)
+df_main1 = df_main1.withColumn('aemr_cd_rep_frequency', df_main1.frequency_id)
+df_main1 = df_main1.withColumn('aemr_cd_activity_code', lpad(df_main1.activity_id, 3, '0'))
+df_main1 = df_main1.withColumn('aemr_cd_size_code', df_main1.size_id)
+df_main1 = df_main1.withColumn('aemr_cd_upper_size', col('NULL'))
+df_main1 = df_main1.withColumn('aemr_cd_lower_size', col('NULL'))
+df_main1 = df_main1.withColumn('aemr_cd_year', df_main1.cd_year)
+df_main1 = df_main1.withColumn('aemr_cd_month', lpad(df_main1.period, 2, '0'))
+df_main1 = df_main1.withColumn('aemr_dt_rdate', df_main1.rdate)
+df_main1 = df_main1.withColumn('aemr_dt_post_date', df_main1.postdate)
+df_main1 = df_main1.withColumn('aemr_cd_fips_country_code', df_main1.geography_id.substr(1, 3))
+df_main1 = df_main1.withColumn('aemr_cd_fips_state_code', df_main1.geography_id.substr(4, 3))
+df_main1 = df_main1.withColumn('aemr_cd_fips_county_code', df_main1.geography_id.substr(7, 3))
+df_main1 = df_main1.withColumn('aemr_cd_fips_sub_county_code', df_main1.geography_id.substr(10, 3))
+df_main1 = df_main1.withColumn('aemr_cd_customer_type_code', lpad(df_main1.customer_type_id, 3, '0'))
+df_main1 = df_main1.withColumn('aemr_cd_end_use_code', lpad(df_main1.end_use_id, 3, '0'))
+df_main1 = df_main1.withColumn('aemr_cd_attribute', col('NULL'))
+df_main1 = df_main1.withColumn('aemr_qt_retail_qty', df_main1.count_id)
+df_main1 = df_main1.withColumn('aemr_cd_source_system', 'US AEM')
+df_main1 = df_main1.withColumn('aemr_id_batch_id', 1)
+df_main1 = df_main1.withColumn('aemr_cd_vin', col('NULL'))
+df_main1 = df_main1.withColumn('aemr_cd_model_id', df_main1.chart_id)
+
+df_main1 = df_main1.withColumn('aemr_id_retail_history', seq_aemr_td00001.nextval)
+
+# Now df_main1 is ready to be inserted into ddwh01_dw.td_aemr_retail_history
+df_main1.write.insertInto('ddwh01_dw.td_aemr_retail_history')
+```
+
+Please note that the above code assumes that the sequence generator function `seq_aemr_td00001.nextval` is already defined in the PySpark environment. Also, the column names and table names are assumed to be the same as the ones in the SQL query.

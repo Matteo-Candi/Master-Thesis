@@ -1,0 +1,31 @@
+The following is the translated Python code for the SAS code you provided. Please note that Python has a different syntax compared to SAS, which can result in some differences in logic and functionality. 
+
+```python
+# Import necessary libraries
+import pandas as pd
+from pathlib import Path
+
+# Define file paths
+ter_path = Path(r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets")
+sez_path = Path(r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets")
+ter_out_path = Path(r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets")
+sez_out_path = Path(r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets")
+appo_path = Path(r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets")
+
+# Read the data
+ter = pd.read_csv(ter_path / "etapop20b.csv")
+sez = pd.read_csv(sez_path / "etapop20b.csv")
+geografica_comune = pd.read_csv(ter_out_path / "geografica_comune.csv")
+nati_eta_madre_provincia_istat = pd.read_csv(appo_path / "nati_eta_madre_provincia_istat.csv")
+
+# Transform and merge data
+xclasse = ter.assign(time=2019, eta1_a=ter['eta'].apply(lambda x: 'Y_UN17' if 15 <= x <= 17 else ('Y_GE50' if 50<=x<=54 else (str(int(x)) if 18<=x<=49 else None))), femmine=ter['tot_fem']).dropna().rename(columns={'codc620b': 'codice_comune__str', 'tot_fem':'femmine'})[['codice_comune__str', 'eta1_a', 'time', 'femmine']]
+xclasse.groupby('eta1_a').agg({'eta': ['min','max']}).reset_index().rename(columns={'<lambda>': 'f'})
+xgeog = geografica_comune[['codice_comune__str', 'codice_provincia']]
+nati = nati_eta_madre_provincia_istat.rename(columns={"valore": "nati"})
+merged = pd.merge(xgeog, xclasse, on='codice_comune__str')
+provinciale_donne = merged.groupby(['codice_provincia', 'eta1_a'])['femmine'].sum().reset_index()
+nati_donne = pd.merge(nati, provinciale_donne[['codice_provincia', 'eta1_a', 'donne_classe_eta']], on=['codice_provincia', 'eta1_a'])
+nati_donne['nati_1000_donne_classe_eta'] = (nati_donne['nati'] / nati_donne['femmine']) * 1000
+```
+Please replace the csv file paths with your actual data source paths. Also, please be aware that this Python code only achieves functionality equivalent to the provided SAS code by using pandas DataFrame operations. It's not an exact translation as pandas doesn't have a tabulate function and uses a different method for merging datasets.

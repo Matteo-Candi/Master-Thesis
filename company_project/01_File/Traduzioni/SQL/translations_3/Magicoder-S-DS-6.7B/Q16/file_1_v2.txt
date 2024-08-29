@@ -1,0 +1,75 @@
+You are an expert in translating code from SQL to PySpark; translate the given code at your best even if there are problems; do not return any message outside the code and make it as readable as possible breaking it in smaller parts; minimize the code complexity and volume; ensure to not make any syntax error and close all parenthesis; define all variables and import all libraries used; ensure the user can copy and run the code without modifications; translate from SQL to PySpark every part of the input code reproducing the same operations; do not use SQL syntax in the PySpark code and do not use spark.sql(); make PySpark code more efficient than the SQL one; proper column operations and the correct syntax for casting and aliasing. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE); 
+@@Response
+PySpark does not support MERGE INTO clause or using SELECT statement along with an ALTER clause like SQL. However, here is how this SQL query could be translated to the PySpark DataFrame manipulations:
+
+```python
+# import necessary libraries
+from pyspark.sql.functions import *
+from datetime import datetime
+
+# reading data into dataframes
+DW = spark.table('ddwh01_dw.TM_VENL_MASTER_LINK')
+SA = spark.table('ddwh00_sa.TS_VENL0001_WW_GPP')
+
+# get the dataframe with rows in SA but not in DW
+new_records = SA.subtract(DW)
+
+# add/update into master link table
+DW = DW.alias('DW').join(new_records.alias('SA'), 'VENL_CD_CLIENT = SA.VENL_CD_CLIENT AND VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID', 'left'). \
+    when(col('SA.VENL_CD_CLIENT').isNotNull(), DW.withColumn("VENL_CD_VENDOR", col('SA.VENL_CD_VENDOR')) \
+    .withColumn("VENL_CD_USER", col('SA.VENL_CD_USER')) \
+    .withColumn("VENL_DT_DATE", col('SA.VENL_DT_DATE')) \
+    .withColumn("VENL_DT_TIME", col('SA.VENL_DT_TIME')) \
+    .withColumn("VENL_DT_LAST_MODIFY", current_date()) \
+    .withColumn("VENL_ID_BATCH_LAST_MODIFY", lit(None).cast('int'))
+    ).otherwise(new_records.withColumn("VENL_ID_LINK", seq.nextValue()) \
+    .withColumn("VENL_DT_START_VALIDITY", lit(datetime(1900, 1, 1))) \
+    .withColumn("VENL_DT_END_VALIDITY", lit(datetime(9999, 12, 31))) \
+    .withColumn("VENL_DT_INSERT", current_date()) \
+    .withColumn("VENL_ID_BATCH_LAST_MODIFY", col('VENL_ID_BATCH_ID')) \
+    .withColumn("VENL_DT_LAST_MODIFY", current_date()))
+
+DW.write.mode("append").insertInto('ddwh01_dw.TM_VENL_MASTER_LINK')
+
+```
+This code works in two steps. First, it subtracts the rows in SA which do not exist in DW, and assigns them to new_records for further use. Then it checks for each row: if it's from SA (new record), it adds/updates data into DW, if it's from DW (exists in DW but not in SA), it leaves data as is.
+Note: Please adjust the code according to your table schemas in the environment where the code runs. This code is a translation of the given SQL code only, and SQL to PySpark translations can be different based on the specificities of the SQL function and its usage which are not supported in PySpark.

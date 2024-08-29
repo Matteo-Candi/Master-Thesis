@@ -1,0 +1,126 @@
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise. 
+
+@@Instruction 
+Translate the following code from SAS to Python:
+libname ter "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname ter_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+libname sez_out "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+libname appo "C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets";
+
+options mergenoby = warn;
+
+data xclasse;
+	set ter.etapop20b;
+	time = 2019;
+	length eta1_a $ 6;
+	if 15 <= eta <= 17
+		then eta1_a = "Y_UN17";
+	else if 18 <= eta <= 49
+		then eta1_a = "Y"||trim(left(eta));
+	else if 50 <= eta <= 54
+		then eta1_a = "Y_GE50";
+	else delete;
+	keep codc620b eta1_a eta time tot_fem;
+	rename codc620b = codice_comune__str
+		   tot_fem = femmine;
+run;
+proc tabulate data = xclasse;
+	class eta1_a;
+	var eta;
+	table eta1_a, eta*(min max) * f = 6. /nocellmerge;
+run;
+proc sort data = xclasse;
+	by codice_comune__str;
+run;
+data xgeog;
+	set ter_out.geografica_comune;
+	keep codice_comune__str codice_provincia;
+run;
+proc sort data = xgeog;
+	by codice_comune__str;
+run;
+data xclageo;
+	merge xgeog xclasse;
+	by codice_comune__str;
+run;
+proc means data = xclageo noprint;
+	class codice_provincia eta1_a;
+	types codice_provincia * eta1_a;
+	id time;
+	output out = provinciale_donne (drop = _type_ _freq_)
+		sum(femmine) = donne_classe_eta;
+run;
+
+data nati;
+	set appo.nati_eta_madre_provincia_istat;
+	rename valore = nati;
+run;
+proc sort data = nati;
+	by codice_provincia eta1_a;
+run;
+proc sort data = provinciale_donne;
+	by codice_provincia eta1_a;
+run;
+data nati_donne;
+	merge nati provinciale_donne (drop = time);
+	by codice_provincia eta1_a;
+run; 
+
+data nati_donne_rapp;
+	set nati_donne;
+	nati_1000_donne_classe_eta = 1000 * nati / donne_classe_eta;
+run;
+
+options nolabel;
+
+
+ 
+@@Response
+Below is the Python equivalent for the given SAS code, please note that Python and SAS handle various things differently and this translation might not give exactly the same output because of that:
+
+```python
+import pandas as pd
+
+# Read data from SAS datasets
+ter = pd.read_sas('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/etapop20b.sas7bdat')
+sez = pd.read_sas('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/etapop20b.sas7bdat')
+
+ter_out = pd.read_sas('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_comune.sas7bdat')
+sez_out = pd.read_sas('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_comune.sas7bdat')
+
+appo = pd.read_sas('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/nati_eta_madre_provincia_istat.sas7bdat')
+
+# You can now work with DataFrames. The equivalent of a data step in SAS is creating a DataFrame.
+ter['time'] = 2019
+ter['eta1_a'] = ter['eta'].apply(lambda x: 'Y_UN17' if 15 <= x <= 17 else 'Y'+str(x) if 18 <= x <= 49 else 'Y_GE50' if 50 <= x <= 54 else None)
+ter = ter[['codc620b', 'eta1_a', 'eta', 'tot_fem']].rename(columns={'codc620b': 'codice_comune__str', 'tot_fem': 'femmine'})
+
+ter.dropna(subset = ['eta1_a'], inplace = True) # equivalent of delete in SAS when the condition is not met
+
+ter = pd.pivot_table(ter, index = 'codice_comune__str', columns = 'eta1_a', values = 'eta') 
+
+geografica_comune = ter_out.groupby('codice_comune__str').first().reset_index() # equivalent of proc sort 
+
+xclageo = pd.merge(ter, geografica_comune, on = 'codice_comune__str') # equivalent of data step of merge data sets in SAS
+
+provinciale_donne = pd.pivot_table(xclageo, index='codice_provincia', columns='eta1_a', values='femmine').reset_index()
+
+nati = pd.pivot_table(appo, index=['codice_provincia', 'eta1_a'], values='valore').reset_index()
+nati.columns = ['codice_provincia', 'eta1_a', 'nati']
+
+nati_donne = pd.merge(nati, provinciale_donne, on = ['codice_provincia', 'eta1_a'])
+
+nati_donne['nati_1000_donne_classe_eta'] = nati_donne['nati'] / nati_donne['donne_classe_eta'] * 1000
+
+# Drop labels to avoid displaying them.
+# This is equivalent to the options nolabel in SAS
+with pd.option_context('display.max_rows', None, 'display.max_columns', None): 
+    print(nati_donne)
+```
+
+Please note that you need to have the pandas, pysas7bdat, and sas7bdat libraries installed in your Python environment for this code to run. If not you can install them using command `pip install pandas pysas7bdat sas7bdat`. Also, please ensure that your SAS datasets are in a .sas7bdat (.sas7bdat) format. 
+
+And finally, this python script will print the final dataframe `nati_donne` but not save it as a new file since it's not specified in the original SAS code.

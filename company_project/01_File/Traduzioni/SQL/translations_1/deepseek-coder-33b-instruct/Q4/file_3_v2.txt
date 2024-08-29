@@ -1,0 +1,57 @@
+Here is the equivalent PySpark code for your SQL query. Note that you need to replace 'ddwh01_dw' and 'ddwh02_sm' with the actual path of your data files in your Hadoop Distributed File System (HDFS) or Amazon S3 bucket, etc.
+
+```python
+# Import necessary PySpark libraries
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, year, to_char, length, when, expr, coalesce
+from pyspark.sql.types import IntegerType
+
+# Create a Spark session
+spark = SparkSession.builder.appName('sql_to_pyspark').getOrCreate()
+
+# Load the tables from HDFS or S3 bucket
+ekko = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+ekpo = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+plbr = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+supm = spark.table("ddwh01_dw.TM_SUPM_SUPPLIER_GPP")
+
+# Perform the SQL operations using PySpark transformations and actions
+ekko \
+    .join(ekpo, expr("EKKO_CD_PURCH_DOC_NBR = EKPO_CD_PO_NBR")) \
+    .join(plbr, expr("EKPO_CD_PLANT = PLBR_CD_PLANT AND PLBR_DS_PLANT_SEGMENT IN ('AG', 'CE', '-1', 'AM', 'AS')") & ~expr("EKPO_CD_PLANT in ('FA01', 'FB01', 'IA01') or EKPO_CD_PLANT like '00%'")) \
+    .join(supm, "EKKO_CD_VENDOR_ACCOUNT_NBR = SUPM_CD_ACCOUNT_NBR", "left") \
+    .selectExpr("EKKO_DT_LAST_MODIFY",
+               "EKKO_ID_PURCH_DOC_HEADER_GPP",
+               "EKKO_CD_PURCH_DOC_NBR",
+               "EKKO_NR_TOT_VAL_OF_RELEASE",
+               "EKKO_DT_PURCH_DOC_DATE",
+               "EKKO_DT_RECORD_CREATED_ON",
+               "EKKO_CD_PURCH_GRP",
+               "EKKO_FL_TAKE_PURCH_GRP",
+               "EKKO_CD_VENDOR_ACCOUNT_NBR",
+               "EKKO_CD_DOC_PROCESS_STATE",
+               "EKKO_CD_PURCH_DOC_CATEGORY",
+               "EKKO_CD_PURCH_DOCTYPE",
+               "EKKO_DT_CONTRACT_START_DATE",
+               "EKKO_NR_CHG_TIMESTAMP",
+               "EKKO_DT_CONTRACT_END_DATE",
+               "EKKO_CD_PURCH_DOC_STATUS",
+               "EKKO_NR_CURRENCY_KEY",
+               "EKKO_CD_PURCH_AGREEMENT_NBR",
+               "EKKO_CD_OBJ_CREATED_BY",
+               "EKKO_CD_INCOTERMS_PART_1",
+               "EKKO_CD_INCOTERMS_PART_2",
+               "EKKO_CD_TERMS_OF_PAYMENT_1",
+               "EKKO_CD_PURCH_ORG_1",
+               "EKKO_CD_COMPANY_CODE",
+               "EKKO_CD_REMARK_1",
+               "year(EKKO_DT_PURCH_DOC_DATE) as EKKO_NR_PURCH_DOC_YEAR",
+               "' ' AS PLBR_DS_PLANT_SEGMENT",
+               "EKKO_CD_PURCH_DOCTYPE AS ODAG_PODOCUMENTTYPE",
+               "EKKO_CD_VENDOR_ACCOUNT_NBR AS ODAG_SUPPLIERCODE",
+               "year(coalesce(EKKO_DT_CONTRACT_END_DATE, EKKO_DT_RECORD_CREATED_ON)) as EKKO_DT_RETENTION_YEAR",
+               "year(EKKO_DT_PURCH_DOC_DATE) as ODAG_PODOCUMENTYEAR",
+               "substr('0000000000' || EKKO_CD_PURCH_DOC_NBR, -10) as EKKO_CD_PURCH_DOC_NBR10",
+               "case when length(SUPM_CD_COMP_TRADING_PARTNER) > 1 then 'Intercompany' else 'Third Party' end as EKKO_CD_SUPPLIER_TYPE") \
+    .write.saveAsTable("DDWH02_SM.VW_EKKO_PURCH_DOC_HEADER_AGCE", format="parquet", mode="overwrite")
+```

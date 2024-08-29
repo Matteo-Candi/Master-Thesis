@@ -1,0 +1,46 @@
+
+The PySpark code equivalent to the SQL query would be as follows:
+
+```python
+from pyspark.sql import SparkSession
+
+# Initialize SparkSession
+spark = SparkSession.builder \
+    .appName('Translating_SQL_to_PySpark') \
+    .getOrCreate()
+
+# Load the data from TT_EKKO_PURCH_DOC_HEADER_GPP table
+df1 = spark.table("DDWH01_DW.TT_EKKO_PURCH_DOC_HEADER_GPP")
+
+# Filter the records based on conditions and create a new dataframe with required columns
+df2 = df1.filter((df1['PLBR_DS_PLANT_SEGMENT'] == 'AG') | (df1['PLBR_DS_PLANT_SEGMENT'] == 'CE') | 
+                     (df1['PLBR_DS_PLANT_SEGMENT'] == '-1') | (df1['PLBR_DS_PLANT_SEGMENT'] == 'AM') | 
+                     (df1['PLBR_DS_PLANT_SEGMENT'] == 'AS')) \
+             .filter((df1['EKPO_CD_PLANT'].notlike('FA01%')) & (df1['EKPO_CD_PLANT'].notlike('FB01%')) & 
+                     (df1['EKPO_CD_PLANT'].notlike('IA01%'))) \
+             .filter(df1['EKPO_CD_PLANT'].notlike('00%')) \
+             .selectExpr("EKKO_DT_LAST_MODIFY", "EKKO_ID_PURCH_DOC_HEADER_GPP", 
+                              "EKKO_CD_PURCH_DOC_NBR", "EKKO_NR_TOT_VAL_OF_RELEASE", 
+                              "EKKO_DT_PURCH_DOC_DATE", "EKKO_DT_RECORD_CREATED_ON", 
+                              "EKKO_CD_PURCH_GRP", "EKKO_FL_TAKE_PURCH_GRP", 
+                              "EKKO_CD_VENDOR_ACCOUNT_NBR", "EKKO_CD_DOC_PROCESS_STATE", 
+                              "EKKO_CD_PURCH_DOC_CATEGORY", "EKKO_CD_PURCH_DOCTYPE", 
+                              "EKKO_DT_CONTRACT_START_DATE", "EKKO_NR_CHG_TIMESTAMP", 
+                              "EKKO_DT_CONTRACT_END_DATE", "EKKO_CD_PURCH_DOC_STATUS", 
+                              "EKKO_NR_CURRENCY_KEY", "EKKO_CD_PURCH_AGREEMENT_NBR", 
+                              "EKKO_CD_OBJ_CREATED_BY", "EKKO_CD_INCOTERMS_PART_1", 
+                              "EKKO_CD_INCOTERMS_PART_2", "EKKO_CD_TERMS_OF_PAYMENT_1", 
+                              "EKKO_CD_PURCH_ORG_1", "EKKO_CD_COMPANY_CODE", 
+                              "EKKO_CD_REMARK_1", "to_number(date_format(EKKO_DT_PURCH_DOC_DATE, 'yyyy')) as EKKO_NR_PURCH_DOC_YEAR", 
+                              "' ' AS PLBR_DS_PLANT_SEGMENT", "EKKO_CD_PURCH_DOCTYPE as ODAG_PODOCUMENTTYPE", 
+                              "EKKO_CD_VENDOR_ACCOUNT_NBR as ODAG_SUPPLIERCODE", 
+                              "date_format(coalesce(EKKO_DT_CONTRACT_END_DATE, EKKO_DT_RECORD_CREATED_ON), 'yyyy') as EKKO_DT_RETENTION_YEAR", 
+                              "date_format(EKKO_DT_PURCH_DOC_DATE, 'yyyy') as ODAG_PODOCUMENTYEAR", 
+                              "lpad('000000000' || EKKO_CD_PURCH_DOC_NBR, -10) as EKKO_CD_PURCH_DOC_NBR10") \
+             .join(df2, df1['EKPO_CD_PO_NBR'] == df2['EKPO_CD_PO_NBR'], 'left') \
+             .selectExpr("*", "CASE WHEN length(SUPM_CD_COMP_TRADING_PARTNER) > 1 THEN 'Intercompany' ELSE 'Third Party' END as EKKO_CD_SUPPLIER_TYPE")
+
+# Create a view with the required columns and save it to DDWH02_SM table
+df2.createOrReplaceTempView("VW_EKKO_PURCH_DOC_HEADER_AGCE")
+spark.sql("CREATE OR REPLACE FORCE EDITIONABLE VIEW DDWH02_SM.VW_EKKO_PURCH_DOC_HEADER_AGCE AS SELECT * FROM VW_EKKO_PURCH_DOC_HEADER_AGCE")
+```

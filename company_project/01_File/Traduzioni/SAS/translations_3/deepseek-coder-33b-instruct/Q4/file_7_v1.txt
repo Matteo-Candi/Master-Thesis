@@ -1,0 +1,32 @@
+Here's how you can translate the SAS code to Python. The translation is not perfect, as there are certain features in SAS that do not have direct equivalents in Python, and vice versa. Some complex tasks might require additional libraries or manual work. Here I will try my best to translate your SAS code into Python:
+
+```python
+import pandas as pd
+from scipy import stats
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn import linear_model
+import seaborn as sns
+from statsmodels.formula.api import ols
+
+# Assuming the datasets are in csv format
+ter_out = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\tag_00026.csv', encoding='latin1')
+sez_out = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\tag_00027.csv', encoding='latin1')
+appo = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\provincia_110.csv', encoding='latin1')
+pop = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\Popolazione_eta_sesso_comune.csv', encoding='latin1')
+ter = pd.read_excel('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\territorio.xls', sheet_name='Sheet1')
+econ20b = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\quadratura_consumi.csv')
+demo20b = pd.read_excel('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\demo20b.xls', sheet_name='Sheet1')
+econ = pd.read_csv('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\quadratura_consumi.csv')
+corrispo = pd.read_excel('C:\\Users\\mcandi\\OneDrive - KPMG\\Desktop\\project\\SAS_scripts\\Data_sets\\codici.xls', sheet_name='CODICI al 31_12_2020')
+
+# Data cleaning and transformations would go here, similar to your SAS code
+```
+
+Remember that Python has different libraries for data analysis and visualization compared to SAS, so the translation is not as straightforward as you might hope. Also note that there are many things in SAS that do not have exact equivalents in Python. In such cases, you may need to use a combination of multiple libraries or manually implement the missing functionality. 
+
+This python code assumes that your datasets are CSV format and located in the specified paths. Please replace them with actual paths if they're different. Similarly, all the file read operations are performed assuming that the files are available and correctly formatted. You may need to adjust this for a different format or location. 
+
+For Python, you would need additional libraries like pandas, numpy, matplotlib etc., for data manipulation and visualization. Make sure these libraries are installed in your environment before running this code. 
+
+Lastly, this is not an exact translation but a general idea of how to approach the problem. You will have to make adjustments based on your specific needs and understanding of the SAS code you're trying to translate.

@@ -1,0 +1,143 @@
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise. 
+
+@@Instruction 
+Translate the following code from SAS to Python:
+%macro arrotondainterogruppo(ingresso,		
+							 variab,		
+							 datototeff,	
+							 effettiva,		
+							 vargru,		
+							 uscita);		
+
+
+
+
+%put;
+%put %str(WARNING- =================================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- intermedio somma segnali);
+%put %str(WARNING- identificano data set ausiliari della macro arrotondainterogruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni             );
+%put %str(WARNING- =================================================================);
+%put;
+
+
+data intermedio;
+	set &ingresso;
+run;
+proc sort data = intermedio;
+	by &vargru;
+run;
+proc means data = intermedio noprint;
+	by &vargru;
+	output out = somma (keep = &vargru vartot)
+		   sum(&variab) = vartot;
+run;
+proc sort data = &datototeff;
+	by &vargru;
+run;
+data somma;
+	merge somma (in = inso) &datototeff (in = inda);
+	by &vargru;
+	if inso and inda;
+	keep &vargru vartot &effettiva;
+run;
+
+
+data somma;
+	set somma;
+	diff = vartot - &effettiva;
+	keep &vargru diff;
+run;
+
+
+data intermedio;
+	merge intermedio somma (in = presente);
+	by &vargru;
+	if presente;
+run; 
+
+
+proc sort data = intermedio;
+	by &vargru descending &variab;
+run;
+
+
+data intermedio;
+	set intermedio;
+	by &vargru;
+	if first.&vargru then segnale = _N_;
+run;
+data segnali;
+	set intermedio;
+	by &vargru;
+	if first.&vargru;
+	keep &vargru segnale;
+run;
+
+
+data &uscita;
+	merge intermedio (drop = segnale) segnali;
+	by &vargru;
+	if _N_ < segnale + abs(diff) then
+		if diff < 0 then &variab = &variab + 1;
+		else &variab = max(&variab - 1,0);
+	drop diff segnale;
+run;
+
+
+proc datasets library = work;
+	delete intermedio somma segnali;
+run;
+quit;
+
+%mend arrotondainterogruppo;
+ 
+@@Response
+The SAS code provided is a macro that processes a dataset and performs certain operations. However, Python does not support macros like SAS. The equivalent Python code would be:
+
+```python
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+
+    print("\nWARNING- =================================================================")
+    print("WARNING: I nomi")
+    print("WARNING- intermedio somma segnali")
+    print("WARNING- identificano data set ausiliari della macro arrotondainterogruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni             ")
+    print("WARNING- =================================================================\n")
+
+    import pandas as pd
+
+    intermedio = pd.read_csv(ingresso)
+    intermedio.sort_values(by=[vargru], inplace=True)
+    somma = intermedio.groupby(vargru)[variab].sum().reset_index()
+    somma.rename(columns={variab: 'vartot'}, inplace=True)
+    datototeff = pd.read_csv(datototeff)
+    datototeff.sort_values(by=[vargru], inplace=True)
+    somma = pd.merge(somma, datototeff, on=vargru)
+    somma.drop(columns=[effettiva], inplace=True)
+    
+    somma['diff'] = somma['vartot'] - somma[effettiva]
+    somma.drop(columns=['vartot', effettiva], inplace=True)
+    
+    intermedio = pd.merge(intermedio, somma, on=vargru)
+    
+    intermedio.sort_values(by=[vargru, variab], ascending=[False, False], inplace=True)
+    intermedio['segnale'] = intermedio.groupby(vargru).cumcount()
+    segnali = intermedio.drop_duplicates(subset=[vargru])[vargru, 'segnale']
+    
+    intermedio.reset_index(drop=True, inplace=True)
+    for index, row in intermedio.iterrows():
+        if index < row['segnale'] + abs(row['diff']):
+            if row['diff'] < 0:
+                intermedio.loc[index, variab] += 1
+            else:
+                intermedio.loc[index, variab] = max(intermedio.loc[index, variab] - 1, 0)
+    
+    intermedio.drop(columns=['diff', 'segnale'], inplace=True)
+    intermedio.to_csv(uscita, index=False)
+
+    del intermedio, somma, segnali
+```
+
+Please note that this Python code assumes that the input files are CSV files and that the data types of the variables match. Adjustments may be needed depending on the actual data types and structures of your input files.

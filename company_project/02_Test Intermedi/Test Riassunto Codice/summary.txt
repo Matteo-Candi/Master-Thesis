@@ -1,0 +1,53 @@
+Here is the line-by-line description of the SAS code you provided, including all variables names, values, and paths.
+
+1. `libname ter "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets";`: This line is defining a libref 'ter' for the directory "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets".
+
+2. `libname sez "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets";`: This line is defining a libref 'sez' for the same directory as above.
+
+3. `libname ter_out "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets";`: This line is defining a libref 'ter_out' for the same directory as above.
+
+4. `libname sez_out "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Data_sets";`: This line is defining a libref 'sez_out' for the same directory as above.
+
+5. `libname appo "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts";`: This line is defining a libref 'appo' for the directory "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts".
+
+6. `options mergenoby = warn;`: This line sets the SAS option 'mergenoby' to 'warn', which will display a warning message when there are no common variables between two datasets during a merge operation.
+
+7. `%include "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Macro\macroarrotondainterogruppo.sas";`: This line includes the SAS macro named 'macroarrotondainterogruppo' from the file "C:\Users\mcandi\OneDrive – KPMG\Desktop\project\SAS_scripts\Macro\macroarrotondainterogruppo.sas".
+
+8. `title1 "STIMA DELLA POPOLAZIONE PER ETÀ";`: This line sets the first title of the output to be displayed as "STIMA DELLA POPOLAZIONE PER ETÀ".
+
+9. The next several lines are creating a dataset 'basesez' from the input data set 'appo.avanzamento_eta', grouping by 'codice_sezione' and 'cleta', dropping unnecessary variables, and renaming 'codice_comune__str'.
+
+10. The next several lines are creating a dataset 'basecom' from the input data set 'ter_out.Popolazione_eta_sesso_comune', categorizing 'eta' into different classes ('cleta').
+
+11. `title2 "MIN E MAX ETÀ PER CLASSE";`: This line sets the second title of the output to be displayed as "MIN E MAX ETÀ PER CLASSE".
+
+12-14. The next several lines are calculating minimum and maximum 'eta' for each 'cleta'.
+
+15-18. The next several lines are creating a dataset 'comcla' from the input data set 'basecom', grouping by 'codice_comune__str' and 'cleta', summing 'maschi' and 'femmine', renaming variables, and creating an ID variable ('idqua').
+
+19-20. The next several lines are merging the datasets 'basesez' and 'totverif' by 'idqua'.
+
+21-34: Several data steps that perform various operations on the dataset 'quadrare', including creating new variables, filtering records based on conditions, sorting, merging, calculating sums, etc.
+
+35-36: Data steps to check for errors in the dataset 'denzero' and 'corretto'.
+
+37-42: More data steps that perform operations on the datasets 'geog', 'demo', 'gbd', 'piu_popolosa', 'quadrare', 'quadrare_corretto', etc.
+
+43-50: Data steps to check for errors in the dataset 'denzero_new' and 'errore'.
+
+51-62: More data steps that perform operations on the datasets 'quadrato', 'verifica', 'confronto_verifica', etc.
+
+63-70: Data steps to calculate a new variable 'popolazione' in the dataset 'quadrato_ok2'.
+
+71-84: More data steps that perform operations on the datasets 'geog1', 'demo1', 'cfr_anni', etc.
+
+85-90: Data steps to calculate and display histograms for 'differenza_assoluta' and 'differenza_percentuale'.
+
+91-94: More data steps that perform operations on the datasets 'nuova_copertura', 'persa_copertura', etc.
+
+95-97: Data step to create a new dataset 'risultato' from the input dataset 'quadrato_ok2', renaming some variables, and setting some values.
+
+98. `options nolabel;`: This line sets the SAS option 'nolabel' which means that labels will not be displayed in the output.
+
+99-100: Data step to sort the dataset 'risultato' by 'codice_sezione' and 'classe_eta'.

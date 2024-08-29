@@ -1,0 +1,57 @@
+Here is the PySpark code for your SQL query. I have made some assumptions about the data types and transformations as it was not provided in your question. Please adjust accordingly if needed.
+
+```python
+from pyspark.sql import SparkSession, functions as F
+from pyspark.sql.window import Window
+
+# Create a spark session
+spark = SparkSession.builder.getOrCreate()
+
+# Load the data
+main1 = spark.table("ddwh00_sa.ts_aemi0004_us_aem")
+
+# Define the window function for generating sequence
+w = Window().orderBy(F.lit('A'))
+
+# Select and transform columns
+df = main1.select(
+    F.row_number().over(w).alias("aemr_id_retail_history"),  # Assuming you want a sequential number for each row
+    (F.when(F.expr("TO_CHAR(main1.postdate, 'YYYYMM') = TO_CHAR(main1.rdate, 'YYYYMM')"), F.lit('COMPANY DATA'))
+     .otherwise(F.lit('COMPANY REVISION'))).alias("aemr_cd_scenario"),
+    "company_id",
+    F.expr("SUBSTR(product_id, 1, 2)").alias("aemr_cd_program_code"),
+    F.expr("SUBSTR(product_id, 3, 2)").alias("aemr_cd_prodruct_code"),
+    "chart_id",
+    "frequency_id",
+    F.lpad("activity_id", 3, '0').alias("aemr_cd_activity_code"),
+    "size_id",
+    F.lit(None).cast('string').alias("aemr_cd_upper_size"),
+    F.lit(None).cast('string').alias("aemr_cd_lower_size"),
+    "main1.cd_year",
+    F.lpad("period", 2, '0').alias("aemr_cd_month"),
+    "rdate",
+    "main1.postdate",
+    F.expr("SUBSTR(geography_id, 1, 3)").alias("aemr_cd_fips_country_code"),
+    F.expr("SUBSTR(geography_id, 4, 3)").alias("aemr_cd_fips_state_code"),
+    F.expr("SUBSTR(geography_id, 7, 3)").alias("aemr_cd_fips_county_code"),
+    F.expr("SUBSTR(geography_id, 10, 3)").alias("aemr_cd_fips_sub_county_code"),
+    F.lpad("customer_type_id", 3, '0').alias("aemr_cd_customer_type_code"),
+    F.lpad("end_use_id", 3, '0').alias("aemr_cd_end_use_code"),
+    F.lit(None).cast('string').alias("aemr_cd_attribute"),
+    "count_id",
+    F.lit('US AEM').alias("aemr_cd_source_system"),
+    F.lit(1).alias("aemr_id_batch_id"),
+    F.lit(None).cast('string').alias("aemr_cd_vin"),
+    "chart_id"
+)
+
+# Filter rows
+df = df.filter((F.col("company_id").isin(['JIC', 'FOR'])) & 
+               (F.col("frequency_id") == F.lit('M')) & 
+               ((F.when(F.col("product_id").isin(['CEB0', 'CEE2', 'CEE3', 'CEF0', 'CEG0']), F.lit('010')).otherwise(F.lit('011'))) == F.lpad(F.col("activity_id"), 3, '0')) &
+               (F.col("attribute_id") == F.lit('99')))
+
+# Write the data to the table
+df.write.mode("append").insertInto("ddwh01_dw.td_aemr_retail_history")
+```
+Please replace `"ddwh00_sa.ts_aemi0004_us_aem"` and `"ddwh01_dw.td_aemr_retail_history"` with your actual table names. Also, ensure that the PySpark environment is properly configured to access these tables.

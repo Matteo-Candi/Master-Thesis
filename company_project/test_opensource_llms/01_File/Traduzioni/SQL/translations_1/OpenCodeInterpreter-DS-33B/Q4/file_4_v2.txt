@@ -1,0 +1,2 @@
+
+The given SQL code cannot be translated to PySpark as it is.

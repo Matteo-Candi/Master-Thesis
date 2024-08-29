@@ -1,0 +1,133 @@
+You are an expert in translating code from SQL to PySpark; translate the given SQL code to PySpark as best as you can, even if there are problems; insert comments inside the code; do not add any other documentation or explanation outside the code; make the code as readable as possible; minimize its complexity and volume by reducing the number of independent paths, operators, and operands; do not make any mistakes; all the variables have to be defined; ensure the user can copy and run the code without modifications; translate from SQL to PySpark every file provided. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+CREATE OR REPLACE
+FORCE EDITIONABLE VIEW "DDWH02_SM"."VW_EKKO_PURCH_DOC_HEADER_AGCE" ("EKKO_DT_LAST_MODIFY",
+                                                                    "EKKO_ID_PURCH_DOC_HEADER_GPP",
+                                                                    "EKKO_CD_PURCH_DOC_NBR",
+                                                                    "EKKO_NR_TOT_VAL_OF_RELEASE",
+                                                                    "EKKO_DT_PURCH_DOC_DATE",
+                                                                    "EKKO_DT_RECORD_CREATED_ON",
+                                                                    "EKKO_CD_PURCH_GRP",
+                                                                    "EKKO_FL_TAKE_PURCH_GRP",
+                                                                    "EKKO_CD_VENDOR_ACCOUNT_NBR",
+                                                                    "EKKO_CD_DOC_PROCESS_STATE",
+                                                                    "EKKO_CD_PURCH_DOC_CATEGORY",
+                                                                    "EKKO_CD_PURCH_DOCTYPE",
+                                                                    "EKKO_DT_CONTRACT_START_DATE",
+                                                                    "EKKO_NR_CHG_TIMESTAMP",
+                                                                    "EKKO_DT_CONTRACT_END_DATE",
+                                                                    "EKKO_CD_PURCH_DOC_STATUS",
+                                                                    "EKKO_NR_CURRENCY_KEY",
+                                                                    "EKKO_CD_PURCH_AGREEMENT_NBR",
+                                                                    "EKKO_CD_OBJ_CREATED_BY",
+                                                                    "EKKO_CD_INCOTERMS_PART_1",
+                                                                    "EKKO_CD_INCOTERMS_PART_2",
+                                                                    "EKKO_CD_TERMS_OF_PAYMENT_1",
+                                                                    "EKKO_CD_PURCH_ORG_1",
+                                                                    "EKKO_CD_COMPANY_CODE",
+                                                                    "EKKO_CD_REMARK_1",
+                                                                    "EKKO_NR_PURCH_DOC_YEAR",
+                                                                    "PLBR_DS_PLANT_SEGMENT",
+                                                                    "ODAG_PODOCUMENTTYPE",
+                                                                    "ODAG_SUPPLIERCODE",
+                                                                    "EKKO_DT_RETENTION_YEAR",
+                                                                    "ODAG_PODOCUMENTYEAR",
+                                                                    "EKKO_CD_PURCH_DOC_NBR10",
+                                                                    "EKKO_CD_SUPPLIER_TYPE") AS
+SELECT EKKO_DT_LAST_MODIFY,
+       EKKO_ID_PURCH_DOC_HEADER_GPP,
+       EKKO_CD_PURCH_DOC_NBR,
+       EKKO_NR_TOT_VAL_OF_RELEASE,
+       EKKO_DT_PURCH_DOC_DATE,
+       EKKO_DT_RECORD_CREATED_ON,
+       EKKO_CD_PURCH_GRP,
+       EKKO_FL_TAKE_PURCH_GRP,
+       EKKO_CD_VENDOR_ACCOUNT_NBR,
+       EKKO_CD_DOC_PROCESS_STATE,
+       EKKO_CD_PURCH_DOC_CATEGORY,
+       EKKO_CD_PURCH_DOCTYPE,
+       EKKO_DT_CONTRACT_START_DATE,
+       EKKO_NR_CHG_TIMESTAMP,
+       EKKO_DT_CONTRACT_END_DATE,
+       EKKO_CD_PURCH_DOC_STATUS,
+       EKKO_NR_CURRENCY_KEY,
+       EKKO_CD_PURCH_AGREEMENT_NBR,
+       EKKO_CD_OBJ_CREATED_BY,
+       EKKO_CD_INCOTERMS_PART_1,
+       EKKO_CD_INCOTERMS_PART_2,
+       EKKO_CD_TERMS_OF_PAYMENT_1,
+       EKKO_CD_PURCH_ORG_1,
+       EKKO_CD_COMPANY_CODE,
+       EKKO_CD_REMARK_1,
+       TO_NUMBER(TO_CHAR(EKKO_DT_PURCH_DOC_DATE, 'YYYY')) AS EKKO_NR_PURCH_DOC_YEAR,
+       ' ' AS PLBR_DS_PLANT_SEGMENT,
+       EKKO_CD_PURCH_DOCTYPE AS ODAG_PODOCUMENTTYPE,
+       EKKO_CD_VENDOR_ACCOUNT_NBR AS ODAG_SUPPLIERCODE,
+       TO_CHAR(COALESCE(EKKO_DT_CONTRACT_END_DATE, EKKO_DT_RECORD_CREATED_ON), 'YYYY') AS EKKO_DT_RETENTION_YEAR,
+       TO_CHAR(EKKO_DT_PURCH_DOC_DATE, 'YYYY') AS ODAG_PODOCUMENTYEAR,
+       to_Char(substr('0000000000' || EKKO_CD_PURCH_DOC_NBR, -10)) AS EKKO_CD_PURCH_DOC_NBR10,
+       Supplier_Type AS EKKO_CD_SUPPLIER_TYPE
+FROM ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP
+INNER JOIN
+  (SELECT DISTINCT EKPO_CD_PO_NBR
+   FROM ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP
+   INNER JOIN ddwh01_dw.TD_PLBR_PLANT_BRANCHES ON EKPO_CD_PLANT = PLBR_CD_PLANT
+   AND PLBR_DS_PLANT_SEGMENT IN ('AG',
+                                 'CE',
+                                 '-1',
+                                 'AM',
+                                 'AS')
+   AND (EKPO_CD_PLANT NOT IN ('FA01',
+                              'FB01',
+                              'IA01')
+        OR EKPO_CD_PLANT NOt like '00%')) AGCE ON EKKO_CD_PURCH_DOC_NBR = AGCE.EKPO_CD_PO_NBR
+LEFT JOIN
+  (SELECT DISTINCT SUPM_CD_ACCOUNT_NBR,
+                   CASE
+                       WHEN LENGTH(SUPM_CD_COMP_TRADING_PARTNER) > 1 THEN 'Intercompany'
+                       ELSE 'Third Party'
+                   END AS Supplier_Type
+   FROM ddwh01_dw.TM_SUPM_SUPPLIER_GPP) SUPM ON EKKO_CD_VENDOR_ACCOUNT_NBR = SUPM.SUPM_CD_ACCOUNT_NBR; 
+@@Response
+PySpark does not support the creation of views in the same way SQL does. However, you can create a DataFrame from the result of a SQL query and then save it as a table. Here is a PySpark equivalent of your SQL code:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.appName("DDWH02_SM.VW_EKKO_PURCH_DOC_HEADER_AGCE").getOrCreate()
+
+# Assuming TT_EKKO_PURCH_DOC_HEADER_GPP and TD_PLBR_PLANT_BRANCHES are DataFrames
+df = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+df2 = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+
+# Assuming TT_EKPO_PURCH_DOC_ITEM_GPP is a DataFrame
+df3 = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+
+# Assuming TM_SUPM_SUPPLIER_GPP is a DataFrame
+df4 = spark.table("ddwh01_dw.TM_SUPM_SUPPLIER_GPP")
+
+# Joining the DataFrames
+df = df.join(df2, df.EKKO_CD_PURCH_DOC_NBR == df2.EKPO_CD_PO_NBR, 'inner')
+df = df.join(df3, df.EKKO_CD_PURCH_DOC_NBR == df3.EKPO_CD_PO_NBR, 'inner')
+df = df.join(df4, df.EKKO_CD_VENDOR_ACCOUNT_NBR == df4.SUPM_CD_ACCOUNT_NBR, 'left')
+
+# Adding the new columns
+df = df.withColumn("EKKO_NR_PURCH_DOC_YEAR", year(df.EKKO_DT_PURCH_DOC_DATE))
+df = df.withColumn("ODAG_PODOCUMENTTYPE", df.EKKO_CD_PURCH_DOCTYPE)
+df = df.withColumn("ODAG_SUPPLIERCODE", df.EKKO_CD_VENDOR_ACCOUNT_NBR)
+df = df.withColumn("EKKO_DT_RETENTION_YEAR", when(df.EKKO_DT_CONTRACT_END_DATE.isNull(), year(df.EKKO_DT_RECORD_CREATED_ON)).otherwise(year(df.EKKO_DT_CONTRACT_END_DATE)))
+df = df.withColumn("ODAG_PODOCUMENTYEAR", year(df.EKKO_DT_PURCH_DOC_DATE))
+df = df.withColumn("EKKO_CD_PURCH_DOC_NBR10", lpad(df.EKKO_CD_PURCH_DOC_NBR, 10, '0'))
+df = df.withColumn("EKKO_CD_SUPPLIER_TYPE", when(length(df4.SUPM_CD_COMP_TRADING_PARTNER) > 1, 'Intercompany').otherwise('Third Party'))
+
+# Selecting the desired columns
+df = df.select("EKKO_DT_LAST_MODIFY", "EKKO_ID_PURCH_DOC_HEADER_GPP", "EKKO_CD_PURCH_DOC_NBR", "EKKO_NR_TOT_VAL_OF_RELEASE", "EKKO_DT_PURCH_DOC_DATE", "EKKO_DT_RECORD_CREATED_ON", "EKKO_CD_PURCH_GRP", "EKKO_FL_TAKE_PURCH_GRP", "EKKO_CD_VENDOR_ACCOUNT_NBR", "EKKO_CD_DOC_PROCESS_STATE", "EKKO_CD_PURCH_DOC_CATEGORY", "EKKO_CD_PURCH_DOCTYPE", "EKKO_DT_CONTRACT_START_DATE", "EKKO_NR_CHG_TIMESTAMP", "EKKO_DT_CONTRACT_END_DATE", "EKKO_CD_PURCH_DOC_STATUS", "EKKO_NR_CURRENCY_KEY", "EKKO_CD_PURCH_AGREEMENT_NBR", "EKKO_CD_OBJ_CREATED_BY", "EKKO_CD_INCOTERMS_PART_1", "EKKO_CD_INCOTERMS_PART_2", "EKKO_CD_TERMS_OF_PAYMENT_1", "EKKO_CD_PURCH_ORG_1", "EKKO_CD_COMPANY_CODE", "EKKO_CD_REMARK_1", "EKKO_NR_PURCH_DOC_YEAR", "PLBR_DS_PLANT_SEGMENT", "ODAG_PODOCUMENTTYPE", "ODAG_SUPPLIERCODE", "EKKO_DT_RETENTION_YEAR", "ODAG_PODOCUMENTYEAR", "EKKO_CD_PURCH_DOC_NBR10", "EKKO_CD_SUPPLIER_TYPE")
+
+# Saving the DataFrame as a table
+df.write.saveAsTable("DDWH02_SM.VW_EKKO_PURCH_DOC_HEADER_AGCE", format="parquet", mode="overwrite")
+```
+
+This PySpark code will create a DataFrame from the joined DataFrames and then save it as a table in Parquet format. Please make sure to replace the table names and paths with your actual table names and paths. Also, this code assumes that the DataFrames `df`, `df2`, `df3`, and `df4` are already defined and contain the data from your tables.

@@ -1,0 +1,36 @@
+
+Translating SQL to PySpark code would be quite a complex process since they are very different and do not have the same functions. However, here is an approximation of what this code might look like translated into PySpark with some assumptions (like assuming you are using Python). Note that this will not work directly as you need to adjust it based on your exact data schema:
+
+```python
+from pyspark.sql import SparkSession
+import pyspark.sql.functions as F
+
+# Assume spark is already setup
+spark = SparkSession.builder \
+    .appName("example-pyspark") \
+    .getOrCreate()
+    
+df = spark.read.format("jdbc").option("url", "jdbc:postgresql://localhost/test").option("dbtable", "ts_aemi0004_us_aem").load()
+
+# Apply filters and conditions
+filtered_df = df.filter(df["company_id"].isin(['JIC','FOR'])) \
+                 .filter(df["frequency_id"] == 'M') \
+                 .withColumn("activity_check", F.when((F.col("product_id").isin(['CEB0', 'CEE2', 'CEE3', 'CEF0', 'CEG0'])), '010').otherwise('011')) \
+                 .filter(df["attribute_id"] == '99')
+
+# Generate sequence column for aemr_id_retail_history
+seq = spark.range(filtered_df.count())
+filtered_df = filtered_df.crossJoin(seq)
+filtered_df = filtered_df.withColumn("aemr_id_retail_history", F.col("id")+1).drop("id")
+
+# Define other columns using SQL functions like SUBSTR and TO_CHAR
+filtered_df = filtered_df.withColumn("aemr_cd_scenario", 
+                                           F.when((F.to_date(F.col("postdate"),"yyyyMM") == 
+                                                        F.to_date(F.col("rdate"),"yyyyMM")),'COMPANY DATA').otherwise('COMPANY REVISION')) \
+                               .withColumn("aemr_cd_rep_company_code", df["company_id"]) \
+                               # ... other columns defined similarly
+
+# Finally select required fields and save to Hive table
+filtered_df.select([c for c in filtered_df.columns if "aemr_" in c]).write.mode("append").insertInto("ddwh01_dw.td_aemr_retail_history")
+```
+This PySpark code does not fully translate the SQL code given but tries to give an idea of what it could look like in a more PySpark-centric way. It might not work directly for your exact data schema, and you would need to adjust it based on your data schema, such as defining types and formats for columns that were assumed to be string in the original SQL query.

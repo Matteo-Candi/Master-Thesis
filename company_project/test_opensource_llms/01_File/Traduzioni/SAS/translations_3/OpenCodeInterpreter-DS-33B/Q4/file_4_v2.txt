@@ -1,0 +1,28 @@
+
+```python
+import pandas as pd
+from os import path
+
+# Define file paths
+territoriali_file = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_comune.csv"
+economici_file = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/economica_comune.csv"
+popolazione_file = "C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/Popolazione_eta_sesso_comune.xlsx"
+
+# Read data from CSV files using pandas
+territoriali = pd.read_csv(territoriali_file)
+economici = pd.read_csv(economici_file)
+popolazione = pd.read_excel(popolazione_file)
+
+# Merge data frames
+basecom1 = pd.merge(territoriali, economici, on='codice_comune__str', how='outer')
+basecom2 = pd.merge(basecom1, popolazione, on='codice_comune__str', how='left')
+
+# Perform calculations and add new columns to the data frame
+basecom2['red_pop'] = basecom2['reddito'] / basecom2['popolazione']
+basecom2['con_pop'] = basecom2['consumi_totali'] / basecom2['popolazione']
+basecom2['propensione'] = basecom2['con_pop'] / basecom2['red_pop']
+basecom2['inverso'] = 1 / basecom2['red_pop']
+
+# Print the data frame
+print(basecom2)
+```

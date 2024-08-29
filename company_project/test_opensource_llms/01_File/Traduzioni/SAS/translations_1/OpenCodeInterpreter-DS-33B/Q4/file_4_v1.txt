@@ -1,0 +1,95 @@
+
+```python
+import pandas as pd
+from sas7bdat import SAS7BDAT
+
+# Load data from SAS files
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\geografica_comune.sas7bdat') as file:
+    geog = pd.read_sas(file)
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\economica_comune.sas7bdat') as file:
+    eco = pd.read_sas(file)
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\Popolazione_eta_sesso_comune.sas7bdat') as file:
+    popnew = pd.read_sas(file)
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\geografica_sezione.sas7bdat') as file:
+    geosez = pd.read_sas(file)
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\economica_sezione.sas7bdat') as file:
+    ecosez = pd.read_sas(file)
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\Popolazione_eta_sesso_sezione.sas7bdat') as file:
+    popnewsez = pd.read_sas(file)
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\demo20b.sas7bdat') as file:
+    oldpop = pd.read_sas(file)
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\econom20b.sas7bdat') as file:
+    oldcon = pd.read_sas(file)
+with SAS7BDAT('C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets\\2019b.sas7bdat') as file:
+    attuale = pd.read_sas(file)
+
+# Merge dataframes to create basecom1
+basecom1 = geog.merge(eco, on='codice_comune__str', how='inner').merge(popnew, on='codice_comune__str', how='left')
+basecom1['reddito'] = basecom1['reddito'].astype(float)
+basecom1['consumi_totali'] = basecom1['consumi_totali'].astype(float)
+basecom1['popolazione'] = basecom1['popolazione'].astype(float)
+basecom1['red_pop'] = basecom1['reddito'] / basecom1['popolazione']
+basecom1['con_pop'] = basecom1['consumi_totali'] / basecom1['popolazione']
+basecom1['propensione'] = basecom1['con_pop'] / basecom1['red_pop']
+basecom1['inverso'] = 1 / basecom1['red_pop']
+
+# Calculate correlation for each territory
+corr_territorio = basecom1.groupby('territorio').apply(lambda x: x[['propensione', 'red_pop', 'inverso']].corr())
+
+# Create basesez1 dataframe
+basesez1 = geosez.merge(ecosez, on='codice_sezione', how='inner').merge(popnewsez, on='codice_sezione', how='left')
+basesez1['reddito'] = basesez1['reddito'].astype(float)
+basesez1['popolazione'] = basesez1['popolazione'].astype(float)
+basesez1.loc[basesez1['popolazione'] > 0, 'red_pop'] = basesez1['reddito'] / basesez1['popolazione']
+basesez1.loc[basesez1['popolazione'] > 0, 'inverso'] = 1 / basesez1['red_pop']
+
+# Calculate correlation for each territory in basesez1
+corr_territorio_sez = basesez1.groupby('territorio').apply(lambda x: x[['propensione', 'red_pop', 'inverso']].corr())
+
+# Create base_out2 dataframe
+base_out2 = basesez1.merge(parametri, on='territorio', how='left')
+base_out2['stima_grezza'] = base_out2['reddito'] * base_out2['model1']
+
+# Calculate quadra dataframe
+quadra = pd.DataFrame({'consumi_totali': [basesez1['consumi_totali'].sum()]})
+
+# Call macroquadraturagruppo function to calculate consumi_qua
+macroquadraturagruppo(base_out2, 'stima_grezza', quadra, 'consumi_totali', 'consumi_qua', 'codice_comune__str', base_out1)
+
+# Call macroarrotondainterogruppo function to round consumi_qua
+macroarrotondainterogruppo(base_out1, 'consumi_qua', quadra, 'consumi_totali', 'codice_comune__str', base_out3)
+
+# Create oldpop and oldcon dataframes
+oldpop['reddito'] = oldpop['stmpop19'].astype(float) / oldpop['stmpop19'].astype(float)
+oldcon['consumi_pre'] = oldcon['con19'].astype(float) / oldcon['popolazione_pre'].astype(float)
+
+# Merge dataframes to create base_controllo
+base_controllo = basesez2.merge(oldpop, on='codice_sezione', how='left').merge(oldcon, on='codice_sezione', how='left')
+base_controllo['reddito'] = base_controllo['reddito'].astype(float)
+base_controllo['consumi_qua'] = base_controllo['consumi_qua'].astype(float)
+base_controllo['popolazione'] = base_controllo['popolazione'].astype(float)
+base_controllo.loc[base_controllo['popolazione_pre'] > 0, 'red_pop_pre'] = base_controllo['stmpop19'].astype(float) / base_controllo['stmpop19'].astype(float)
+base_controllo.loc[base_controllo['popolazione_pre'] > 0, 'con_pop_pre'] = base_controllo['consumi_pre'].astype(float) / base_controllo['stmpop19'].astype(float)
+base_controllo.loc[base_controllo['popolazione'] > 0, 'con_pop'] = base_controllo['consumi_qua'].astype(float) / base_controllo['popolazione'].astype(float)
+base_controllo.loc[(base_controllo['popolazione'] > 0) & (base_controllo['popolazione_pre'] > 0), 'varred'] = 100 * (base_controllo['red_pop'].astype(float) - base_controllo['red_pop_pre'].astype(float)) / base_controllo['red_pop_pre'].astype(float)
+base_controllo.loc[(base_controllo['popolazione'] > 0) & (base_controllo['popolazione_pre'] > 0), 'varcon'] = 100 * (base_controllo['con_pop'].astype(float) - base_controllo['con_pop_pre'].astype(float)) / base_controllo['con_pop_pre'].astype(float)
+
+# Create errore dataframe to check for errors
+errore = base_controllo[(base_controllo['popolazione'] == 0 & base_controllo['consumi_qua'] > 0) | (base_controllo['popolazione'] > 0 & base_controllo['consumi_qua'] == 0)]
+
+# Create somma dataframe to calculate total reddito and total consumi
+somma = base_controllo.groupby('codice_comune__str').apply(lambda x: x[['reddito', 'consumi_totali']].sum())
+
+# Merge dataframes to create cfrcom dataframe
+cfrcom = somma.merge(basecom1, on='codice_comune__str', how='inner')
+
+# Create diverso dataframe to check for differences in reddito and consumi_totali
+diverso = cfrcom[(cfrcom['reddito'] != cfrcom['reddito_com']) | (cfrcom['consumi_totali'] != cfrcom['consumi_qua'])]
+
+# Create nuova dataframe to replace consumi_qua with consumi_totali in attuale dataframe
+nuova = attuale.merge(base_controllo, on='codice_sezione', how='inner')
+nuova['consumi_totali'] = nuova['consumi_qua'].astype(float)
+
+# Create ordinata dataframe to order the columns in a specific order
+ordinata = nuova[['codice_sezione', 'reddito', 'consumi_totali', 'anno_riferimento', 'release']]
+```

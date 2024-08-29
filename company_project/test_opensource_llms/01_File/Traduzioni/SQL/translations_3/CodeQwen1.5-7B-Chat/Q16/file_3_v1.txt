@@ -1,0 +1,181 @@
+system
+You are an expert in translating code from SQL to PySpark error-free, maintaining all functionality; the code is commented but not exaplined; do not use spark.sql() function and define properly columns; PySpark code is more efficient than SQL one while keeping it readable and concise.
+user
+Translate the following code from SQL to PySpark:
+CREATE OR REPLACE
+FORCE EDITIONABLE VIEW "DDWH02_SM"."VW_EKKO_PURCH_DOC_HEADER_AGCE" ("EKKO_DT_LAST_MODIFY",
+                                                                    "EKKO_ID_PURCH_DOC_HEADER_GPP",
+                                                                    "EKKO_CD_PURCH_DOC_NBR",
+                                                                    "EKKO_NR_TOT_VAL_OF_RELEASE",
+                                                                    "EKKO_DT_PURCH_DOC_DATE",
+                                                                    "EKKO_DT_RECORD_CREATED_ON",
+                                                                    "EKKO_CD_PURCH_GRP",
+                                                                    "EKKO_FL_TAKE_PURCH_GRP",
+                                                                    "EKKO_CD_VENDOR_ACCOUNT_NBR",
+                                                                    "EKKO_CD_DOC_PROCESS_STATE",
+                                                                    "EKKO_CD_PURCH_DOC_CATEGORY",
+                                                                    "EKKO_CD_PURCH_DOCTYPE",
+                                                                    "EKKO_DT_CONTRACT_START_DATE",
+                                                                    "EKKO_NR_CHG_TIMESTAMP",
+                                                                    "EKKO_DT_CONTRACT_END_DATE",
+                                                                    "EKKO_CD_PURCH_DOC_STATUS",
+                                                                    "EKKO_NR_CURRENCY_KEY",
+                                                                    "EKKO_CD_PURCH_AGREEMENT_NBR",
+                                                                    "EKKO_CD_OBJ_CREATED_BY",
+                                                                    "EKKO_CD_INCOTERMS_PART_1",
+                                                                    "EKKO_CD_INCOTERMS_PART_2",
+                                                                    "EKKO_CD_TERMS_OF_PAYMENT_1",
+                                                                    "EKKO_CD_PURCH_ORG_1",
+                                                                    "EKKO_CD_COMPANY_CODE",
+                                                                    "EKKO_CD_REMARK_1",
+                                                                    "EKKO_NR_PURCH_DOC_YEAR",
+                                                                    "PLBR_DS_PLANT_SEGMENT",
+                                                                    "ODAG_PODOCUMENTTYPE",
+                                                                    "ODAG_SUPPLIERCODE",
+                                                                    "EKKO_DT_RETENTION_YEAR",
+                                                                    "ODAG_PODOCUMENTYEAR",
+                                                                    "EKKO_CD_PURCH_DOC_NBR10",
+                                                                    "EKKO_CD_SUPPLIER_TYPE") AS
+SELECT EKKO_DT_LAST_MODIFY,
+       EKKO_ID_PURCH_DOC_HEADER_GPP,
+       EKKO_CD_PURCH_DOC_NBR,
+       EKKO_NR_TOT_VAL_OF_RELEASE,
+       EKKO_DT_PURCH_DOC_DATE,
+       EKKO_DT_RECORD_CREATED_ON,
+       EKKO_CD_PURCH_GRP,
+       EKKO_FL_TAKE_PURCH_GRP,
+       EKKO_CD_VENDOR_ACCOUNT_NBR,
+       EKKO_CD_DOC_PROCESS_STATE,
+       EKKO_CD_PURCH_DOC_CATEGORY,
+       EKKO_CD_PURCH_DOCTYPE,
+       EKKO_DT_CONTRACT_START_DATE,
+       EKKO_NR_CHG_TIMESTAMP,
+       EKKO_DT_CONTRACT_END_DATE,
+       EKKO_CD_PURCH_DOC_STATUS,
+       EKKO_NR_CURRENCY_KEY,
+       EKKO_CD_PURCH_AGREEMENT_NBR,
+       EKKO_CD_OBJ_CREATED_BY,
+       EKKO_CD_INCOTERMS_PART_1,
+       EKKO_CD_INCOTERMS_PART_2,
+       EKKO_CD_TERMS_OF_PAYMENT_1,
+       EKKO_CD_PURCH_ORG_1,
+       EKKO_CD_COMPANY_CODE,
+       EKKO_CD_REMARK_1,
+       TO_NUMBER(TO_CHAR(EKKO_DT_PURCH_DOC_DATE, 'YYYY')) AS EKKO_NR_PURCH_DOC_YEAR,
+       ' ' AS PLBR_DS_PLANT_SEGMENT,
+       EKKO_CD_PURCH_DOCTYPE AS ODAG_PODOCUMENTTYPE,
+       EKKO_CD_VENDOR_ACCOUNT_NBR AS ODAG_SUPPLIERCODE,
+       TO_CHAR(COALESCE(EKKO_DT_CONTRACT_END_DATE, EKKO_DT_RECORD_CREATED_ON), 'YYYY') AS EKKO_DT_RETENTION_YEAR,
+       TO_CHAR(EKKO_DT_PURCH_DOC_DATE, 'YYYY') AS ODAG_PODOCUMENTYEAR,
+       to_Char(substr('0000000000' || EKKO_CD_PURCH_DOC_NBR, -10)) AS EKKO_CD_PURCH_DOC_NBR10,
+       Supplier_Type AS EKKO_CD_SUPPLIER_TYPE
+FROM ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP
+INNER JOIN
+  (SELECT DISTINCT EKPO_CD_PO_NBR
+   FROM ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP
+   INNER JOIN ddwh01_dw.TD_PLBR_PLANT_BRANCHES ON EKPO_CD_PLANT = PLBR_CD_PLANT
+   AND PLBR_DS_PLANT_SEGMENT IN ('AG',
+                                 'CE',
+                                 '-1',
+                                 'AM',
+                                 'AS')
+   AND (EKPO_CD_PLANT NOT IN ('FA01',
+                              'FB01',
+                              'IA01')
+        OR EKPO_CD_PLANT NOt like '00%')) AGCE ON EKKO_CD_PURCH_DOC_NBR = AGCE.EKPO_CD_PO_NBR
+LEFT JOIN
+  (SELECT DISTINCT SUPM_CD_ACCOUNT_NBR,
+                   CASE
+                       WHEN LENGTH(SUPM_CD_COMP_TRADING_PARTNER) > 1 THEN 'Intercompany'
+                       ELSE 'Third Party'
+                   END AS Supplier_Type
+   FROM ddwh01_dw.TM_SUPM_SUPPLIER_GPP) SUPM ON EKKO_CD_VENDOR_ACCOUNT_NBR = SUPM.SUPM_CD_ACCOUNT_NBR;
+assistant
+Here's the translated PySpark code:
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, to_char, substring, lpad
+
+# Create a spark session
+spark = SparkSession.builder.appName('vw_ekko_purch_doc_header_agce').getOrCreate()
+
+# Read data from tables
+EKKO_PURCH_DOC_HEADER_GPP = spark.table("ddwh01_dw.TT_EKKO_PURCH_DOC_HEADER_GPP")
+EKPO_PURCH_DOC_ITEM_GPP = spark.table("ddwh01_dw.TT_EKPO_PURCH_DOC_ITEM_GPP")
+PLBR_PLANT_BRANCHES = spark.table("ddwh01_dw.TD_PLBR_PLANT_BRANCHES")
+TM_SUPM_SUPPLIER_GPP = spark.table("ddwh01_dw.TM_SUPM_SUPPLIER_GPP")
+
+# Define a temporary function for supplier type
+def get_supplier_type(supplier_code):
+    match = TM_SUPM_SUPPLIER_GPP.filter(TM_SUPM_SUPPLIER_GPP.SUPM_CD_ACCOUNT_NBR == supplier_code)
+    if match.count() > 0:
+        return match.first()[1]
+    else:
+        return None
+
+# Perform joins and transformations
+agce_join = EKPO_PURCH_DOC_ITEM_GPP.join(PLBR_PLANT_BRANCHES,
+                                        EKPO_PURCH_DOC_ITEM_GPP.EKPO_CD_PLANT == PLBR_PLANT_BRANCHES.PLBR_CD_PLANT,
+                                        how="inner") \
+               .filter((PLBR_PLANT_BRANCHES.PLBR_DS_PLANT_SEGMENT == "AG") |
+                      (PLBR_PLANT_BRANCHES.PLBR_DS_PLANT_SEGMENT == "CE") |
+                      (PLBR_PLANT_BRANCHES.PLBR_DS_PLANT_SEGMENT == "-1") |
+                      (PLBR_PLANT_BRANCHES.PLBR_DS_PLANT_SEGMENT == "AM") |
+                      (PLBR_PLANT_BRANCHES.PLBR_DS_PLANT_SEGMENT == "AS") |
+                      ((PLBR_PLANT_BRANCHES.PLBR_CD_PLANT == "FA01") |
+                      (PLBR_PLANT_BRANCHES.PLBR_CD_PLANT == "FB01") |
+                      (PLBR_PLANT_BRANCHES.PLBR_CD_PLANT == "IA01") |
+                      (PLBR_PLANT_BRANCHES.PLBR_CD_PLANT.like("00%")))
+
+agce_result = EKKO_PURCH_DOC_HEADER_GPP.join(agce_join,
+                                            EKKO_PURCH_DOC_HEADER_GPP.EKKO_CD_PURCH_DOC_NBR == agce_join.EKPO_CD_PO_NBR,
+                                            how="left") \
+                  .join(TM_SUPM_SUPPLIER_GPP.alias("SUPM"),
+                        EKKO_PURCH_DOC_HEADER_GPP.EKKO_CD_VENDOR_ACCOUNT_NBR == SUPM.SUPM_CD_ACCOUNT_NBR,
+                        how="left")
+
+# Select required columns
+vw_ekko_purch_doc_header_agce = agce_result.select(
+    col("EKKO_DT_LAST_MODIFY"),
+    col("EKKO_ID_PURCH_DOC_HEADER_GPP"),
+    col("EKKO_CD_PURCH_DOC_NBR"),
+    col("EKKO_NR_TOT_VAL_OF_RELEASE"),
+    col("EKKO_DT_PURCH_DOC_DATE"),
+    col("EKKO_DT_RECORD_CREATED_ON"),
+    col("EKKO_CD_PURCH_GRP"),
+    col("EKKO_FL_TAKE_PURCH_GRP"),
+    col("EKKO_CD_VENDOR_ACCOUNT_NBR"),
+    col("EKKO_CD_DOC_PROCESS_STATE"),
+    col("EKKO_CD_PURCH_DOC_CATEGORY"),
+    col("EKKO_CD_PURCH_DOCTYPE"),
+    col("EKKO_DT_CONTRACT_START_DATE"),
+    col("EKKO_NR_CHG_TIMESTAMP"),
+    col("EKKO_DT_CONTRACT_END_DATE"),
+    col("EKKO_CD_PURCH_DOC_STATUS"),
+    col("EKKO_NR_CURRENCY_KEY"),
+    col("EKKO_CD_PURCH_AGREEMENT_NBR"),
+    col("EKKO_CD_OBJ_CREATED_BY"),
+    col("EKKO_CD_INCOTERMS_PART_1"),
+    col("EKKO_CD_INCOTERMS_PART_2"),
+    col("EKKO_CD_TERMS_OF_PAYMENT_1"),
+    col("EKKO_CD_PURCH_ORG_1"),
+    col("EKKO_CD_COMPANY_CODE"),
+    col("EKKO_CD_REMARK_1"),
+    col("EKKO_NR_PURCH_DOC_YEAR").alias(to_char(col("EKKO_DT_PURCH_DOC_DATE"), 'YYYY')),
+    ' '.alias("PLBR_DS_PLANT_SEGMENT"),
+    col("EKKO_CD_PURCH_DOCTYPE").alias("ODAG_PODOCUMENTTYPE"),
+    col("EKKO_CD_VENDOR_ACCOUNT_NBR").alias("ODAG_SUPPLIERCODE"),
+    col("EKKO_DT_RETENTION_YEAR").alias(to_char(coalesce(col("EKKO_DT_CONTRACT_END_DATE"),
+                                                        col("EKKO_DT_RECORD_CREATED_ON")), 'YYYY')),
+    col("EKKO_DT_PURCH_DOC_YEAR").alias(to_char(col("EKKO_DT_PURCH_DOC_DATE"), 'YYYY')),
+    lpad(col("EKKO_CD_PURCH_DOC_NBR"), 10, '0').alias("EKKO_CD_PURCH_DOC_NBR10"),
+    get_supplier_type(col("EKKO_CD_VENDOR_ACCOUNT_NBR")).alias("EKKO_CD_SUPPLIER_TYPE")
+)
+
+vw_ekko_purch_doc_header_agce.write.mode('overwrite').saveAsTable("DDWH02_SM.VW_EKKO_PURCH_DOC_HEADER_AGCE")
+```
+
+Note: This code assumes you have created a temporary function get_supplier_type() which returns the supplier type for a given supplier code. Also, this code assumes that all necessary tables and columns are available in the Spark environment. You might need to adjust the table names and column names according to your actual environment. 
+
+Remember to replace 'overwrite' with 'append' if you want to append the result to an existing table.

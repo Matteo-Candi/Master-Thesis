@@ -1,0 +1,88 @@
+You are an AI programming assistant, utilizing the Deepseek Coder model, developed by Deepseek Company, and you only answer questions related to computer science. For politically sensitive questions, security and privacy issues, and other non-computer science questions, you will refuse to answer.
+You are an expert in translating code from SQL to PySpark. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code.### Instruction:
+Translate the following code from SQL to PySpark:
+MERGE INTO ddwh01_dw.TM_VENL_MASTER_LINK TARGET USING
+  (SELECT CLIENT VENL_CD_CLIENT,
+          PARTNER_GUID VENL_CD_PARTNER_GUID,
+          VENDOR VENL_CD_VENDOR,
+          CRUSER VENL_CD_USER,
+          CRDAT VENL_DT_DATE,
+          CRTIM VENL_DT_TIME
+   FROM ddwh00_sa.TS_VENL0001_WW_GPP SA MINUS SELECT VENL_CD_CLIENT,
+                                                     VENL_CD_PARTNER_GUID,
+                                                     VENL_CD_VENDOR,
+                                                     VENL_CD_USER,
+                                                     VENL_DT_DATE,
+                                                     VENL_DT_TIME
+   FROM ddwh01_dw.TM_VENL_MASTER_LINK DW) SA ON (TARGET.VENL_CD_CLIENT = SA.VENL_CD_CLIENT
+                                                 AND TARGET.VENL_CD_PARTNER_GUID = SA.VENL_CD_PARTNER_GUID) WHEN MATCHED THEN
+UPDATE
+SET TARGET.VENL_CD_VENDOR = SA.VENL_CD_VENDOR,
+    TARGET.VENL_CD_USER = SA.VENL_CD_USER,
+    TARGET.VENL_DT_DATE = SA.VENL_DT_DATE,
+    TARGET.VENL_DT_TIME = SA.VENL_DT_TIME,
+    TARGET.VENL_DT_LAST_MODIFY = SYSDATE,
+    TARGET.VENL_ID_BATCH_LAST_MODIFY = NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG) WHEN NOT MATCHED THEN
+INSERT (VENL_ID_LINK,
+        VENL_CD_CLIENT,
+        VENL_CD_PARTNER_GUID,
+        VENL_CD_VENDOR,
+        VENL_CD_USER,
+        VENL_DT_DATE,
+        VENL_DT_TIME,
+        VENL_ID_BATCH_ID,
+        VENL_DT_START_VALIDITY,
+        VENL_DT_END_VALIDITY,
+        VENL_DT_INSERT,
+        VENL_ID_BATCH_LAST_MODIFY,
+        VENL_DT_LAST_MODIFY)
+VALUES (DDWH01_DW.SEQ_TM_VENL.NEXTVAL, SA.VENL_CD_CLIENT, SA.VENL_CD_PARTNER_GUID, SA.VENL_CD_VENDOR, SA.VENL_CD_USER, SA.VENL_DT_DATE, SA.VENL_DT_TIME, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), TO_DATE('01/01/1900', 'DD/MM/YYYY'), TO_DATE('31/12/9999', 'DD/MM/YYYY'), SYSDATE, NVL(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG), SYSDATE);
+### Response:
+Here is the PySpark code equivalent to the SQL code you provided:
+
+```python
+# Importing necessary libraries
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import sysdate, to_date, nvl
+
+# Creating a SparkSession
+spark = SparkSession.builder.getOrCreate()
+
+# Reading data from the source table
+source_data = spark.table("ddwh00_sa.TS_VENL0001_WW_GPP")
+
+# Reading data from the target table
+target_data = spark.table("ddwh01_dw.TM_VENL_MASTER_LINK")
+
+# Performing data transformation and merging
+target_data = target_data.alias("TARGET")
+source_data = source_data.alias("SA")
+
+merged_data = target_data.join(source_data, ["VENL_CD_CLIENT", "VENL_CD_PARTNER_GUID"], "left").select(
+    "TARGET.*", "SA.*"
+)
+
+# Updating the target table with the merged data
+updated_data = merged_data.withColumn("VENL_DT_LAST_MODIFY", sysdate())
+
+# Inserting new data into the target table
+new_data = source_data.select(
+    "VENL_ID_LINK",
+    "VENL_CD_CLIENT",
+    "VENL_CD_PARTNER_GUID",
+    "VENL_CD_VENDOR",
+    "VENL_CD_USER",
+    "VENL_DT_DATE",
+    "VENL_DT_TIME",
+    "VENL_ID_BATCH_ID",
+    to_date("01/01/1900", "DD/MM/YYYY").alias("VENL_DT_START_VALIDITY"),
+    to_date("31/12/9999", "DD/MM/YYYY").alias("VENL_DT_END_VALIDITY"),
+    sysdate().alias("VENL_DT_INSERT"),
+    nvl(p_ELT_ID_BATCH, n_ELT_ID_JOB_LOG).alias("VENL_ID_BATCH_LAST_MODIFY"),
+    sysdate().alias("VENL_DT_LAST_MODIFY")
+)
+
+new_data.show()
+```
+
+Please note that this code assumes that you have already initialized a SparkSession and have the necessary tables available in your Spark environment. Make sure to replace the table names and column names with the actual names used in your environment.

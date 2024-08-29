@@ -1,0 +1,434 @@
+{
+    "CodeQwen1.5-7B-Chat_Q16_file_1_v2": {
+        "input_tokens": 964,
+        "max_length": 3856,
+        "time": 37.86,
+        "output_tokens": 2282
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_2_v2": {
+        "input_tokens": 1302,
+        "max_length": 5208,
+        "time": 38.95,
+        "output_tokens": 2685
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_3_v2": {
+        "input_tokens": 2047,
+        "max_length": 8188,
+        "time": 56.81,
+        "output_tokens": 4050
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_4_v2": {
+        "input_tokens": 2662,
+        "max_length": 10648,
+        "time": 76.19,
+        "output_tokens": 5342
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_5_v2": {
+        "input_tokens": 4439,
+        "max_length": 17756,
+        "time": 118.4,
+        "output_tokens": 8598
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_1_v1": {
+        "input_tokens": 883,
+        "max_length": 3532,
+        "time": 36.46,
+        "output_tokens": 2153
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_2_v1": {
+        "input_tokens": 1221,
+        "max_length": 4884,
+        "time": 32.72,
+        "output_tokens": 2388
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_3_v1": {
+        "input_tokens": 1966,
+        "max_length": 7864,
+        "time": 46.23,
+        "output_tokens": 3602
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_4_v1": {
+        "input_tokens": 2581,
+        "max_length": 10324,
+        "time": 63.32,
+        "output_tokens": 4809
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_5_v1": {
+        "input_tokens": 4358,
+        "max_length": 17432,
+        "time": 99.09,
+        "output_tokens": 7844
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_6_v1": {
+        "input_tokens": 5784,
+        "max_length": 23136,
+        "time": 172.27,
+        "output_tokens": 11682
+    },
+    "CodeQwen1.5-7B-Chat_Q16_file_6_v2": {
+        "input_tokens": 5865,
+        "max_length": 23460,
+        "time": 103.52,
+        "output_tokens": 9495
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_1_v1": {
+        "input_tokens": 878,
+        "max_length": 3512,
+        "time": 25.86,
+        "output_tokens": 1802
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_2_v1": {
+        "input_tokens": 1140,
+        "max_length": 4560,
+        "time": 34.26,
+        "output_tokens": 2358
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_3_v1": {
+        "input_tokens": 1864,
+        "max_length": 7456,
+        "time": 38.1,
+        "output_tokens": 3220
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_4_v1": {
+        "input_tokens": 2408,
+        "max_length": 9632,
+        "time": 31.9,
+        "output_tokens": 3548
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_5_v1": {
+        "input_tokens": 4052,
+        "max_length": 16208,
+        "time": 115.14,
+        "output_tokens": 8032
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_6_v1": {
+        "input_tokens": 5160,
+        "max_length": 16384,
+        "time": 413.28,
+        "output_tokens": 16384
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_1_v2": {
+        "input_tokens": 959,
+        "max_length": 3836,
+        "time": 52.44,
+        "output_tokens": 2826
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_2_v2": {
+        "input_tokens": 1221,
+        "max_length": 4884,
+        "time": 39.64,
+        "output_tokens": 2633
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_3_v2": {
+        "input_tokens": 1945,
+        "max_length": 7780,
+        "time": 60.17,
+        "output_tokens": 4090
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_4_v2": {
+        "input_tokens": 2489,
+        "max_length": 9956,
+        "time": 75.01,
+        "output_tokens": 5147
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_5_v2": {
+        "input_tokens": 4133,
+        "max_length": 16384,
+        "time": 115.05,
+        "output_tokens": 8088
+    },
+    "Magicoder-S-DS-6.7B_Q16_file_6_v2": {
+        "input_tokens": 5241,
+        "max_length": 16384,
+        "time": 82.25,
+        "output_tokens": 8060
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_1_v1": {
+        "input_tokens": 878,
+        "max_length": 3512,
+        "time": 19.44,
+        "output_tokens": 1592
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_2_v1": {
+        "input_tokens": 1140,
+        "max_length": 4560,
+        "time": 29.62,
+        "output_tokens": 2188
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_3_v1": {
+        "input_tokens": 1864,
+        "max_length": 7456,
+        "time": 43.21,
+        "output_tokens": 3354
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_4_v1": {
+        "input_tokens": 2408,
+        "max_length": 9632,
+        "time": 39.7,
+        "output_tokens": 3784
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_5_v1": {
+        "input_tokens": 4052,
+        "max_length": 16208,
+        "time": 100.57,
+        "output_tokens": 7418
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_6_v1": {
+        "input_tokens": 5160,
+        "max_length": 16384,
+        "time": 87.79,
+        "output_tokens": 8089
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_1_v2": {
+        "input_tokens": 959,
+        "max_length": 3836,
+        "time": 29.54,
+        "output_tokens": 2008
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_2_v2": {
+        "input_tokens": 1221,
+        "max_length": 4884,
+        "time": 37.08,
+        "output_tokens": 2515
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_3_v2": {
+        "input_tokens": 1945,
+        "max_length": 7780,
+        "time": 43.42,
+        "output_tokens": 3445
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_4_v2": {
+        "input_tokens": 2489,
+        "max_length": 9956,
+        "time": 41.13,
+        "output_tokens": 3914
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_5_v2": {
+        "input_tokens": 4133,
+        "max_length": 16384,
+        "time": 450.15,
+        "output_tokens": 16384
+    },
+    "OpenCodeInterpreter-DS-6.7B_Q16_file_6_v2": {
+        "input_tokens": 5241,
+        "max_length": 16384,
+        "time": 82.8,
+        "output_tokens": 8009
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_1_v1": {
+        "input_tokens": 878,
+        "max_length": 3512,
+        "time": 36.0,
+        "output_tokens": 2163
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_2_v1": {
+        "input_tokens": 1140,
+        "max_length": 4560,
+        "time": 34.04,
+        "output_tokens": 2353
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_3_v1": {
+        "input_tokens": 1864,
+        "max_length": 7456,
+        "time": 41.16,
+        "output_tokens": 3331
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_4_v1": {
+        "input_tokens": 2408,
+        "max_length": 9632,
+        "time": 91.26,
+        "output_tokens": 5659
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_5_v1": {
+        "input_tokens": 4052,
+        "max_length": 16208,
+        "time": 87.41,
+        "output_tokens": 7133
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_6_v1": {
+        "input_tokens": 5160,
+        "max_length": 16384,
+        "time": 66.65,
+        "output_tokens": 7484
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_1_v2": {
+        "input_tokens": 959,
+        "max_length": 3836,
+        "time": 31.32,
+        "output_tokens": 2083
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_2_v2": {
+        "input_tokens": 1221,
+        "max_length": 4884,
+        "time": 35.97,
+        "output_tokens": 2511
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_3_v2": {
+        "input_tokens": 1945,
+        "max_length": 7780,
+        "time": 44.55,
+        "output_tokens": 3534
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_4_v2": {
+        "input_tokens": 2489,
+        "max_length": 9956,
+        "time": 76.66,
+        "output_tokens": 5229
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_5_v2": {
+        "input_tokens": 4133,
+        "max_length": 16384,
+        "time": 88.2,
+        "output_tokens": 7247
+    },
+    "Artigenz-Coder-DS-6.7B_Q16_file_6_v2": {
+        "input_tokens": 5241,
+        "max_length": 16384,
+        "time": 123.52,
+        "output_tokens": 9333
+    },
+    "deepseek-coder-33b-instruct_Q4_file_1_v1": {
+        "input_tokens": 878,
+        "max_length": 3512,
+        "time": 38.28,
+        "output_tokens": 991
+    },
+    "deepseek-coder-33b-instruct_Q4_file_2_v1": {
+        "input_tokens": 1140,
+        "max_length": 4560,
+        "time": 45.67,
+        "output_tokens": 1322
+    },
+    "deepseek-coder-33b-instruct_Q4_file_3_v1": {
+        "input_tokens": 1864,
+        "max_length": 7456,
+        "time": 61.37,
+        "output_tokens": 1746
+    },
+    "deepseek-coder-33b-instruct_Q4_file_4_v1": {
+        "input_tokens": 2408,
+        "max_length": 9632,
+        "time": 60.96,
+        "output_tokens": 1634
+    },
+    "deepseek-coder-33b-instruct_Q4_file_5_v1": {
+        "input_tokens": 4052,
+        "max_length": 16208,
+        "time": 49.34,
+        "output_tokens": 1095
+    },
+    "deepseek-coder-33b-instruct_Q4_file_6_v1": {
+        "input_tokens": 5160,
+        "max_length": 16384,
+        "time": 40.83,
+        "output_tokens": 718
+    },
+    "deepseek-coder-33b-instruct_Q4_file_1_v2": {
+        "input_tokens": 959,
+        "max_length": 3836,
+        "time": 41.5,
+        "output_tokens": 1084
+    },
+    "deepseek-coder-33b-instruct_Q4_file_2_v2": {
+        "input_tokens": 1221,
+        "max_length": 4884,
+        "time": 35.81,
+        "output_tokens": 986
+    },
+    "deepseek-coder-33b-instruct_Q4_file_3_v2": {
+        "input_tokens": 1945,
+        "max_length": 7780,
+        "time": 49.35,
+        "output_tokens": 1356
+    },
+    "deepseek-coder-33b-instruct_Q4_file_4_v2": {
+        "input_tokens": 2489,
+        "max_length": 9956,
+        "time": 49.09,
+        "output_tokens": 1257
+    },
+    "deepseek-coder-33b-instruct_Q4_file_5_v2": {
+        "input_tokens": 4133,
+        "max_length": 16384,
+        "time": 142.82,
+        "output_tokens": 3737
+    },
+    "deepseek-coder-33b-instruct_Q4_file_6_v2": {
+        "input_tokens": 5241,
+        "max_length": 16384,
+        "time": 122.46,
+        "output_tokens": 3100
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_1_v1": {
+        "input_tokens": 878,
+        "max_length": 3512,
+        "time": 9.97,
+        "output_tokens": 41
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_2_v1": {
+        "input_tokens": 1140,
+        "max_length": 4560,
+        "time": 30.52,
+        "output_tokens": 820
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_3_v1": {
+        "input_tokens": 1864,
+        "max_length": 7456,
+        "time": 52.38,
+        "output_tokens": 1461
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_4_v1": {
+        "input_tokens": 2408,
+        "max_length": 9632,
+        "time": 10.93,
+        "output_tokens": 28
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_5_v1": {
+        "input_tokens": 4052,
+        "max_length": 16208,
+        "time": 127.15,
+        "output_tokens": 3324
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_6_v1": {
+        "input_tokens": 5160,
+        "max_length": 16384,
+        "time": 45.15,
+        "output_tokens": 842
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_1_v2": {
+        "input_tokens": 959,
+        "max_length": 3836,
+        "time": 34.82,
+        "output_tokens": 863
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_2_v2": {
+        "input_tokens": 1221,
+        "max_length": 4884,
+        "time": 20.86,
+        "output_tokens": 480
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_3_v2": {
+        "input_tokens": 1945,
+        "max_length": 7780,
+        "time": 11.88,
+        "output_tokens": 115
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_4_v2": {
+        "input_tokens": 2489,
+        "max_length": 9956,
+        "time": 10.65,
+        "output_tokens": 17
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_5_v2": {
+        "input_tokens": 4133,
+        "max_length": 16384,
+        "time": 28.77,
+        "output_tokens": 470
+    },
+    "OpenCodeInterpreter-DS-33B_Q4_file_6_v2": {
+        "input_tokens": 5241,
+        "max_length": 16384,
+        "time": 58.81,
+        "output_tokens": 1362
+    }
+}

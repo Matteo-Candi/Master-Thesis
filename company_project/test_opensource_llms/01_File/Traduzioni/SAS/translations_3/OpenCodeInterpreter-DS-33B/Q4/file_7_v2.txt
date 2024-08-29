@@ -1,0 +1,51 @@
+
+Sure, below is the translation of the given SAS code to Python. However, note that not all functions or libraries exist in Python and some functionalities will need to be replaced by manual computations. The code has been commented for better understanding and readability. Also, certain parts might have syntax errors because Python does not support all SAS functionalities:
+
+```python
+# Importing necessary packages 
+import os
+import pandas as pd
+from pathlib import Path
+
+# Define file paths
+sas_path = r"C:\Users\mcandi\OneDrive - KPMG\Desktop\project\SAS_scripts\Data_sets"
+excel_file = "tag_00026.xlsx"
+province_file = "provincia_110.xlsx"
+corr_file = "Codici-statistici-e-denominazioni-al-31_12_2020.xls"
+region_comuni_file = "geografica_comune.xlsx"
+demo_file = "demo20b.csv"
+quadratura_consumi_file = "quadratura_consumi.csv"
+economica_file = "econom20b.xlsx"
+territorio_path = Path(sas_path).joinpath("Territorio")
+quadrature_path = Path(sas_path).joinpath("Quadratura")
+macro_path = Path(sas_path).joinpath("Macro")
+
+# Load data from Excel file into pandas DataFrame
+xconsumi_tag = pd.read_excel(os.path.join(territorio_path, excel_file), sheet_name='TAG-00026_4')
+xreddito_tag = pd.read_excel(os.path.join(territorio_path, excel_file), sheet_name='TAG-00027_2')
+
+# Preprocess data
+consumi_tag = xconsumi_tag[(xconsumi_tag['province_e_regioni'].str.upper() == xconsumi_tag['province_e_regioni']) & 
+    (~(xconsumi_tag['province_e_regioni']=='VALLE D\'AOSTA/VALLÈE D\'AOSTE'))]
+reddito_tag = xreddito_tag[(xreddito_tag['province_e_regioni'].str.upper() == xreddito_tag['province_e_regioni']) & 
+    (~(xreddito_tag['province_e_regioni']=='VALLE D\'AOSTA/VALLÈE D\'AOSTE'))]
+
+# Merge data and compute new variables
+consumi_tag['consumi'] = consumi_tag['_017'] / 1000
+reddito_tag['reddito'] = reddito_tag['_017'] / 1000
+base_tag = pd.merge(reddito_tag, consumi_tag)
+base_tag['propensione'] = base_tag['consumi'] / base_tag['reddito']
+base_tag['inverso'] = 1 / base_tag['reddito']
+
+# Load additional data
+provincia = pd.read_excel(os.path.join(territorio_path, province_file))
+corrispo = pd.read_excel(os.path.join(quadrature_path, corr_file), sheet_name='CODICI al 31_12_2020')
+geog = pd.read_excel(os.path.join(territorio_path, region_comuni_file))
+economica = pd.read_excel(os.path.join(territorio_path, economica_file), sheet_name='Econom20b')
+popolazione = pd.read_csv(os.path.join(demo_path, demo_file))
+quadratura_consumi = pd.read_excel(os.path.join(territorio_path, quadratura_consumi_file), sheet_name='Quadratura consumi')
+
+# Load Macro files 
+macro1 = open(os.path.join(macro_path, 'macroquadraturagruppo.sas'), 'r').read()
+macro2 = open(os.path.join(macro_path, 'macroarrotondainterogruppo.sas'), 'r').read()
+```

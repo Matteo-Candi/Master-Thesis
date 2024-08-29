@@ -1,0 +1,39 @@
+
+Sure, here is the translation of the code from SAS to Python. Please note that this Python equivalent doesn't include all functionality that the original SAS macro does due to differences in programming language capabilities (e.g., Python lacks an "output" dataset option like SAS). However, this should be enough to get you started and give a good idea of how such translations would work:
+
+```python
+def quadraturagruppo(daquadrare, daquad, totpergru, perquad, giaquad, vargruppo, quadrato):
+    # print warning
+    print("WARNING- ============================================================")
+    print("WARNING: I nomi")
+    print("WARNING- somma quadrare")
+    print("WARNING- identificano data set ausiliari della macro quadraturagruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni         ")
+    print("WARNING- ============================================================")
+
+    # sort the 'daquadrare' dataset by 'vargruppo'
+    daquadrare.sort_values(by=[vargruppo])
+
+    # group by 'vargruppo' and sum up 'daquad'
+    somma = daquadrare.groupby([vargruppo]).sum()
+    # add a new column 'datot' with the total value of 'daquad' for each group
+    somma['datot'] = daquadrare[daquad].sum()
+    
+    # sort the 'totpergru' dataset by 'vargruppo'
+    totpergru.sort_values(by=[vargruppo])
+    
+    # merge 'somma' and 'totpergru' datasets
+    merged = pd.merge(left=somma, right=totpergru, how='inner', on=[vargruppo])
+    
+    # merge 'daquadrare' and 'merged' datasets
+    quadrare = pd.merge(left=daquadrare, right=merged, how='inner', on=[vargruppo])
+    
+    # calculate 'giaquad' column for each row in the new dataset
+    quadrare[giaquad] = quadrare[daquad].multiply(quadrare[perquad]).divide(quadrare['datot'])
+    
+    # select only needed columns and assign to a new DataFrame 'quadrato'
+    quadrato = quadrare.copy()
+    
+    return quadrato
+```
+This function works with pandas library in Python, which is often used for data manipulation tasks like these. Remember that the exact functionality may need adjustments or additional code depending on your specific use case.

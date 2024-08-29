@@ -1,0 +1,148 @@
+system
+You are an expert in translating code from SAS to Python. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code.
+user
+Translate the following code from SAS to Python:
+%macro arrotondainterogruppo(ingresso,		
+							 variab,		
+							 datototeff,	
+							 effettiva,		
+							 vargru,		
+							 uscita);		
+
+
+
+
+%put;
+%put %str(WARNING- =================================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- intermedio somma segnali);
+%put %str(WARNING- identificano data set ausiliari della macro arrotondainterogruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni             );
+%put %str(WARNING- =================================================================);
+%put;
+
+
+data intermedio;
+	set &ingresso;
+run;
+proc sort data = intermedio;
+	by &vargru;
+run;
+proc means data = intermedio noprint;
+	by &vargru;
+	output out = somma (keep = &vargru vartot)
+		   sum(&variab) = vartot;
+run;
+proc sort data = &datototeff;
+	by &vargru;
+run;
+data somma;
+	merge somma (in = inso) &datototeff (in = inda);
+	by &vargru;
+	if inso and inda;
+	keep &vargru vartot &effettiva;
+run;
+
+
+data somma;
+	set somma;
+	diff = vartot - &effettiva;
+	keep &vargru diff;
+run;
+
+
+data intermedio;
+	merge intermedio somma (in = presente);
+	by &vargru;
+	if presente;
+run; 
+
+
+proc sort data = intermedio;
+	by &vargru descending &variab;
+run;
+
+
+data intermedio;
+	set intermedio;
+	by &vargru;
+	if first.&vargru then segnale = _N_;
+run;
+data segnali;
+	set intermedio;
+	by &vargru;
+	if first.&vargru;
+	keep &vargru segnale;
+run;
+
+
+data &uscita;
+	merge intermedio (drop = segnale) segnali;
+	by &vargru;
+	if _N_ < segnale + abs(diff) then
+		if diff < 0 then &variab = &variab + 1;
+		else &variab = max(&variab - 1,0);
+	drop diff segnale;
+run;
+
+
+proc datasets library = work;
+	delete intermedio somma segnali;
+run;
+quit;
+
+%mend arrotondainterogruppo;
+
+assistant
+Here's the Python translation of the SAS macro:
+
+```python
+import pandas as pd
+
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+    print("\nWARNING- =================================================================")
+    print("WARNING: I nomi")
+    print("WARNING- intermedio somma segnali")
+    print("WARNING- identificano data set ausiliari della macro arrotondainterogruppo")
+    print("WARNING- che vengono cancellati al termine delle elaborazioni             ")
+    print("WARNING- =================================================================\n")
+
+    df_intermedio = pd.read_csv(ingresso)
+    df_intermedio.sort_values(by=[vargru], inplace=True)
+
+    df_somma = df_intermedio.groupby(vargru).agg({variab: 'sum'}).reset_index()
+    df_somma.columns = [vargru, 'vartot']
+
+    df_datototeff = pd.read_csv(datototeff)
+    df_datototeff.sort_values(by=[vargru], inplace=True)
+
+    df_somma = pd.merge(df_somma, df_datototeff, on=[vargru], how='inner')
+    df_somma = df_somma[['vargru', 'vartot', effettiva]]
+
+    df_somma['diff'] = df_somma['vartot'] - df_somma[effettiva]
+    df_somma = df_somma[['vargru', 'diff']]
+
+    df_intermedio = pd.merge(df_intermedio, df_somma, on=[vargru], how='inner')
+    df_intermedio.sort_values(by=[vargru, variab], ascending=[True, False], inplace=True)
+
+    df_intermedio['segnale'] = df_intermedio.groupby(vargru).cumcount() + 1
+
+    df_segnali = df_intermedio.groupby(vargru).first().reset_index()[['vargru', 'segnale']]
+
+    df_uscita = pd.merge(df_intermedio.drop(columns=['segnale']), df_segnali, on=[vargru], how='inner')
+    df_uscita.loc[df_uscita['_N_'] < df_uscita['segnale'] + abs(df_uscita['diff']), variab] = df_uscita.loc[df_uscita['_N_'] < df_uscita['segnale'] + abs(df_uscita['diff']), variab].apply(lambda x: x + 1 if x < 0 else max(x - 1, 0))
+
+    df_uscita.drop(columns=['diff', 'segnale'], inplace=True)
+
+    # Remove temporary dataframes
+    del df_intermedio
+    del df_somma
+    del df_segnali
+
+    df_uscita.to_csv(uscita, index=False)
+
+# Usage
+arrotondainterogruppo('input.csv', 'variab', 'datototeff.csv', 'effettiva', 'vargru', 'output.csv')
+```
+
+Please note that this Python code assumes that the input data is in CSV format. If the data is in a different format, you may need to adjust the code accordingly. Additionally, this code does not handle missing values or other edge cases that might be present in the original SAS code.

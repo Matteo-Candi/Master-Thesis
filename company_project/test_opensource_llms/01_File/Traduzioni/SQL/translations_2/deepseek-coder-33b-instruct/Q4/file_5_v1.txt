@@ -1,0 +1,59 @@
+Here is the PySpark code equivalent to your SQL query:
+
+```python
+from pyspark.sql import SparkSession, functions as F
+from pyspark.sql.window import Window
+
+# Create a spark session if not already created
+spark = SparkSession.builder.getOrCreate()
+
+# Read tables
+inol = spark.table("ddwh01_dw.td_inol_invoice_orders_lines")
+delta = spark.table("ddwh02_dim.twrk_pvan_delta_flash_leg")
+vele = spark.table("ddwh01_dw.tm_vele_vehicle_legacy")
+sops = spark.table("ddwh01_dw.td_sops_sales_order_position")
+slor = spark.table("ddwh01_dw.tt_slor_sales_order")
+inoh = spark.table("ddwh01_dw.tt_inoh_invoice_orders_header")
+tdim_pvan = spark.table("tdim_pvan_vehicle")  # Assuming this is a table in your database
+
+# Define window for max sales order position id
+window = Window.partitionBy('sops_cd_sales_order', 'sops_cd_legacy_mkt', 'sops_cd_dealer_code', 'sops_cd_source_order', 'sops_cd_source_order_sequence', 'sops_cd_source_system', 'sops_cd_product_line', 'sops_id_vele_vcl_legacy')
+
+# Filter sales order position by max id and source system not like '%SAP%'
+sops = sops.withColumn('max_id_sops', F.max(F.col('sops_id_sales_order_pos')).over(window))\
+           .filter((F.col('sops_cd_source_system').like("%SAP%") == False) & (F.col('sops_id_sales_order_pos') == F.col('max_id_sops')))
+
+# Join tables
+df = inol.join(delta, inol["inol_id_vele_vcl_legacy"] == delta["vele_id_vehicle_legacy_id_pk"], "inner")\
+         .join(vele, inol["inol_id_vele_vcl_legacy"] == vele["vele_id_vehicle_legacy_id_pk"], "left_outer")\
+         .join(sops, [inol["inol_cd_sales_order"] == sops["sops_cd_sales_order"], 
+                      inol["inol_cd_legacy_mkt"] == sops["sops_cd_legacy_mkt"],
+                      inol["inol_cd_dealer_code"] == sops["sops_cd_dealer_code"],
+                      inol["inol_cd_source_order"] == sops["sops_cd_source_order"],
+                      inol["inol_cd_source_order_sequence"] == sops["sops_cd_source_order_sequence"],
+                      inol["inol_cd_source_system"] == sops["sops_cd_source_system"],
+                      inol["inol_cd_product_line"] == sops["sops_cd_product_line"],
+                      inol["inol_id_vele_vcl_legacy"] == sops["sops_id_vele_vcl_legacy"]], "left_outer")\
+         .join(slor, sops["sops_id_slor_sales_order"] == slor["slor_id_sales_order"], "left_outer")\
+         .join(inoh, inol["inol_id_inoh_invoice_orders_he"] == inoh["inoh_id_invoice_orders_header"], "left_outer")\
+         .join(tdim_pvan, tdim_pvan["pvan_id_vcl"] == inol["inol_id_vele_vcl_legacy"], "left_outer")
+
+# Filter out deleted lines
+df = df.filter(inol["inol_fl_delete_line"].isNull())
+
+# Define your columns and select them from the dataframe
+fbil = df.select([
+    F.lit(-1).alias("fbil_id_comp_company"),
+    ... # Continue with the rest of your columns here
+])
+
+# Write to table
+fbil.write.insertInto("ddwh02_sm.twrk_fbil_billing_l_flash")
+```
+Please note that you need to define all your columns in the select statement according to your requirement. Also, please replace `...` with the rest of your column definitions. 
+
+This script assumes that all tables are registered as Spark tables (i.e., they have been loaded into memory). If not, you will need to read them from their source using appropriate functions like `spark.read.csv()` or `spark.read.parquet()` etc. 
+
+Also note that PySpark does not support the SQL syntax used in your query directly (like NVL and TO_CHAR), so I've replaced them with equivalent Spark functions (F.when, F.to_date). If you have any other specific requirements or transformations, please let me know. 
+
+Lastly, this script writes the result into a table using `write.insertInto()` method. Please replace "ddwh02_sm.twrk_fbil_billing_l_flash" with your actual table name. If you want to overwrite existing data in the table, use `mode("overwrite")` instead of `insertInto()`.

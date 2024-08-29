@@ -1,0 +1,51 @@
+This SAS macro can be translated to Python, however, it is important to note that Python does not have a direct equivalent of the 'proc' procedures in SAS. So, this code will not run exactly as expected because it relies on SAS-specific operations and cannot be directly converted into Python. 
+
+However, here's an example how you can start writing the Python equivalent:
+
+```python
+# Import required libraries
+import pandas as pd
+from scipy import stats
+
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+    # Read data from csv file into a DataFrame
+    intermedio = pd.read_csv(ingresso)
+    
+    # Sort the DataFrame by group variable
+    intermedio = intermedio.sort_values(by=vargru)
+    
+    # Calculate total sum of variab for each vargru group
+    somma = intermedio.groupby(vargru)[variab].sum().reset_index()
+    
+    # Merge two DataFrames on vargru
+    somma = pd.merge(somma, datototeff, how='inner', on=vargru)
+    
+    # Calculate difference between total sum and effettiva
+    somma['diff'] = somma[variab] - effettiva
+    
+    # Merge two DataFrames on vargru
+    intermedio = pd.merge(intermedio, somma, how='inner', on=vargru)
+    
+    # Sort the DataFrame by group variable and variab in descending order
+    intermedio = intermedio.sort_values([vargru, variab], ascending=[True, False])
+    
+    # Assign a signal to each group based on vargru
+    intermedio['segnale'] = range(1, len(intermedio) + 1)
+    
+    # Select the first observation of each group and drop all other observations
+    segnali = intermedio.drop_duplicates(subset=vargru, keep='first')
+    
+    # Update variab based on diff value
+    for index, row in intermedio.iterrows():
+        if row['segnale'] < row['diff']:
+            if row['diff'] < 0:
+                intermedio.at[index, variab] += 1
+            else:
+                intermedio.at[index, variab] = max(row[variab] - 1, 0)
+    
+    # Remove unecessary columns and save the DataFrame to a csv file
+    intermedio = intermedio.drop(['diff', 'segnale'], axis=1)
+    intermedio.to_csv(uscita, index=False)
+``` 
+
+Please replace the file paths `ingresso` and `datototeff` in the function call to match your local files. The `variab`, `effettiva`, `vargru` are assumed to be column names present in the csv files. Also, you need to import the data manipulation libraries pandas and scipy before running this script.

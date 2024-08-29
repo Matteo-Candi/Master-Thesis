@@ -1,0 +1,47 @@
+
+The Python equivalent of the SAS code is as follows. This code assumes that you have already loaded your datasets into pandas dataframes. If not, you need to do this first using the `read_csv()` function. Note that the structure and content of the dataframes are assumed based on the SAS code provided. 
+
+```python
+import pandas as pd
+
+# Loading the datasets
+ter = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/etapop20b')
+sez = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/geografica_comune')
+appo = pd.read_csv('C:/Users/mcandi/OneDrive - KPMG/Desktop/project/SAS_scripts/Data_sets/nati_eta_madre_provincia_istat')
+
+# Adding a new column 'time' and assigning it with 2019 value
+ter['time'] = 2019
+
+# Creating a new column 'eta1_a' based on the conditions in SAS code
+ter['eta1_a'] = ter.apply(lambda row: 'Y_UN17' if 15 <= row['eta'] <= 17 else (
+    'Y' + str(row['eta']) if 18 <= row['eta'] <= 49 else ('Y_GE50' if 50 <= row['eta'] <= 54 else None)), axis=1)
+
+# Dropping the rows where 'eta1_a' is None (i.e., condition not met in SAS code)
+ter = ter[ter['eta1_a'].notnull()]
+
+# Selecting required columns and renaming them
+xclasse = ter[['codc620b', 'eta1_a', 'eta']].rename(columns={'codc620b': 'codice_comune__str', 'tot_fem': 'femmine'})
+
+# Sorting xclasse by 'codice_comune__str'
+xclasse = xclasse.sort_values('codice_comune__str')
+
+# Selecting required columns from sez and renaming them
+xgeog = sez[['codice_comune__str', 'codice_provincia']]
+
+# Sorting xgeog by 'codice_comune__str'
+xgeog = xgeog.sort_values('codice_comune__str')
+
+# Merging the dataframes xgeog and xclasse on 'codice_comune__str'
+xclageo = pd.merge(xgeog, xclasse, on='codice_comune__str')
+
+# Renaming column in appo
+appo = appo.rename(columns={'valore': 'nati'})
+
+# Merging the dataframes appo and xclageo on 'codice_provincia' and 'eta1_a'
+nati_donne = pd.merge(appo, xclageo, how='inner', left_on=['codice_provincia', 'eta1_a'], right_on=['codice_provincia', 'eta1_a'])
+
+# Calculating the ratio of nati to femmine for each group in nati_donne and storing it in a new column 'nati_1000_donne_classe_eta'
+nati_donne['nati_1000_donne_classe_eta'] = (1000 * nati_donne['nati']) / nati_donne['femmine']
+```
+
+This Python code does not include the tabulate and sorting steps from the SAS code, as these are more complex operations that require additional information or parameters.

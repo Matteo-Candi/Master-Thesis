@@ -1,0 +1,54 @@
+
+```python
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+    # Print warning message
+    print('WARNING- =================================================================')
+    print('WARNING: I nomi intermedio somma segnali identificano data set ausiliari della macro arrotondainterogruppo che vengono cancellati al termine delle elaborazioni              ')
+    print('WARNING- ==================================================================')
+    
+    # Load data into a pandas DataFrame
+    intermedio = pd.read_csv(ingresso)
+    
+    # Sort the DataFrame by specified variable
+    intermedio = intermedio.sort_values(by=vargru)
+    
+    # Calculate sum of specified variable for each group in the DataFrame
+    somma = intermedio.groupby(vargru).sum()[variab]
+    
+    # Load data into a pandas DataFrame
+    datototeff = pd.read_csv(datototeff)
+    
+    # Sort the DataFrame by specified variable
+    datototeff = datototeff.sort_values(by=vargru)
+    
+    # Merge two DataFrames based on specified variable and keep only rows where both DataFrames have matching values
+    somma = pd.merge(somma, datototeff, how='inner', left_index=True, right_on=vargru)
+    
+    # Calculate difference between sum of specified variable and specified effect variable for each group in the DataFrame
+    somma['diff'] = somma[variab] - effettiva
+    
+    # Keep only required columns in the DataFrame
+    somma = somma[[vargru, 'diff']]
+    
+    # Merge two DataFrames based on specified variable and keep only rows where both DataFrames have matching values
+    intermedio = pd.merge(intermedio, somma, how='inner', left_on=vargru, right_index=True)
+    
+    # Sort the DataFrame by specified variable in descending order
+    intermedio = intermedio.sort_values(by=[vargru, variab], ascending=[True, False])
+    
+    # Add a new column to the DataFrame indicating the signal for each group
+    intermedio['segnale'] = list(range(1, len(intermedio) + 1))
+    
+    # Keep only required columns in the DataFrame
+    segnali = intermedio[['segnale', vargru]]
+    
+    # Merge two DataFrames based on specified variable and update specified variable if condition is met
+    uscita = pd.merge(intermedio, segnali, how='inner', left_on=vargru, right_index=True)
+    uscita[variab] = np.where((uscita['segnale'] < uscita['diff'].abs()) & (uscita['diff'] < 0), uscita[variab] + 1, np.maximum(uscita[variab] - 1, 0))
+    
+    # Drop unnecessary columns from the DataFrame
+    uscita = uscita.drop(['diff', 'segnale'], axis=1)
+    
+    # Write the updated DataFrame to a CSV file
+    uscita.to_csv(uscita, index=False)
+```

@@ -1,0 +1,157 @@
+system
+You are an expert in translating code from SAS to Python error-free, maintaining all functionality; the code is commented but not exaplined; variables, file paths and libraries used are well defined or imported; Python code is more efficient than SAS one while keeping it readable and concise.
+user
+Translate the following code from SAS to Python:
+%macro arrotondainterogruppo(ingresso,		
+							 variab,		
+							 datototeff,	
+							 effettiva,		
+							 vargru,		
+							 uscita);		
+
+
+
+
+%put;
+%put %str(WARNING- =================================================================);
+%put %str(WARNING: I nomi);
+%put %str(WARNING- intermedio somma segnali);
+%put %str(WARNING- identificano data set ausiliari della macro arrotondainterogruppo);
+%put %str(WARNING- che vengono cancellati al termine delle elaborazioni             );
+%put %str(WARNING- =================================================================);
+%put;
+
+
+data intermedio;
+	set &ingresso;
+run;
+proc sort data = intermedio;
+	by &vargru;
+run;
+proc means data = intermedio noprint;
+	by &vargru;
+	output out = somma (keep = &vargru vartot)
+		   sum(&variab) = vartot;
+run;
+proc sort data = &datototeff;
+	by &vargru;
+run;
+data somma;
+	merge somma (in = inso) &datototeff (in = inda);
+	by &vargru;
+	if inso and inda;
+	keep &vargru vartot &effettiva;
+run;
+
+
+data somma;
+	set somma;
+	diff = vartot - &effettiva;
+	keep &vargru diff;
+run;
+
+
+data intermedio;
+	merge intermedio somma (in = presente);
+	by &vargru;
+	if presente;
+run; 
+
+
+proc sort data = intermedio;
+	by &vargru descending &variab;
+run;
+
+
+data intermedio;
+	set intermedio;
+	by &vargru;
+	if first.&vargru then segnale = _N_;
+run;
+data segnali;
+	set intermedio;
+	by &vargru;
+	if first.&vargru;
+	keep &vargru segnale;
+run;
+
+
+data &uscita;
+	merge intermedio (drop = segnale) segnali;
+	by &vargru;
+	if _N_ < segnale + abs(diff) then
+		if diff < 0 then &variab = &variab + 1;
+		else &variab = max(&variab - 1,0);
+	drop diff segnale;
+run;
+
+
+proc datasets library = work;
+	delete intermedio somma segnali;
+run;
+quit;
+
+%mend arrotondainterogruppo;
+
+assistant
+Here is the equivalent Python code:
+
+```python
+import pandas as pd
+
+def arrotondainterogruppo(ingresso, variab, datototeff, effettiva, vargru, uscita):
+    print('WARNING- =================================================================')
+    print('WARNING: I nomi')
+    print('WARNING- intermedio somma segnali')
+    print('WARNING- identificano data set ausiliari della macro arrotondainterogruppo')
+    print('WARNING- che vengono cancellati al termine delle elaborazioni             ')
+    print('WARNING- =================================================================')
+    print()
+
+    # Read data
+    intermedio = pd.read_csv(ingresso)
+    datototeff = pd.read_csv(datototeff)
+
+    # Sort data
+    intermedio.sort_values(by=vargru, inplace=True)
+    datototeff.sort_values(by=vargru, inplace=True)
+
+    # Calculate sum
+    somma = intermedio.groupby(vargru)[variab].sum().reset_index()
+    somma.columns = [vargru, 'vartot']
+
+    # Merge data
+    somma = somma.merge(datototeff, on=vargru, how='inner')[['vartot', effettiva]]
+
+    # Calculate difference
+    somma['diff'] = somma['vartot'] - somma[effettiva]
+
+    # Sort data
+    intermedio = intermedio.merge(somma[['vargru', 'diff']], on=vargru, how='inner')
+
+    # Sort by variable
+    intermedio.sort_values(by=[vargru, variab], ascending=[True, False], inplace=True)
+
+    # Create signal
+    intermedio['segnale'] = intermedio.groupby(vargru).cumcount() + 1
+
+    # Create signal dataframe
+    segnali = intermedio[['vargru', 'segnale']].drop_duplicates()
+
+    # Merge signal dataframe
+    uscita = intermedio.merge(segnali, on=vargru, how='inner')
+
+    # Update variable based on signal
+    uscita.loc[uscita['_N_'] < uscita['segnale'] + abs(uscita['diff']), variab] = uscita[variab] + (uscita['diff'] < 0).astype(int)
+    uscita.drop(columns=['diff', 'segnale'], inplace=True)
+
+    # Save data
+    uscita.to_csv(uscita, index=False)
+
+    # Delete temporary data
+    del intermedio
+    del somma
+    del segnali
+```
+
+This Python code does the same thing as your SAS macro. It reads in two CSV files, sorts them by a grouping variable, calculates the sum of a variable within each group, merges the sum data with the original data, calculates the difference between the sum and the effective variable, sorts the data by the grouping variable and variable, creates a signal variable, creates a signal dataframe, merges the signal dataframe with the original data, updates the variable based on the signal, saves the updated data to a CSV file, and deletes temporary data.

@@ -1,0 +1,47 @@
+
+The PySpark equivalent of the provided SQL code is as follows:
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit, current_date, to_date
+
+# Initialize Spark Session
+spark = SparkSession.builder.appName('SQL to PySpark').getOrCreate()
+
+# Load data from source table
+source_table = spark.read.format("jdbc").option("url", "jdbc:postgresql://hostname:port/database").option("dbtable", "ddwh00_sa.TS_VENL0001_WW_GPP").load()
+
+# Load data from target table
+target_table = spark.read.format("jdbc").option("url", "jdbc:postgresql://hostname:port/database").option("dbtable", "ddwh01_dw.TM_VENL_MASTER_LINK").load()
+
+# Perform the merge operation
+merged = target_table.join(source_table, (target_table.VENL_CD_CLIENT == source_table.VENL_CD_CLIENT) & (target_table.VENL_CD_PARTNER_GUID == source_table.VENL_CD_PARTNER_GUID), 'left')
+merged = merged.withColumn('VENL_ID_LINK', when(col('VENL_CD_CLIENT').isNotNull(), lit(DDWH01_DW.SEQ_TM_VENL.NEXTVAL)).otherwise(col('VENL_ID_LINK')))
+merged = merged.withColumn('VENL_DT_START_VALIDITY', to_date(lit("01/01/1900"), "dd/MM/yyyy")))
+merged = merged.withColumn('VENL_DT_END_VALIDITY', to_date(lit("31/12/9999"), "dd/MM/yyyy"))
+merged = merged.withColumn('VENL_DT_INSERT', current_date())
+merged = merged.withColumn('VENL_ID_BATCH_LAST_MODIFY', when(col('p_ELT_ID_BATCH').isNotNull, col('p_ELT_ID_BATCH')).otherwise(lit(n_ELT_ID_JOB_LOG)))
+merged = merged.withColumn('VENL_DT_LAST_MODIFY', current_date())
+merged = merged.fillna({'VENL_CD_CLIENT': source_table.VENL_CD_CLIENT, 
+                            'VENL_CD_PARTNER_GUID': source_table.VENL_CD_PARTNER_GUID, 
+                            'VENL_CD_VENDOR': source_table.VENL_CD_VENDOR, 
+                            'VENL_CD_USER': source_table.VENL_CD_USER, 
+                            'VENL_DT_DATE': source_table.VENL_DT_DATE, 
+                            'VENL_DT_TIME': source_table.VENL_DT_TIME})
+merged = merged.select('VENL_ID_LINK', 
+                           'VENL_CD_CLIENT', 
+                           'VENL_CD_PARTNER_GUID', 
+                           'VENL_CD_VENDOR', 
+                           'VENL_CD_USER', 
+                           'VENL_DT_DATE', 
+                           'VENL_DT_TIME', 
+                           'VENL_ID_BATCH_LAST_MODIFY', 
+                           'VENL_DT_START_VALIDITY', 
+                           'VENL_DT_END_VALIDITY', 
+                           'VENL_DT_INSERT', 
+                           'VENL_ID_BATCH_LAST_MODIFY', 
+                           'VENL_DT_LAST_MODIFY')
+
+# Save the merged data back to target table
+merged.write.format("jdbc").option("url", "jdbc:postgresql://hostname:port/database").option("dbtable", "ddwh01_dw.TM_VENL_MASTER_LINK").mode('overwrite').save()
+```
+Please replace `'hostname:port/database'` with your actual database connection string. The code assumes that the source and target tables are located in a PostgreSQL database. If you're using a different type of database, you may need to modify the code accordingly.

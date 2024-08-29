@@ -1,0 +1,61 @@
+Here is the PySpark code equivalent to your SQL query. Note that MERGE operation in SQL is not directly available in PySpark and we need to use join operations instead. Also, please note that some of the functions like NVL are replaced with their Python equivalents (`or` operator). 
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit, concat, to_date, when
+
+# Create a spark session
+spark = SparkSession.builder \
+    .appName('Merge SQL to PySpark') \
+    .getOrCreate()
+
+# Read the source data from SA tables
+SA1 = spark.read.table("ddwh00_sa.TS_MAKT0001_WW_GPP")
+SA2 = spark.read.table("ddwh00_sa.TS_EQKT0001_WW_GPP")
+# ... read other SA tables similarly
+
+# Perform UNION ALL operation on all SA tables and assign column names
+unionDF = (SA1.select(lit('MAKT').alias("DESC_CD_TABLE"), lit('Material').alias("DESC_CD_TABLE_DESC"), col("MATNR").alias("DESC_CD_CODE"), 
+                       col("SPRAS").alias("DESC_CD_LANGUAGE"), lit(1).alias("DESC_CD_POSITION"), col("MAKTX").alias("DESC_CD_DESCRIPTION1"), 
+                       col("MAKTG").alias("DESC_CD_DESCRIPTION2"), lit(None).alias("DESC_CD_DETAIL1"), lit(None).alias("DESC_CD_DETAIL2"), 
+                       lit(None).alias("DESC_CD_DETAIL3"), lit('WW GPP').alias("DESC_CD_SOURCE_SYSTEM"))
+           .unionAll(SA2.select(lit('EQKT').alias("DESC_CD_TABLE"), lit('Equipment').alias("DESC_CD_TABLE_DESC"), col("EQUNR").alias("DESC_CD_CODE"), 
+                                col("SPRAS").alias("DESC_CD_LANGUAGE"), lit(1).alias("DESC_CD_POSITION"), col("EQKTX").alias("DESC_CD_DESCRIPTION1"), 
+                                col("EQKTU").alias("DESC_CD_DESCRIPTION2"), col("KZLTX").alias("DESC_CD_DETAIL1"), col("TXASP").alias("DESC_CD_DETAIL2"), 
+                                concat(col("TEXTCHANGEDDATETIME")).alias("DESC_CD_DETAIL3"), lit('WW GPP').alias("DESC_CD_SOURCE_SYSTEM")))
+           # ... union all other SA tables similarly
+          )
+
+# Read the target data from DWH table
+DW = spark.read.table("ddwh01_dw.TM_DESC_DESCRIPTION")
+
+# Perform join operation to find matched and unmatched records
+joinDF = unionDF.alias('SA').join(DW.alias('TARGET'), 
+                                   (col('TARGET.DESC_CD_TABLE') == col('SA.DESC_CD_TABLE')) & 
+                                   (col('TARGET.DESC_CD_CODE') == col('SA.DESC_CD_CODE')) & 
+                                   (col('TARGET.DESC_CD_LANGUAGE') == col('SA.DESC_CD_LANGUAGE')) & 
+                                   ((col('TARGET.DESC_CD_POSITION').isNull() & lit(-1).eqNullSafe(col('SA.DESC_CD_POSITION'))) | (col('TARGET.DESC_CD_POSITION') == col('SA.DESC_CD_POSITION'))), 
+                                  'leftanti') # left anti join to find unmatched records
+
+# Perform update operation on matched records
+updatedDF = DW.alias('TARGET').join(unionDF.alias('SA'), 
+                                     (col('TARGET.DESC_CD_TABLE') == col('SA.DESC_CD_TABLE')) & 
+                                     (col('TARGET.DESC_CD_CODE') == col('SA.DESC_CD_CODE')) & 
+                                     (col('TARGET.DESC_CD_LANGUAGE') == col('SA.DESC_CD_LANGUAGE')) & 
+                                     ((col('TARGET.DESC_CD_POSITION').isNull() & lit(-1).eqNullSafe(col('SA.DESC_CD_POSITION'))) | (col('TARGET.DESC_CD_POSITION') == col('SA.DESC_CD_POSITION'))), 
+                                    'inner').select(col('TARGET.*'), col('SA.DESC_CD_DESCRIPTION1'), col('SA.DESC_CD_DESCRIPTION2'), 
+                                                    col('SA.DESC_CD_DETAIL1'), col('SA.DESC_CD_DETAIL2'), col('SA.DESC_CD_DETAIL3'))
+
+# Perform insert operation on unmatched records
+insertedDF = unionDF.select(concat(lit("DDWH01_DW.SEQ_TM_DESC.NEXTVAL"), lit(" AS DESC_ID_TABLE")).cast('int'), 'SA.*', 
+                            concat(lit("SYSDATE"), lit(" AS DESC_DT_INSERT")), concat(lit("SYSDATE"), lit(" AS DESC_DT_LAST_MODIFY")), 
+                            when(col('p_ELT_ID_BATCH').isNull(), col('n_ELT_ID_JOB_LOG')).otherwise(col('p_ELT_ID_BATCH')).alias("DESC_ID_BATCH_LAST_MODIFY"), 
+                            to_date(lit("01/01/1900"), "dd/MM/yyyy").alias("DESC_DT_START_VALIDITY"), 
+                            to_date(lit("31/12/9999"), "dd/MM/yyyy").alias("DESC_DT_END_VALIDITY"))
+
+# Write the final result back to DWH table
+updatedDF.unionAll(insertedDF).write.mode('overwrite').insertInto("ddwh01_dw.TM_DESC_DESCRIPTION")
+```
+Please replace `DDWH01_DW.SEQ_TM_DESC.NEXTVAL` with the actual sequence generator in your database. Also, make sure to adjust column names and data types according to your actual schema. 
+
+The PySpark code is written assuming that you have a SparkSession set up and it's connected to your data source. If not, please refer to the official documentation on how to create a SparkSession.

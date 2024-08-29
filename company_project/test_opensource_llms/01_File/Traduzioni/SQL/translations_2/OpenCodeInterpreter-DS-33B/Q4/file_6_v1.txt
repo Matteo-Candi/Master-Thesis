@@ -1,0 +1,114 @@
+
+The PySpark equivalent code for the SQL code provided is as follows:
+
+```python
+from pyspark.sql import SparkSession
+
+# Create a spark session
+spark = SparkSession.builder \
+    .appName('TranslateSQLtoPySpark') \
+    .getOrCreate()
+
+# Define the table schema
+schema = StructType([StructField("EKPO_ID_PURCH_DOC_ITEM_GPP", IntegerType(), True),
+                           StructField("EKPO_DT_LAST_MODIFY", TimestampType(), True),
+                           StructField("EKPO_ID_EKKO_PURCH_DOC_HEADER", IntegerType(), True),
+                           StructField("EKPO_CD_CONCAT_EBELN_EBELP", StringType(), True),
+                           StructField("EKPO_CD_PLANT", StringType(), True),
+                           StructField("EKPO_CD_PO_NBR", StringType(), True),
+                           StructField("EKPO_NR_ITEM_NBR_PO", IntegerType(), True),
+                           StructField("EKPO_NR_TARGET_QUANTITY", DoubleType(), True),
+                           StructField("EKPO_NR_FIRST_LEAD_TIME", DoubleType(), True),
+                           StructField("EKPO_NR_MIN_FABR_QTY", DoubleType(), True),
+                           StructField("EKPO_NR_MIN_FABR_QTY_UNIT", StringType(), True),
+                           StructField("EKPO_NR_STAND_PO_QUANTITY", DoubleType(), True),
+                           StructField("EKPO_NR_STAND_PO_QTY_UNIT", StringType(), True),
+                           StructField("EKPO_NR_TCE_AMOUNT", DoubleType(), True),
+                           StructField("EKPO_NR_TCE_AMOUNT_CUR", StringType(), True),
+                           StructField("EKPO_NR_TOOLING_ESTIMATE", DoubleType(), True),
+                           StructField("EKPO_NR_TOOLING_ESTIMATE_CUR", StringType(), True),
+                           StructField("EKPO_NR_NET_PRICE_PO", DoubleType(), True),
+                           StructField("EKPO_NR_NET_ORDER_VALUE", DoubleType(), True),
+                           StructField("EKPO_CD_MATERIAL_GRP", StringType(), True),
+                           StructField("EKPO_CD_MATERIAL_NBR", StringType(), True),
+                           StructField("EKPO_CD_PO_UNIT_OF_MEASURE", StringType(), True),
+                           StructField("EKPO_CD_REVISION_LVL", IntegerType(), True),
+                           StructField("EKPO_CD_QUOTA_ARRANGEMENT", StringType(), True),
+                           StructField("EKPO_CD_MADE_IN_COUNTRY_1", StringType(), True),
+                           StructField("EKPO_CD_PROGRAM_ID", IntegerType(), True),
+                           StructField("EKPO_FL_DELETION_PO", BooleanType(), True),
+                           StructField("EKPO_CD_PRINC_PURCH_AGREEMT", StringType(), True),
+                           StructField("EKPO_NR_ITEM_PURCH_AGREEMENT", DoubleType(), True),
+                           StructField("EKPO_CD_MATERIAL_NBR_VENDOR", StringType(), True),
+                           StructField("EKPO_NR_PRICE_UNIT", DoubleType(), True),
+                           StructField("EKPO_CD_SHORT_TEXT", StringType(), True),
+                           StructField("EKPO_DT_STARTING_DT", TimestampType(), True),
+                           StructField("EKPO_NR_DEPTH_MM", DoubleType(), True),
+                           StructField("EKPO_DT_END_DT", TimestampType(), True),
+                           StructField("EKPO_NR_HEIGHT_MM", DoubleType(), True),
+                           StructField("EKPO_CD_INDICE_CONTO_LAVORO", StringType(), True),
+                           StructField("EKPO_CD_IN_PAIR_MATERIAL_1", StringType(), True),
+                           StructField("EKPO_CD_IN_PAIR_MATERIAL_2", StringType(), True),
+                           StructField("EKPO_CD_IN_PAIR_MATERIAL_3", StringType(), True),
+                           StructField("EKPO_CD_IN_PAIR_MATERIAL_4", StringType(), True),
+                           StructField("EKPO_CD_IN_PAIR_MATERIAL_5", StringType(), True),
+                           StructField("EKPO_CD_IN_PAIR_MATERIAL_6", StringType(), True),
+                           StructField("EKPO_FL_IN_PAIR_WITH", BooleanType(), True),
+                           StructField("EKPO_NR_MIN_ORDER_QTY", DoubleType(), True),
+                           StructField("EKPO_FL_OVERSEAS", BooleanType(), True),
+                           StructField("EKPO_FL_WMF_FLAG", BooleanType(), True),
+                           StructField("EKPO_NR_PACKAGING_UNIT_MOQ", DoubleType(), True),
+                           StructField("EKPO_NR_PACK_WEIGHT_KG", DoubleType(), True),
+                           StructField("EKPO_CD_PACK_TYPE", StringType(), True),
+                           StructField("EKPO_CD_PPAP_STATUS", IntegerType(), True),
+                           StructField("EKPO_NR_PROCUR_MULTI", DoubleType(), True),
+                           StructField("EKPO_NR_PROCUR_MULTI_UNIT", StringType(), True),
+                           StructField("EKPO_CD_REVISION_LVL_2", IntegerType(), True),
+                           StructField("EKPO_NR_SAMPLE_LEAD_TIME", DoubleType(), True),
+                           StructField("EKPO_FL_STACKABLE", BooleanType(), True),
+                           StructField("EKPO_CD_TIPO_CONTO_LAVORO", StringType(), True),
+                           StructField("EKPO_CD_TYRE_BRAND", StringType(), True),
+                           StructField("EKPO_CD_TYRE_SIZE", IntegerType(), True),
+                           StructField("EKPO_FL_VPI_INDICATOR", BooleanType(), True),
+                           StructField("EKPO_NR_WIDTH_MM", DoubleType(), True),
+                           StructField("EKPO_CD_MADE_IN_COUNTRY_2", StringType(), True),
+                           StructField("EKPO_CD_MADE_IN_COUNTRY_3", StringType(), True),
+                           StructField("EKPO_CD_MADE_IN_COUNTRY_4", StringType(), True),
+                           StructField("EKPO_CD_MADE_IN_COUNTRY_5", StringType(), True),
+                           StructField("EKPO_CD_TYRE_SPECIFICATION", StringType(), True),
+                           StructField("EKPO_CD_TYRE_TYPE", IntegerType(), True),
+                           StructField("EKPO_NR_PO_QUANTITY", DoubleType(), True),
+                           StructField("EKPO_CD_REASON_CODE", StringType(), True),
+                           StructField("EKPO_CD_COMPANY_CODE", StringType(), True),
+                           StructField("EKPO_CD_ITEM_CATEG_PO", IntegerType(), True),
+                           StructField("EKPO_NR_PURCH_DOC_YEAR", IntegerType(), False),
+                           StructField("EKPO_CD_PURCH_DOCTYPE", StringType(), True),
+                           StructField("EKPO_CD_WPS_PREFIX", StringType(), True),
+                           StructField("EKPO_CD_PURCH_DOC_NBR_R3_GPP", StringType(), False),
+                           StructField("EKPO_CD_MATERIAL_MFG", StringType(), True),
+                           StructField("EKPO_DS_PLANT_SEGMENT", StringType(), True),
+                           StructField("PLBR_DS_PLANT_SEGMENT", StringType(), True),
+                           StructField("ODAG_PARTNUMBER", StringType(), False),
+                           StructField("ODAG_PROGRAM", IntegerType(), True),
+                           StructField("EKPO_DT_RETENTION_YEAR", IntegerType(), False),
+                           StructField("ODAG_PODOCUMENT", StringType(), False),
+                           StructField("EKPO_NR_NET_WEIGHT", DoubleType(), True),
+                           StructField("EKPO_NR_GROSS_WEIGHT", DoubleType(), True),
+                           StructField("EKPO_CD_UNIT_OF_WEIGHT", StringType(), True),
+                           StructField("EKPO_CD_PLANT_R3_STC", StringType(), False),
+                           StructField("EKPO_CD_PO_NBR10", IntegerType(), False),
+                           StructField("EKPO_NR_ITEM_NBR_PO5", IntegerType(), True),
+                           StructField("EKPO_CD_MATERIAL_NBR_TRIM", StringType(), False),
+                           StructField("EKPO_CD_MATERIAL_MFG_TRIM", StringType(), False),
+                           StructField("EKPO_CD_PURCH_DOC_NBR_R3_GPP10", IntegerType(), False),
+                           StructField("EKPO_KEY_STC", StringType(), False)])
+
+# Load the data from the SQL table into a DataFrame
+df = spark.read \
+    .format('jdbc') \
+    .option('url', 'jdbc:oracle:thin:@<hostname>:<port>/<database>') \
+    .option('dbtable', 'DDWH02_SM.VW_EKPO_PURCH_DOC_ITEM_AGCE') \
+    .option('user', '<username>') \
+    .option('password', '<password>') \
+    .load()
+```

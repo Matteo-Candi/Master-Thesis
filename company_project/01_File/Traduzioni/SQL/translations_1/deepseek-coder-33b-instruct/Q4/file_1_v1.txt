@@ -1,0 +1,40 @@
+Here is the equivalent PySpark code for the given SQL query. Note that PySpark does not support direct MERGE operation like in SQL. We have to perform join operations and then use when/otherwise statements to handle matched and unmatched rows separately. 
+
+```python
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, lit, current_date, current_timestamp, coalesce, to_date
+
+# Create a spark session
+spark = SparkSession.builder.appName('pyspark_merge').getOrCreate()
+
+# Read data from source table
+SA = spark.sql("""SELECT CLIENT VENL_CD_CLIENT,
+                      PARTNER_GUID VENL_CD_PARTNER_GUID,
+                      VENDOR VENL_CD_VENDOR,
+                      CRUSER VENL_CD_USER,
+                      CRDAT VENL_DT_DATE,
+                      CRTIM VENL_DT_TIME
+               FROM ddwh00_sa.TS_VENL0001_WW_GPP SA""")
+
+# Read data from target table
+DW = spark.sql("SELECT * FROM ddwh01_dw.TM_VENL_MASTER_LINK DW")
+
+# Perform join operation using left outer join
+join_condition = [SA['VENL_CD_CLIENT'] == DW['VENL_CD_CLIENT'], SA['VENL_CD_PARTNER_GUID'] == DW['VENL_CD_PARTNER_GUID']]
+joined_df = SA.join(DW, join_condition, 'left_outer')
+
+# Handle matched rows (where there is a match in both SA and DW)
+matched_rows = joined_df.filter(col('VENL_CD_CLIENT').isNotNull() & col('VENL_CD_PARTNER_GUID').isNotNull())
+updated_matched_rows = matched_rows.withColumn('VENL_DT_LAST_MODIFY', current_timestamp()).withColumn('VENL_ID_BATCH_LAST_MODIFY', coalesce(lit(p_ELT_ID_BATCH), lit(n_ELT_ID_JOB_LOG)))
+
+# Handle unmatched rows (where there is no match in DW)
+unmatched_rows = joined_df.filter(col('VENL_CD_CLIENT').isNull() | col('VENL_CD_PARTNER_GUID').isNull())
+inserted_unmatched_rows = unmatched_rows.withColumn('VENL_ID_LINK', spark.sql("SELECT NEXTVAL FROM ddwh01_dw.SEQ_TM_VENL")).withColumn('VENL_DT_START_VALIDITY', to_date(lit('01/01/1900'), 'dd/MM/yyyy')).withColumn('VENL_DT_END_VALIDITY', to_date(lit('31/12/9999'), 'dd/MM/yyyy')).withColumn('VENL_DT_INSERT', current_timestamp()).withColumn('VENL_ID_BATCH_LAST_MODIFY', coalesce(lit(p_ELT_ID_BATCH), lit(n_ELT_ID_JOB_LOG))).withColumn('VENL_DT_LAST_MODIFY', current_timestamp())
+
+# Combine updated matched rows and inserted unmatched rows
+result = updated_matched_rows.unionByName(inserted_unmatched_rows)
+
+# Write the result back to target table
+result.write.mode('overwrite').insertInto("ddwh01_dw.TM_VENL_MASTER_LINK")
+```
+This PySpark code performs a left outer join on SA and DW based on the join condition, then handles matched rows and unmatched rows separately by updating columns and adding new rows accordingly. The result is written back to the target table. Please replace `p_ELT_ID_BATCH` and `n_ELT_ID_JOB_LOG` with actual values or variables in your code.

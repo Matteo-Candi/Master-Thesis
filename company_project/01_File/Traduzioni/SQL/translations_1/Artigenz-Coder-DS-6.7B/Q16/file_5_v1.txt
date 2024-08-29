@@ -1,0 +1,271 @@
+You are an expert in translating code from SQL to PySpark. Translate anyway at the best that you can. Return just the code with comments. Do not explain the code. 
+
+@@Instruction 
+Translate the following code from SQL to PySpark:
+INSERT INTO ddwh02_sm.twrk_fbil_billing_l_flash fbil (fbil_id_comp_company, fbil_cd_accg_doc_code, fbil_nr_accg_doc_fiscal_year, fbil_cd_cmm_doc_code, fbil_cd_cmm_doc_pos_code, fbil_id_pvan_vcl, fbil_cd_sls_ord_code, fbil_cd_sls_ord_pos_code, fbil_id_cmm_doc_id, fbil_id_cmm_doc_pos_id, fbil_id_bdty_billing_doc_tp, fbil_id_time_cmm_doc_date, fbil_id_cust_payer, fbil_id_cust_sold, fbil_id_cuty_customer_type, fbil_id_divi_division, fbil_id_hmup_hmu_product, fbil_id_prat_pr_attributes, fbil_id_prp_prpp_product, fbil_id_time_return_date, fbil_id_time_sales_order_date, fbil_id_sls_ord_id, fbil_id_sls_ord_pos_id, fbil_id_time_start_billing_dat, fbil_cd_currency, fbil_id_batch_id, fbil_fl_itc_flg, fbil_id_cust_payee, fbil_id_cust_billtoparner, fbil_id_cust_saleschannel, fbil_id_cust_soldtoparner, fbil_id_cust_ownership_group, fbil_id_addr_ownership_group, fbil_cd_business_area_code, fbil_cd_codice_resa, fbil_cd_dlr_code, fbil_cd_dlr_ord_ref, fbil_cd_dlr_ord_tp, fbil_cd_doc_nbr, fbil_cd_doc_tp, fbil_cd_draft_inv_code, fbil_cd_eng_nbr, fbil_cd_machine_tp, fbil_cd_market_legacy, fbil_cd_price_tyres_1, fbil_cd_price_tyres_2, fbil_cd_price_list, fbil_cd_price_tech_tp, fbil_cd_product_cl, fbil_cd_product_line, fbil_cd_product_tp, fbil_cd_progressive_ord, fbil_cd_ref_doc_nbr, fbil_cd_serial_nbr, fbil_cd_shipment_progressive, fbil_cd_sls_ord, fbil_cd_source_ord, fbil_cd_source_ord_sequence, fbil_cd_std_card_mdl, fbil_cd_std_card_tyres, fbil_cd_std_card_vrs, fbil_cd_tech_tp, fbil_id_time_itc_inv_date, fbil_fl_inv_reject_reason, fbil_id_time_draft_inv_date, fbil_id_coun_country, fbil_cd_source_system, fbil_in_wholesale_qty, fbil_in_wholesale_net_qty, fbil_in_wholesale_rev_qty, fbil_id_time_accounting_date)
+SELECT -1 AS fbil_id_comp_company,
+       '-1' AS fbil_cd_accg_doc_code,
+       to_number (TO_CHAR (inol.inol_dt_document_date, 'YYYY')) AS fbil_nr_accg_doc_fiscal_year,
+       inol.inol_cd_document_number AS fbil_cd_cmm_doc_code,
+       inol.inol_cd_progressive_order AS fbil_cd_cmm_doc_pos_code,
+       NVL (inol.inol_id_vele_vcl_legacy,
+            -1) AS fbil_id_pvan_vcl,
+           inol.inol_cd_sales_order AS fbil_cd_sls_ord_code,
+           inol.inol_cd_progressive_order AS fbil_cd_sls_ord_pos_code,
+           NVL (inol.inol_id_inoh_invoice_orders_he,
+                -1) AS fbil_id_cmm_doc_id,
+               NVL (inol.inol_id_invoice_orders_lines,
+                    -1) AS fbil_id_cmm_doc_pos_id,
+                   inol_cd_document_type AS fbil_id_bdty_billing_doc_tp,
+                   NVL (to_number (TO_CHAR (inol.inol_dt_document_date, 'J')),
+                        5373484) AS fbil_id_time_cmm_doc_date,
+                       NVL (inol.inol_id_cust_customer,
+                            -1) AS fbil_id_cust_payer,
+                           NVL (inol.inol_id_cust_customer,
+                                -1) AS fbil_id_cust_sold,
+                               -2 AS fbil_id_cuty_customer_type,
+                               NVL (vele.vele_id_ledi_legacy_division,
+                                    -1) AS fbil_id_divi_division,
+                                   NVL (vele.vele_id_hmup_plank_key,
+                                        -1) AS fbil_id_hmup_hmu_product,
+                                       NVL (tdim_pvan.pvan_id_prat_pr_attributes,
+                                            -1) AS fbil_id_prat_pr_attributes,
+                                           NVL (tdim_pvan.pvan_id_prpp_prp_product,
+                                                -1) AS fbil_id_prp_prpp_product,
+                                               5373484 AS fbil_id_time_return_date,
+                                               NVL (to_number (TO_CHAR (slor.slor_dt_document_date, 'J')),
+                                                    5373484) AS fbil_id_time_sales_order_date,
+                                                   NVL (slor.slor_id_sales_order,
+                                                        -1) AS fbil_id_sls_ord_id,
+                                                       NVL (sops.sops_id_sales_order_pos,
+                                                            -1) AS fbil_id_sls_ord_pos_id,
+                                                           NVL (to_number (TO_CHAR (vele.vele_dt_dealer_invoice_date, 'J')),
+                                                                5373484) AS fbil_id_time_start_billing_dat,
+                                                               inoh.inoh_cd_currency_code AS fbil_cd_currency,
+                                                               1 AS fbil_id_batch_id,
+                                                               NULL AS fbil_fl_itc_flg,
+                                                               NVL (inoh.inoh_id_cust_customer,
+                                                                    -1) AS fbil_id_cust_payee,
+                                                                   NVL (inoh.inoh_id_cust_customer,
+                                                                        -1) AS fbil_id_cust_billtoparner,
+                                                                       NVL (inoh.inoh_id_cust_customer,
+                                                                            -1) AS fbil_id_cust_saleschannel,
+                                                                           NVL (inoh.inoh_id_cust_customer,
+                                                                                -1) AS fbil_id_cust_soldtoparner,
+                                                                               NVL (inoh.inoh_id_cust_customer,
+                                                                                    -1) AS fbil_id_cust_ownership_group,
+                                                                                   -2 AS fbil_id_addr_ownership_group,
+                                                                                   inol.inol_cd_business_area_code AS fbil_cd_business_area_code,
+                                                                                   slor.slor_cd_codice_resa AS fbil_cd_codice_resa,
+                                                                                   inol.inol_cd_dealer_code AS fbil_cd_dlr_code,
+                                                                                   inoh.inoh_cd_dealer_order_reference AS fbil_cd_dlr_ord_ref,
+                                                                                   inol.inol_cd_dealer_order_type AS fbil_cd_dlr_ord_tp,
+                                                                                   inol.inol_cd_document_number AS fbil_cd_doc_nbr,
+                                                                                   inol.inol_cd_document_type AS fbil_cd_doc_tp,
+                                                                                   inol.inol_cd_draft_number AS fbil_cd_draft_inv_code,
+                                                                                   inol.inol_cd_engine_number AS fbil_cd_eng_nbr,
+                                                                                   inol.inol_cd_machine_type AS fbil_cd_machine_tp,
+                                                                                   inol.inol_cd_legacy_mkt AS fbil_cd_market_legacy,
+                                                                                   inol.inol_cd_tyres_price_1 AS fbil_cd_price_tyres_1,
+                                                                                   inol.inol_cd_tyres_price_2 AS fbil_cd_price_tyres_2,
+                                                                                   inol.inol_cd_price_list AS fbil_cd_price_list,
+                                                                                   inol.inol_cd_tech_type_price AS fbil_cd_price_tech_tp,
+                                                                                   inol.inol_cd_product_class AS fbil_cd_product_cl,
+                                                                                   inol.inol_cd_product_line AS fbil_cd_product_line,
+                                                                                   inol.inol_cd_product_type AS fbil_cd_product_tp,
+                                                                                   inol.inol_cd_progressive_order AS fbil_cd_progressive_ord,
+                                                                                   inol.inol_cd_reference_document_num AS fbil_cd_ref_doc_nbr,
+                                                                                   inol.inol_cd_serial_number AS fbil_cd_serial_nbr,
+                                                                                   inol.inol_cd_shipment_progressive AS fbil_cd_shipment_progressive,
+                                                                                   inol.inol_cd_sales_order AS fbil_cd_sls_ord,
+                                                                                   inol.inol_cd_source_order AS fbil_cd_source_ord,
+                                                                                   inol.inol_cd_source_order_sequence AS fbil_cd_source_ord_sequence,
+                                                                                   inol.inol_cd_standard_card_model AS fbil_cd_std_card_mdl,
+                                                                                   inol.inol_cd_standard_card_tyres AS fbil_cd_std_card_tyres,
+                                                                                   inol.inol_cd_standard_card_version AS fbil_cd_std_card_vrs,
+                                                                                   inol.inol_cd_tech_tp AS fbil_cd_tech_tp,
+                                                                                   5373484 AS fbil_id_time_itc_inv_date,
+                                                                                   inol.inol_fl_invoice_reject_reason AS fbil_fl_inv_reject_reason,
+                                                                                   NVL (to_number (TO_CHAR (inol.inol_dt_draft_date, 'J')),
+                                                                                        5373484) AS fbil_id_time_draft_inv_date,
+                                                                                       NVL (inol.inol_id_mark_std_legacy_mkt,
+                                                                                            -1) AS fbil_id_coun_country,
+                                                                                           inol.inol_cd_source_system AS fbil_cd_source_system,
+                                                                                           CASE
+                                                                                               WHEN inol.inol_cd_document_type IN ('1') THEN 1
+                                                                                               ELSE 0
+                                                                                           END AS fbil_in_wholesale_qty,
+                                                                                           CASE
+                                                                                               WHEN inol.inol_cd_document_type IN ('1') THEN 1
+                                                                                               ELSE 0
+                                                                                           END - CASE
+                                                                                                     WHEN inol.inol_cd_document_type IN ('6') THEN 1
+                                                                                                     ELSE 0
+                                                                                                 END AS fbil_in_wholesale_net_qty,
+                                                                                                 CASE WHEN inol.inol_cd_document_type IN ('6') th
+FROM ddwh01_dw.td_inol_invoice_orders_lines inol
+INNER JOIN ddwh02_dim.twrk_pvan_delta_flash_leg delta ON delta.vele_id_vehicle_legacy_id_pk = inol.inol_id_vele_vcl_legacy
+INNER JOIN ddwh01_dw.tm_vele_vehicle_legacy vele ON vele.vele_id_vehicle_legacy_id_pk = inol.inol_id_vele_vcl_legacy
+LEFT
+    OUTER JOIN
+  (SELECT *
+   FROM
+     (SELECT s.*,
+             MAX (s.sops_id_sales_order_pos) OVER (PARTITION BY s.sops_cd_sales_order,
+                                                                s.sops_cd_legacy_mkt,
+                                                                s.sops_cd_dealer_code,
+                                                                s.sops_cd_source_order,
+                                                                s.sops_cd_source_order_sequence,
+                                                                s.sops_cd_source_system,
+                                                                s.sops_cd_product_line,
+                                                                s.sops_id_vele_vcl_legacy) AS max_id_sops
+      FROM ddwh01_dw.td_sops_sales_order_position s
+      WHERE sops_cd_source_system not like '%SAP%')
+   WHERE sops_id_sales_order_pos = max_id_sops) sops ON inol.inol_cd_sales_order = sops.sops_cd_sales_order
+AND inol.inol_cd_legacy_mkt = sops.sops_cd_legacy_mkt
+AND inol.inol_cd_dealer_code = sops.sops_cd_dealer_code
+AND inol.inol_cd_source_order = sops.sops_cd_source_order
+AND inol.inol_cd_source_order_sequence = sops.sops_cd_source_order_sequence
+AND inol.inol_cd_source_system = sops.sops_cd_source_system
+AND inol.inol_cd_product_line = sops.sops_cd_product_line
+AND inol.inol_id_vele_vcl_legacy = sops.sops_id_vele_vcl_legacy
+LEFT
+    OUTER JOIN ddwh01_dw.tt_slor_sales_order slor ON sops.sops_id_slor_sales_order = slor.slor_id_sales_order
+LEFT
+    OUTER JOIN ddwh01_dw.tt_inoh_invoice_orders_header inoh ON inoh.inoh_id_invoice_orders_header = inol.inol_id_inoh_invoice_orders_he
+LEFT
+    OUTER JOIN tdim_pvan_vehicle tdim_pvan ON tdim_pvan.pvan_id_vcl = inol.inol_id_vele_vcl_legacy
+WHERE inol.inol_fl_delete_line IS NULL ; 
+@@Response
+Inserting data from one table into another can be done using the `write.mode("overwrite")` command in PySpark. However, the specific syntax might vary depending on the structure of your data, so it's important to adapt it to your needs.
+
+Here is the PySpark equivalent of your SQL code:
+
+```python
+# Import necessary libraries
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+
+# Define schema for the dataframe
+schema = StructType([
+    StructField('fbil_id_comp_company', IntegerType(), True),
+    StructField('fbil_cd_accg_doc_code', StringType(), True),
+    StructField('fbil_nr_accg_doc_fiscal_year', IntegerType(), True),
+    StructField('fbil_cd_cmm_doc_code', StringType(), True),
+    StructField('fbil_cd_cmm_doc_pos_code', StringType(), True),
+    StructField('fbil_id_pvan_vcl', IntegerType(), True),
+    StructField('fbil_cd_sls_ord_code', StringType(), True),
+    StructField('fbil_cd_sls_ord_pos_code', StringType(), True),
+    StructField('fbil_id_cmm_doc_id', IntegerType(), True),
+    StructField('fbil_id_cmm_doc_pos_id', IntegerType(), True),
+    StructField('fbil_id_bdty_billing_doc_tp', StringType(), True),
+    StructField('fbil_id_time_cmm_doc_date', IntegerType(), True),
+    StructField('fbil_id_cust_payer', IntegerType(), True),
+    StructField('fbil_id_cust_sold', IntegerType(), True),
+    StructField('fbil_id_cuty_customer_type', IntegerType(), True),
+    StructField('fbil_id_divi_division', IntegerType(), True),
+    StructField('fbil_id_hmup_hmu_product', IntegerType(), True),
+    StructField('fbil_id_prat_pr_attributes', IntegerType(), True),
+    StructField('fbil_id_prp_prpp_product', IntegerType(), True),
+    StructField('fbil_id_time_return_date', IntegerType(), True),
+    StructField('fbil_id_time_sales_order_date', IntegerType(), True),
+    StructField('fbil_id_sls_ord_id', IntegerType(), True),
+    StructField('fbil_id_sls_ord_pos_id', IntegerType(), True),
+    StructField('fbil_id_time_start_billing_dat', IntegerType(), True),
+    StructField('fbil_cd_currency', StringType(), True),
+    StructField('fbil_id_batch_id', IntegerType(), True),
+    StructField('fbil_fl_itc_flg', StringType(), True),
+    StructField('fbil_id_cust_payee', IntegerType(), True),
+    StructField('fbil_id_cust_billtoparner', IntegerType(), True),
+    StructField('fbil_id_cust_saleschannel', IntegerType(), True),
+    StructField('fbil_id_cust_soldtoparner', IntegerType(), True),
+    StructField('fbil_id_cust_ownership_group', IntegerType(), True),
+    StructField('fbil_id_addr_ownership_group', IntegerType(), True),
+    StructField('fbil_cd_business_area_code', StringType(), True),
+    StructField('fbil_cd_codice_resa', StringType(), True),
+    StructField('fbil_cd_dlr_code', StringType(), True),
+    StructField('fbil_cd_dlr_ord_ref', StringType(), True),
+    StructField('fbil_cd_dlr_ord_tp', StringType(), True),
+    StructField('fbil_cd_doc_nbr', StringType(), True),
+    StructField('fbil_cd_doc_tp', StringType(), True),
+    StructField('fbil_cd_draft_inv_code', StringType(), True),
+    StructField('fbil_cd_eng_nbr', StringType(), True),
+    StructField('fbil_cd_machine_tp', StringType(), True),
+    StructField('fbil_cd_market_legacy', StringType(), True),
+    StructField('fbil_cd_price_tyres_1', StringType(), True),
+    StructField('fbil_cd_price_tyres_2', StringType(), True),
+    StructField('fbil_cd_price_list', StringType(), True),
+    StructField('fbil_cd_price_tech_tp', StringType(), True),
+    StructField('fbil_cd_product_cl', StringType(), True),
+    StructField('fbil_cd_product_line', StringType(), True),
+    StructField('fbil_cd_product_tp', StringType(), True),
+    StructField('fbil_cd_progressive_ord', StringType(), True),
+    StructField('fbil_cd_ref_doc_nbr', StringType(), True),
+    StructField('fbil_cd_serial_nbr', StringType(), True),
+    StructField('fbil_cd_shipment_progressive', StringType(), True),
+    StructField('fbil_cd_sls_ord', StringType(), True),
+    StructField('fbil_cd_source_ord', StringType(), True),
+    StructField('fbil_cd_source_ord_sequence', StringType(), True),
+    StructField('fbil_cd_std_card_mdl', StringType(), True),
+    StructField('fbil_cd_std_card_tyres', StringType(), True),
+    StructField('fbil_cd_std_card_vrs', StringType(), True),
+    StructField('fbil_cd_tech_tp', StringType(), True),
+    StructField('fbil_id_time_itc_inv_date', IntegerType(), True),
+    StructField('fbil_fl_inv_reject_reason', StringType(), True),
+    StructField('fbil_id_time_draft_inv_date', IntegerType(), True),
+    StructField('fbil_id_coun_country', IntegerType(), True),
+    StructField('fbil_cd_source_system', StringType(), True),
+    StructField('fbil_in_wholesale_qty', IntegerType(), True),
+    StructField('fbil_in_wholesale_net_qty', IntegerType(), True),
+    StructField('fbil_in_wholesale_rev_qty', IntegerType(), True),
+    StructField('fbil_id_time_accounting_date', IntegerType(), True)
+])
+
+# Read data from source table
+inol_df = spark.read.format("jdbc").options(
+    url="jdbc:mysql://localhost:3306/db",
+    dbtable="ddwh01_dw.td_inol_invoice_orders_lines",
+    user="username",
+    password="password"
+).load()
+
+# Perform transformations
+inol_df = inol_df.withColumn("fbil_id_comp_company", lit(-1))
+inol_df = inol_df.withColumn("fbil_cd_accg_doc_code", lit('-1'))
+inol_df = inol_df.withColumn("fbil_nr_accg_doc_fiscal_year", inol_df.inol_dt_document_date.cast('long'))
+inol_df = inol_df.withColumn("fbil_id_time_cmm_doc_date", inol_df.inol_dt_document_date.cast('long'))
+inol_df = inol_df.withColumn("fbil_id_time_itc_inv_date", lit(5373484))
+inol_df = inol_df.withColumn("fbil_id_time_return_date", lit(5373484))
+inol_df = inol_df.withColumn("fbil_id_time_sales_order_date", inol_df.slor_dt_document_date.cast('long'))
+inol_df = inol_df.withColumn("fbil_id_time_start_billing_dat", inol_df.vele_dt_dealer_invoice_date.cast('long'))
+inol_df = inol_df.withColumn("fbil_id_time_draft_inv_date", inol_df.inol_dt_draft_date.cast('long'))
+inol_df = inol_df.withColumn("fbil_id_cust_payer", inol_df.inol_id_cust_customer)
+inol_df = inol_df.withColumn("fbil_id_cust_sold", inol_df.inol_id_cust_customer)
+inol_df = inol_df.withColumn("fbil_id_cuty_customer_type", lit(-2))
+inol_df = inol_df.withColumn("fbil_id_divi_division", inol_df.vele_id_ledi_legacy_division)
+inol_df = inol_df.withColumn("fbil_id_hmup_hmu_product", inol_df.vele_id_hmup_plank_key)
+inol_df = inol_df.withColumn("fbil_id_prat_pr_attributes", inol_df.pvan_id_prat_pr_attributes)
+inol_df = inol_df.withColumn("fbil_id_prp_prpp_product", inol_df.pvan_id_prpp_prp_product)
+inol_df = inol_df.withColumn("fbil_id_batch_id", lit(1))
+inol_df = inol_df.withColumn("fbil_id_cust_payee", inol_df.inoh_id_cust_customer)
+inol_df = inol_df.withColumn("fbil_id_cust_billtoparner", inol_df.inoh_id_cust_customer)
+inol_df = inol_df.withColumn("fbil_id_cust_saleschannel", inol_df.inoh_id_cust_customer)
+inol_df = inol_df.withColumn("fbil_id_cust_soldtoparner", inol_df.inoh_id_cust_customer)
+inol_df = inol_df.withColumn("fbil_id_cust_ownership_group", inol_df.inoh_id_cust_customer)
+inol_df = inol_df.withColumn("fbil_id_addr_ownership_group", lit(-2))
+inol_df = inol_df.withColumn("fbil_id_coun_country", inol_df.inol_id_mark_std_legacy_mkt)
+inol_df = inol_df.withColumn("fbil_in_wholesale_qty", when(inol_df.inol_cd_document_type == '1', 1).otherwise(0))
+inol_df = inol_df.withColumn("fbil_in_wholesale_net_qty", inol_df.fbil_in_wholesale_qty - when(inol_df.inol_cd_document_type == '6', 1).otherwise(0))
+inol_df = inol_df.withColumn("fbil_in_wholesale_rev_qty", when(inol_df.inol_cd_document_type == '6', 1).otherwise(0))
+
+# Write data to target table
+inol_df.write.format("jdbc").options(
+    url="jdbc:mysql://localhost:3306/db",
+    dbtable="ddwh02_sm.twrk_fbil_billing_l_flash",
+    user="username",
+    password="password",
+    driver="com.mysql.jdbc.Driver"
+).mode("overwrite").save()
+```
+
+Please, replace `"jdbc:mysql://localhost:3306/db"`, `"username"`, and `"password"` with your actual database connection details. Also, make sure the column names and data types match between the source and target tables.
