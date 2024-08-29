@@ -69,14 +69,20 @@ def generate_translations(input_data_path: str, file_name: str) -> None:
         step = int(file_name.split('_')[-1])
         S = get_idxs_list_NOSE(step)
         checkpoint_path = f"training/results_and_checkpoints/nose_step_{step}/final_checkpoint.pth"
+        # checkpoint_path = f"training/results_and_checkpoints/nose_step_without_layernorm_{step}/final_checkpoint.pth"
         model_reduction(model, S)
-        # customize_model(model, S, 0)
-        _, _, _ = reload_checkpoint(checkpoint_path, model, S, None, None, device, test_phase=True)
 
+        # Use for customizing the model with a specific set of layers
+        # removed_s = [9]
+        # S = [s for s in S if s not in removed_s]
+        # customize_model(model, S, 0.1)
+        # model_reduction(model, removed_s)
+
+        _, _, _ = reload_checkpoint(checkpoint_path, model, S, None, None, device, test_phase=True)
 
     model.to(device)
     model.eval()
-
+    
     save_computation_metrics(file_name, model, device)
 
     translations = []
@@ -85,22 +91,19 @@ def generate_translations(input_data_path: str, file_name: str) -> None:
 
     for code in tqdm(data):
         inputs: list = [{'role': 'user', 'content': prompt + '\n' + code}]
-        inputs = tokenizer.apply_chat_template(inputs, return_tensors="pt").to(model.device)
-
-        output = model(inputs)
+        inputs = tokenizer.apply_chat_template(inputs, return_tensors="pt", padding=True).to(model.device)
 
         output = model.generate(
             inputs,
-            max_length=1000,
+            max_length=500,
             do_sample=True,
             temperature=0.01,
             pad_token_id=tokenizer.eos_token_id,
             eos_token_id=tokenizer.eos_token_id,
-            use_cache = False,
-            past_key_values=None
         )
 
         decoded_output = tokenizer.decode(output[0][len(inputs[0]):], skip_special_tokens=True)
+        print(decoded_output)
         translations.append(decoded_output)
 
         torch.cuda.empty_cache()

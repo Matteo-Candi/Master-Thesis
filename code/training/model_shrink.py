@@ -12,6 +12,7 @@ class CustomLlamaSdpaAttention(LlamaSdpaAttention):
         self.v_proj = attention_module.v_proj
         self.o_proj = attention_module.o_proj
         self.rotary_emb = attention_module.rotary_emb
+        self.layer_idx = layer_idx
 
         self.scale_factor = scale_factor 
 
@@ -26,7 +27,7 @@ class CustomLlamaSdpaAttention(LlamaSdpaAttention):
         output = M * attn_output + (2 - M) * hidden_states
         
         return output, self_attn_weights, present_key_value 
-    
+     
 
 
 def freeze_model_parameters(model) -> None:
@@ -46,7 +47,7 @@ def set_mlp_trainable(layer)-> None:
 
     unfreeze_layer_parameters(layer.mlp)
     unfreeze_layer_parameters(layer.post_attention_layernorm)
-
+    
 
 def customize_self_attention(layer, scale_factor, layer_idx)-> None:
     '''

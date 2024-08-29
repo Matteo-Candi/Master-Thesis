@@ -5,57 +5,53 @@ import os
 
 from unit_tests.json_to_unittest import json_to_test_lines
 
-
 # Function to replace the function name in the provided code
-def replace_func_name(code: str) -> str:
+def replace_func_name(code):
     
     # Regular expression pattern to match the function definition
-    pattern: str = r'def\s+(\w+)\('
+    pattern = r'def\s+(\w+)\('
     match = re.search(pattern, code)
-    original_name = match.group(1)
-    new_name: str = 'testfunc'
+    if match is not None:
+        original_name = match.group(1)
+        new_name = 'testfunc'
 
-    # Replace the original function name with 'testfunc'
-    code = code.replace(original_name + '(', new_name + '(')
-
+        # Replace the original function name with 'testfunc'
+        code = code.replace(original_name + '(', new_name + '(')
     return code
 
-
 # Function to add a new function to the test file
-def add_function(idx: int, prediction: str, function_name: str) -> None:
-
-    formatted_idx: str = ''
+def add_function(idx, prediction, function_name):
     # Format the index with leading zeros
     if idx < 10:
-        formatted_idx = '00' + str(idx)
+        idx = '00' + str(idx)
     elif idx < 100:
-        formatted_idx = '0' + str(idx)
+        idx = '0' + str(idx)
     else:
-        formatted_idx = str(idx)
+        idx = str(idx)
 
     # Define the test folder and template file path
-    test_folder: str = f"unit_tests/test_files/{formatted_idx}_{function_name}"
-    template_file: str = 'unit_tests/template.py'
+    test_folder = f"unit_tests/test_files/{idx}_{function_name}"
+    template_file = 'unit_tests/template.py'
     os.makedirs(test_folder, exist_ok=True)
 
-    file_lines: list[str] = []
+    file_lines = []
     with open(template_file, "r", encoding="utf-8") as f:
-        lines: list[str] = f.readlines()
+        lines = f.readlines()
         for line in lines:
             file_lines.append(line)
 
-    before: bool = True
-    after: bool = False
-    test_file_lines_before: list[str] = []
-    test_file_lines_after: list[str] = []
+    before = True
+    after = False
+    test_file_lines_before = []
+    test_file_lines_after = []
 
-    indent_space_num: int = 0
+    indent_space_num = 0
 
     # Split the template file into parts before and after the target function insertion point
     for line in file_lines:
         if before:
             test_file_lines_before.append(line)
-        s_line: str = line.strip()
+        s_line = line.strip()
         if s_line.startswith("# Write the target function here"):
             before = False
             indent_space_num = len(list(takewhile(str.isspace, line)))
@@ -64,12 +60,12 @@ def add_function(idx: int, prediction: str, function_name: str) -> None:
         if after:
             test_file_lines_after.append(line)
 
-    test_file_lines: list[str] = []
+    test_file_lines = []
     for line in test_file_lines_before:
         test_file_lines.append(line)
 
     # Replace the function name in the prediction code
-    code: str = replace_func_name(prediction)
+    code = replace_func_name(prediction)
 
     # Insert the modified prediction code into the test file
     test_file_lines.append(" " * indent_space_num + code + "\n")
@@ -82,38 +78,33 @@ def add_function(idx: int, prediction: str, function_name: str) -> None:
         for line in test_file_lines:
             f.write(line)
 
-    return
-
-
 # Function to add unit tests to the test file
-def add_tests(idx: int, question: str, function_name: str) -> None:
-
-    formatted_idx: str = ''
+def add_tests(idx, question, function_name):
 
     # Format the index with leading zeros
     if idx < 10:
-        formatted_idx = '00' + str(idx)
+        idx = '00' + str(idx)
     elif idx < 100:
-        formatted_idx = '0' + str(idx)
+        idx = '0' + str(idx)
     else:
-        formatted_idx = str(idx)
+        idx = str(idx)
 
     # Define the test folder and template file path
-    test_folder: str = f"unit_tests/test_files/{formatted_idx}_{function_name}"
-    template_file: str = f'unit_tests/test_files/{formatted_idx}_{function_name}/test.py'
+    test_folder = f"unit_tests/test_files/{idx}_{function_name}"
+    template_file = f'unit_tests/test_files/{idx}_{function_name}/test.py'
 
-    file_lines: list[str] = []
+    file_lines = []
     with open(template_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
         for line in lines:
             file_lines.append(line)
 
-    before: bool = True
-    after: bool = False
-    test_file_lines_before: list[str] = []
-    test_file_lines_after: list[str] = []
+    before = True
+    after = False
+    test_file_lines_before = []
+    test_file_lines_after = []
 
-    indent_space_num: int = 0
+    indent_space_num = 0
 
     # Split the template file into parts before and after the unit tests insertion point
     for line in file_lines:
@@ -128,7 +119,7 @@ def add_tests(idx: int, question: str, function_name: str) -> None:
         if after:
             test_file_lines_after.append(line)
 
-    test_file_lines: list[str] = []
+    test_file_lines = []
     for line in test_file_lines_before:
         test_file_lines.append(line)
 
@@ -146,12 +137,11 @@ def add_tests(idx: int, question: str, function_name: str) -> None:
             f.write(line)
         print("Test file generated: " + test_folder)
 
-
 # Main function to generate unit tests
-def unit_tests_generator(test_values_filename: str, predictions: list[str]) -> None:
+def unit_tests_generator(test_values_file, predictions):
 
     # Load the test values from the JSON file
-    with open(test_values_filename, 'r') as file:
+    with open(test_values_file, 'r') as file:
         questions = json.load(file)
 
     # Iterate over each question and corresponding prediction

@@ -9,20 +9,20 @@ def run_code():
     username = 'federicaverna'
     password = 'fverna2024ai!'
 
-    commands = [
-        'cd thesis',
-        'source thesis_env/bin/activate',
-        'cd code',
-        'cd training',
-        'nohup python run.py --nose_step 1 > output.log 2>&1 &' 
-    ]
-
     # commands = [
     #     'cd thesis',
     #     'source thesis_env/bin/activate',
     #     'cd code',
-    #     'nohup python run.py --filename nose_step_0 > output.log 2>&1 &' 
+    #     'cd training',
+    #     'nohup python run.py --nose_step 4 > output.log 2>&1 &' 
     # ]
+
+    commands = [
+        'cd thesis',
+        'source thesis_env/bin/activate',
+        'cd code',
+        'nohup python run.py --filename nose_step_without_layernorm_4 > output.log 2>&1 &' 
+    ]
 
     # Combine commands into a single command string
     combined_command = ' && '.join(commands)

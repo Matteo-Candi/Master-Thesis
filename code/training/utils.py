@@ -133,7 +133,7 @@ def send_email_notification(content):
 
 def reload_checkpoint(path, model, S, optimizer, lr_scheduler, device, test_phase: bool = False):
 
-    checkpoint = torch.load(path)
+    checkpoint = torch.load(path, weights_only=False)
 
     # Reload model layers
     S_layers_state = checkpoint['S_layers_state']
@@ -160,6 +160,7 @@ def reload_checkpoint(path, model, S, optimizer, lr_scheduler, device, test_phas
 
         if 'step' not in checkpoint:
             step = 0
+            epoch += 1
         else:
             training_loss = checkpoint['training_loss']
             step = checkpoint['step']
@@ -264,13 +265,19 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
                 epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{step + 1}.pth'
                 torch.save(checkpoint, epoch_step_checkpoint_path)
 
-                old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{step + 1 - 10_000}.pth'
-                if os.path.exists(old_epoch_step_checkpoint_path):
-                    os.remove(old_epoch_step_checkpoint_path)
+                files_to_delete = [
+                    checkpoint_path + f'/checkpoint_epoch_{epoch + 1}_step_{step + 1 - 10_000}.pth',
+                    checkpoint_path + f'/checkpoint_epoch_{epoch}.pth'
+                    ]
+                
+                for file in files_to_delete:
+                    if os.path.exists(file):
+                        os.remove(file)
 
             if (step + 1) % 23_000 == 0:
                 try:
                     send_email_notification(f'Epoch {epoch+1} - step {step+1} - lr {lr}\n\
+                                            training_loss: {train_loss / len(train_dataloader)}\
                                             Everything is working fine!')
                 except:
                     print('Email not sent!')
@@ -309,20 +316,21 @@ def train_custom_model(model, S, num_epochs, learning_rate, gradient_accumulatio
                     'optimizer_state_dict': optimizer.state_dict(),
                     'lr_scheduler_state_dict': lr_scheduler.state_dict(),
                     }
-        
-        # if epoch != 0:
-        #     old_epoch_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch}.pth'
-        #     os.remove(old_epoch_checkpoint_path)
 
         epoch_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch + 1}.pth'
+
         if epoch + 1 == num_epochs:
             epoch_checkpoint_path = checkpoint_path + '/final_checkpoint.pth'
 
         torch.save(checkpoint, epoch_checkpoint_path)
 
-        old_epoch_step_checkpoint_path = checkpoint_path + f'/checkpoint_epoch_{epoch}.pth'
-        if os.path.exists(old_epoch_step_checkpoint_path):
-            os.remove(old_epoch_step_checkpoint_path)
+        files_to_delete = [
+            checkpoint_path + f'/checkpoint_epoch_{epoch  + 1}_step_60000.pth',
+            ]
+        
+        for file in files_to_delete:
+            if os.path.exists(file):
+                os.remove(file)
 
         epochs_metrics = {
             'time': epoch_time,

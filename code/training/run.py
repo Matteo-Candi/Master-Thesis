@@ -45,14 +45,12 @@ def main():
     # print(f'Baseline Loss: {vv}')
 
     reload_checkpoint_path = None
-    reload_checkpoint_path = 'results_and_checkpoints/nose_step_0/checkpoint_epoch_9_step_30000.pth'
-
 
     try:
         train_custom_model(model,
                             S,
                             num_epochs=10,
-                            learning_rate=5e-6,
+                            learning_rate=3.5e-7,
                             gradient_accumulation_steps=1,
                             train_dataloader=train_dataloader,
                             val_dataloader=val_dataloader,
@@ -61,16 +59,15 @@ def main():
                             reload_checkpoint_path=reload_checkpoint_path,
                             )
     except Exception as e:
-        send_email_notification(f"Error encountered: {e}")
+        try:
+            send_email_notification(f"Error encountered: {e}")
+        except Exception as e:
+            print('Process ended with error')
+            with open('error_log.txt', 'w') as f:
+                f.write(str(e))
 
 
 
 if __name__ == "__main__":
 
     main()
-
-
-
-
-# BASELINE Loss
-# Baseline Loss: 0.8105868452329592
